@@ -1,6 +1,6 @@
 import pandas as pd
-import yfinance as yf
 
+from data_provider.provider_factory import ProviderFactory
 from models.financial_data import FinancialData, FinancialPeriod, safe_divide
 
 
@@ -221,34 +221,5 @@ def build_diagnostics(current: FinancialPeriod | None, previous: FinancialPeriod
 
 
 def get_stock_data(symbol: str) -> FinancialData:
-    yf_symbol = normalize_symbol(symbol)
-    ticker = yf.Ticker(yf_symbol)
-
-    info = ticker.info
-    statements = {
-        "financials": ticker.financials,
-        "balance_sheet": ticker.balance_sheet,
-        "cashflow": ticker.cashflow,
-    }
-
-    if not info:
-        raise ValueError("抓不到股票資料，請確認代號是否正確。")
-
-    missing_fields = []
-    current = build_period(0, statements, info, missing_fields) or FinancialPeriod()
-    previous = build_period(1, statements, info, missing_fields)
-    diagnostics = build_diagnostics(current, previous, missing_fields)
-
-    return FinancialData(
-        symbol=yf_symbol,
-        company_name=safe_info_get(info, "longName", "未知公司"),
-        industry=safe_info_get(info, "industry", "未知產業"),
-        sector=safe_info_get(info, "sector", "未知類別"),
-        price=normalize_number(safe_info_get(info, "currentPrice")),
-        pe=normalize_number(safe_info_get(info, "trailingPE")),
-        pb=normalize_number(safe_info_get(info, "priceToBook")),
-        current=current,
-        previous=previous,
-        missing_fields=missing_fields,
-        diagnostics=diagnostics,
-    )
+    provider = ProviderFactory.with_defaults().create("yahoo")
+    return provider.get_financial_data(symbol)

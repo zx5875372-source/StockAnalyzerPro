@@ -5,9 +5,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from data_provider import CSVProvider, MockProvider, ProviderError, YahooFinanceProvider, create_provider
+from data_provider import ProviderError, create_provider
 from data_provider.interfaces import PriceHistory
 from data_provider.provider_factory import ProviderFactory
+from data_provider.providers.csv_provider import CSVProvider
+from data_provider.providers.mock_provider import MockProvider
+from data_provider.providers.yahoo_finance_provider import YahooFinanceProvider
 from models.financial_data import FinancialData, FinancialPeriod
 
 
@@ -104,7 +107,7 @@ class ProviderFactoryTests(unittest.TestCase):
         self.assertIsInstance(provider, MockProvider)
 
     def test_factory_rejects_unknown_provider(self):
-        with self.assertRaisesRegex(ProviderError, "Unknown provider"):
+        with self.assertRaisesRegex(ProviderError, "Unknown provider 'missing'.*csv.*mock.*yahoo"):
             create_provider("missing")
 
 

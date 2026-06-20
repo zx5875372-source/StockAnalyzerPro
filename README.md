@@ -145,8 +145,10 @@ The framework introduces:
 
 Current Sprint boundary:
 
-- Analyzer is not changed.
-- Existing downloader flow remains active.
+- `modules/downloader.py` now creates `YahooFinanceProvider` through `ProviderFactory`.
+- The public downloader API remains `get_stock_data(symbol)`.
+- Analyzer is not changed and still receives `FinancialData`.
+- App, scan, and analyzer flows continue to call the existing downloader API.
 - Provider Framework is covered by unit tests and is ready for later integration.
 
 ## Backtest MVP
