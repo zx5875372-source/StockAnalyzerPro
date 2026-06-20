@@ -14,16 +14,16 @@ def calc_piotroski(data: FinancialData, roa: float | None) -> dict:
     add("1. ROA 為正", roa is not None and roa > 0, "ROA > 0 加 1 分")
     add(
         "2. 營業現金流為正",
-        data.operating_cashflow is not None and data.operating_cashflow > 0,
+        data.current.operating_cashflow is not None and data.current.operating_cashflow > 0,
         "CFO > 0 加 1 分",
     )
-    add("3. ROA 較去年提升", None, "後續版本加入年度比較")
-    add("4. 營業現金流大於淨利", None, "後續版本加入")
-    add("5. 長期負債比下降", None, "後續版本加入")
-    add("6. 流動比率提升", None, "後續版本加入")
-    add("7. 股本未稀釋", None, "後續版本加入")
-    add("8. 毛利率提升", None, "後續版本加入")
-    add("9. 資產週轉率提升", None, "後續版本加入")
+    add("3. ROA 較去年提升", None, "v0.6 加入年度比較")
+    add("4. 營業現金流大於淨利", None, "v0.6 加入")
+    add("5. 長期負債比下降", None, "v0.6 加入")
+    add("6. 流動比率提升", None, "v0.6 加入")
+    add("7. 股本未稀釋", None, "v0.6 加入")
+    add("8. 毛利率提升", None, "v0.6 加入")
+    add("9. 資產週轉率提升", None, "v0.6 加入")
 
     score = sum(1 for item in items if item["passed"] is True)
     available = sum(1 for item in items if item["passed"] is not None)
@@ -115,20 +115,24 @@ def analyze_stock(data: FinancialData) -> dict:
         "industry": data.industry or "未知產業",
         "sector": data.sector or "未知類別",
         "price": data.price,
+        "current_period": data.current.period,
+        "previous_period": data.previous.period if data.previous else None,
         "pe": data.pe,
         "pb": data.pb,
         "roe": roe,
         "roa": roa,
         "debt_to_equity": debt_to_equity,
         "current_ratio": current_ratio,
-        "free_cashflow": data.free_cashflow,
-        "operating_cashflow": data.operating_cashflow,
+        "free_cashflow": data.current.free_cashflow,
+        "operating_cashflow": data.current.operating_cashflow,
+        "missing_fields": data.missing_fields,
+        "diagnostics": data.diagnostics,
         "roe_judgement": judge_roe(roe),
         "roa_judgement": judge_roa(roa),
         "debt_to_equity_judgement": judge_debt_to_equity(debt_to_equity),
         "current_ratio_judgement": judge_current_ratio(current_ratio),
-        "operating_cashflow_judgement": judge_cashflow(data.operating_cashflow),
-        "free_cashflow_judgement": judge_cashflow(data.free_cashflow),
+        "operating_cashflow_judgement": judge_cashflow(data.current.operating_cashflow),
+        "free_cashflow_judgement": judge_cashflow(data.current.free_cashflow),
         "pe_judgement": judge_pe(data.pe),
         "pb_judgement": judge_pb(data.pb),
     }
@@ -165,13 +169,13 @@ def analyze_stock(data: FinancialData) -> dict:
             score += 5
             reasons.append("ROA 偏低")
 
-    if data.free_cashflow is not None and data.free_cashflow > 0:
+    if data.current.free_cashflow is not None and data.current.free_cashflow > 0:
         score += 15
         reasons.append("自由現金流為正")
     else:
         reasons.append("自由現金流不佳或資料不足")
 
-    if data.operating_cashflow is not None and data.operating_cashflow > 0:
+    if data.current.operating_cashflow is not None and data.current.operating_cashflow > 0:
         score += 10
         reasons.append("營業現金流為正")
 

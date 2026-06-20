@@ -31,6 +31,8 @@ def generate_markdown_report(result: dict) -> str:
     path = reports_dir / f"{symbol}_{today}.md"
 
     reasons_text = "\n".join([f"- {r}" for r in result["reasons"]])
+    diagnostics = result.get("diagnostics") or ["無明顯缺漏"]
+    diagnostics_text = "\n".join([f"- {item}" for item in diagnostics])
 
     piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
     piotroski_rows = "\n".join(
@@ -51,6 +53,8 @@ def generate_markdown_report(result: dict) -> str:
 | 產業 | {result["industry"]} |
 | 類別 | {result["sector"]} |
 | 目前股價 | {fmt(result["price"])} |
+| 最新財報期 | {fmt(result["current_period"])} |
+| 前一財報期 | {fmt(result["previous_period"])} |
 
 ---
 
@@ -140,7 +144,13 @@ def generate_markdown_report(result: dict) -> str:
 
 ---
 
-## 十一、細項評分
+## 十一、資料缺漏診斷
+
+{diagnostics_text}
+
+---
+
+## 十二、細項評分
 
 | 項目 | 分數 |
 |---|---:|
@@ -150,9 +160,9 @@ def generate_markdown_report(result: dict) -> str:
 
 ---
 
-## 十二、投資建議
+## 十三、投資建議
 
-目前版本為 SAP v0.4，已加入 Financial Engine v1.0。
+目前版本為 SAP v0.5，已加入 Financial Engine v2.0。
 
 初步判斷：
 
@@ -160,7 +170,7 @@ def generate_markdown_report(result: dict) -> str:
 - SAP Score：{result["sap_score"]} / 100
 - 投資等級：{result["grade"]}
 
-後續版本會補齊完整年度財報比較，讓 Piotroski F-Score 9 項完整計算。
+v0.6 會使用 current / previous 財報資料，補齊完整 Piotroski F-Score 9 項。
 
 """
 
