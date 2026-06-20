@@ -1,38 +1,5 @@
 from models.financial_data import FinancialData
-
-
-def calc_piotroski(data: FinancialData, roa: float | None) -> dict:
-    items = []
-
-    def add(name, passed, note):
-        items.append({
-            "name": name,
-            "passed": passed,
-            "note": note,
-        })
-
-    add("1. ROA 為正", roa is not None and roa > 0, "ROA > 0 加 1 分")
-    add(
-        "2. 營業現金流為正",
-        data.current.operating_cashflow is not None and data.current.operating_cashflow > 0,
-        "CFO > 0 加 1 分",
-    )
-    add("3. ROA 較去年提升", None, "v0.6 加入年度比較")
-    add("4. 營業現金流大於淨利", None, "v0.6 加入")
-    add("5. 長期負債比下降", None, "v0.6 加入")
-    add("6. 流動比率提升", None, "v0.6 加入")
-    add("7. 股本未稀釋", None, "v0.6 加入")
-    add("8. 毛利率提升", None, "v0.6 加入")
-    add("9. 資產週轉率提升", None, "v0.6 加入")
-
-    score = sum(1 for item in items if item["passed"] is True)
-    available = sum(1 for item in items if item["passed"] is not None)
-
-    return {
-        "score": score,
-        "available": available,
-        "items": items,
-    }
+from modules.piotroski import calculate_piotroski
 
 
 def judge_roe(roe: float | None) -> str:
@@ -137,13 +104,16 @@ def analyze_stock(data: FinancialData) -> dict:
         "pb_judgement": judge_pb(data.pb),
     }
 
-    piotroski = calc_piotroski(data, roa)
+    piotroski = calculate_piotroski(data)
 
     score = 0
     reasons = []
 
-    score += piotroski["score"] * 5
-    reasons.append(f"Piotroski 目前可計算 {piotroski['score']} / {piotroski['available']} 項通過")
+    score += piotroski["score"] * 3
+    reasons.append(
+        f"Piotroski F-Score {piotroski['score']} / {piotroski['total']}，"
+        f"可計算 {piotroski['score']} / {piotroski['available']} 項通過"
+    )
 
     if roe is not None:
         if roe >= 15:

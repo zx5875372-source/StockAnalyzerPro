@@ -8,6 +8,16 @@ def fmt(value, suffix=""):
     return f"{value}{suffix}"
 
 
+def metric(value):
+    if value is None:
+        return "資料不足"
+    if isinstance(value, (int, float)):
+        if abs(value) >= 100000:
+            return f"{value:,.0f}"
+        return f"{value:.4f}".rstrip("0").rstrip(".")
+    return str(value)
+
+
 def money(value):
     if value is None:
         return "資料不足"
@@ -35,9 +45,15 @@ def generate_markdown_report(result: dict) -> str:
     diagnostics_text = "\n".join([f"- {item}" for item in diagnostics])
 
     piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
+    piotroski_total = piotroski.get("total", 9)
     piotroski_rows = "\n".join(
         [
-            f"| {item['name']} | {yes_no(item['passed'])} | {item['note']} |"
+            "| "
+            f"{item['name']} | "
+            f"{yes_no(item['passed'])} | "
+            f"{metric(item.get('current_value'))} | "
+            f"{metric(item.get('previous_value'))} | "
+            f"{item['note']} |"
             for item in piotroski["items"]
         ]
     )
@@ -62,11 +78,11 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 結果 |
 |---|---:|
-| 目前可計算分數 | {piotroski["score"]} / {piotroski["available"]} |
-| 完整 9 項版本 | 後續版本補齊年度財報比較 |
+| 完整分數 | {piotroski["score"]} / {piotroski_total} |
+| 可計算項目 | {piotroski["score"]} / {piotroski["available"]} |
 
-| 細項 | 結果 | 說明 |
-|---|---|---|
+| 細項 | 結果 | 目前值 | 去年值/比較值 | 說明 |
+|---|---|---:|---:|---|
 {piotroski_rows}
 
 ---
@@ -154,7 +170,8 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 分數 |
 |---|---:|
-| Piotroski 可計算分數 | {piotroski["score"]} / {piotroski["available"]} |
+| Piotroski 完整分數 | {piotroski["score"]} / {piotroski_total} |
+| Piotroski 可計算項目 | {piotroski["score"]} / {piotroski["available"]} |
 | SAP Score | {result["sap_score"]} / 100 |
 | 投資等級 | {result["grade"]} |
 
@@ -162,15 +179,16 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十三、投資建議
 
-目前版本為 SAP v0.5，已加入 Financial Engine v2.0。
+目前版本為 SAP v0.6，已加入完整 Piotroski F-Score 9 項。
 
 初步判斷：
 
-- Piotroski 可計算分數：{piotroski["score"]} / {piotroski["available"]}
+- Piotroski 完整分數：{piotroski["score"]} / {piotroski_total}
+- Piotroski 可計算項目：{piotroski["score"]} / {piotroski["available"]}
 - SAP Score：{result["sap_score"]} / 100
 - 投資等級：{result["grade"]}
 
-v0.6 會使用 current / previous 財報資料，補齊完整 Piotroski F-Score 9 項。
+Piotroski 明細使用 current / previous 財報資料計算；資料不足的項目不計入可計算項目。
 
 """
 
