@@ -4,5 +4,6 @@ __pycache__/
 *.pyo
 *.db
 data/cache/
+reports/*.md
 .vscode/
 .idea/

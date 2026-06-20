@@ -5,11 +5,15 @@ from modules.report import generate_markdown_report
 
 def main():
     print("====================================")
-    print(" StockAnalyzerPro v0.9")
+    print(" StockAnalyzerPro v1.0")
     print("====================================")
+    print("目前版本：v1.0 Stable Core Release")
+    print("請輸入股票代號開始分析，例如 2330")
+    print("輸入 q 離開")
+    print("------------------------------------")
 
     while True:
-        symbol = input("請輸入股票代號，例如 2330，輸入 q 離開：").strip()
+        symbol = input("股票代號：").strip()
 
         if symbol.lower() == "q":
             print("已離開。")

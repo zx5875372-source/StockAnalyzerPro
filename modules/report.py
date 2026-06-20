@@ -246,7 +246,7 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十三、投資建議
 
-目前版本為 SAP v0.9，已加入 Growth Engine v1.0。
+目前版本為 SAP v1.0 Stable Core Release。
 
 初步判斷：
 
