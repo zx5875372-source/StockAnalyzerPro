@@ -12,16 +12,27 @@ from modules.downloader import normalize_symbol
 from scan import load_sample_stocks
 
 
+GENERATED_SNAPSHOT_PATH = Path("data/snapshots/generated_sap_scores.csv")
+SAMPLE_SNAPSHOT_PATH = Path("data/snapshots/sample_sap_scores.csv")
+
+
 @dataclass
 class BacktestConfig:
     initial_cash: float = 1_000_000
     start_date: str = "2023-01-01"
     end_date: str = "2025-12-31"
     universe_path: Path = Path("tests/sample_data/sample_stocks.json")
-    snapshot_path: Path = Path("data/snapshots/sample_sap_scores.csv")
+    snapshot_path: Path | None = None
     min_sap_score: int = 80
     min_piotroski_score: int = 7
     min_data_quality_score: int = 80
+
+    def resolved_snapshot_path(self) -> Path:
+        if self.snapshot_path is not None:
+            return Path(self.snapshot_path)
+        if GENERATED_SNAPSHOT_PATH.exists():
+            return GENERATED_SNAPSHOT_PATH
+        return SAMPLE_SNAPSHOT_PATH
 
 
 class YFinancePriceProvider:
@@ -99,6 +110,7 @@ class BacktestEngine:
         self.selected_symbols = []
         self.skipped_reasons = {}
         self.look_ahead_safe = False
+        self.snapshot_source = self.config.resolved_snapshot_path()
 
     def load_data(self) -> None:
         raw_universe = load_sample_stocks(self.config.universe_path)
@@ -111,9 +123,10 @@ class BacktestEngine:
         ]
 
         print("載入 historical SAP Score snapshot...")
-        self.snapshots = SnapshotScoreStore.from_csv(self.config.snapshot_path)
+        self.snapshot_source = self.config.resolved_snapshot_path()
+        self.snapshots = SnapshotScoreStore.from_csv(self.snapshot_source)
         self.diagnostics.extend(self.snapshots.diagnostics)
-        self.look_ahead_safe = self.snapshots.available()
+        self.look_ahead_safe = self.snapshots.available() and not self.snapshots.has_warnings()
 
         print("下載歷史價格...")
         symbols = [stock["symbol"] for stock in self.universe]
@@ -174,7 +187,8 @@ class BacktestEngine:
             "selected_stock_count": len(self.selected_symbols),
             "skipped_stock_count": len(self.skipped_reasons),
             "skipped_reasons": self.skipped_reasons,
-            "snapshot_source": str(self.config.snapshot_path),
+            "snapshot_source": str(self.snapshot_source),
+            "snapshot_warning_counts": self.snapshots.warning_counts(),
             "look_ahead_safe": self.look_ahead_safe,
             "diagnostics": self.diagnostics,
         }
@@ -185,7 +199,7 @@ class BacktestEngine:
             "start_date": self.config.start_date,
             "end_date": self.config.end_date,
             "universe_path": str(self.config.universe_path),
-            "snapshot_path": str(self.config.snapshot_path),
+            "snapshot_path": str(self.config.resolved_snapshot_path()),
             "min_sap_score": self.config.min_sap_score,
             "min_piotroski_score": self.config.min_piotroski_score,
             "min_data_quality_score": self.config.min_data_quality_score,

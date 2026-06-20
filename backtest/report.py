@@ -26,6 +26,7 @@ class BacktestReportWriter:
         diagnostics = result.get("diagnostics", [])
         selected = result.get("selected_symbols", [])
         skipped_reasons = result.get("skipped_reasons", {})
+        warning_counts = result.get("snapshot_warning_counts", {})
 
         diagnostics_rows = "\n".join(f"- {item}" for item in diagnostics) if diagnostics else "- 無"
         selected_rows = "\n".join(f"- {symbol}" for symbol in selected) if selected else "- 無"
@@ -34,10 +35,15 @@ class BacktestReportWriter:
             if skipped_reasons
             else "- 無"
         )
+        warning_rows = (
+            "\n".join(f"| {warning} | {count} |" for warning, count in sorted(warning_counts.items()))
+            if warning_counts
+            else "| 無 | 0 |"
+        )
 
         content = f"""# Backtest Summary
 
-Version: Sprint 4 Backtest Data Integrity
+Version: Sprint 5 Snapshot Builder
 
 ## Config
 
@@ -80,6 +86,12 @@ Version: Sprint 4 Backtest Data Integrity
 | Selected Stock Count | {result['selected_stock_count']} |
 | Skipped Stock Count | {result['skipped_stock_count']} |
 
+## Snapshot Warnings
+
+| Warning | Count |
+|---|---:|
+{warning_rows}
+
 ## Selected Symbols
 
 {selected_rows}
@@ -95,8 +107,9 @@ Version: Sprint 4 Backtest Data Integrity
 ## Notes
 
 This MVP uses historical SAP Score snapshots from the configured snapshot source.
-It does not fallback to current scores. The sample snapshot file is still a
-simplified fixture and not a complete point-in-time financial statement dataset.
+It does not fallback to current scores during backtest selection. Generated
+snapshots marked `current_analysis_proxy` and `not_point_in_time` are proxy data,
+not formal point-in-time financial statement snapshots.
 """
         self.summary_path.write_text(content, encoding="utf-8")
 

@@ -64,6 +64,18 @@ class SnapshotScoreStore:
     def available(self) -> bool:
         return bool(self.rows) and not any(item.startswith("snapshot missing") for item in self.diagnostics)
 
+    def warning_counts(self) -> dict[str, int]:
+        counts = {}
+        for row in self.rows:
+            warning = row.get("warning") or ""
+            if not warning:
+                continue
+            counts[warning] = counts.get(warning, 0) + 1
+        return counts
+
+    def has_warnings(self) -> bool:
+        return bool(self.warning_counts())
+
 
 def normalize_snapshot_row(row: dict) -> dict | None:
     date = pd.to_datetime(row.get("date"), errors="coerce")
@@ -86,6 +98,8 @@ def normalize_snapshot_row(row: dict) -> dict | None:
         "sap_score": sap_score,
         "piotroski_score": piotroski_score,
         "data_quality_score": data_quality_score,
+        "source": row.get("source", ""),
+        "warning": row.get("warning", ""),
     }
 
 

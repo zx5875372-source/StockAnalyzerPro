@@ -134,10 +134,17 @@ Run the Sprint 3 Backtest Engine MVP:
 .venv\Scripts\python.exe backtest.py
 ```
 
+Build generated SAP Score snapshots:
+
+```powershell
+.venv\Scripts\python.exe snapshot_builder.py
+```
+
 The MVP uses:
 
 - `tests/sample_data/sample_stocks.json` as the universe.
-- Historical SAP Score snapshots from `data/snapshots/sample_sap_scores.csv`.
+- Historical SAP Score snapshots from `data/snapshots/generated_sap_scores.csv` when available.
+- Falls back to `data/snapshots/sample_sap_scores.csv` when generated snapshots do not exist.
 - yfinance historical price data from `2023-01-01` to `2025-12-31`.
 - Monthly rebalance.
 - Equal-weight positions.
@@ -153,17 +160,17 @@ reports/backtest_equity_curve.csv
 Snapshot CSV columns:
 
 ```text
-date,symbol,sap_score,piotroski_score,data_quality_score
+date,symbol,sap_score,piotroski_score,data_quality_score,source,warning
 ```
 
-Important limitation: Sprint 3 used current SAP Score signals with historical prices, so its result should not be treated as formal backtest performance. Sprint 4 removes that fallback and only uses snapshots available on or before each rebalance date. The sample snapshot file is still a simplified fixture, not a complete point-in-time financial statement dataset.
+Important limitation: Sprint 3 used current SAP Score signals with historical prices, so its result should not be treated as formal backtest performance. Sprint 4 removes current-score fallback during backtest selection. Sprint 5 adds `generated_sap_scores.csv`, but it is still a proxy marked `source=current_analysis_proxy` and `warning=not_point_in_time`. Formal point-in-time snapshot generation is deferred until historical financial statements are available through FinMind, OpenBB, or another reliable provider.
 
 ## Tests and CI
 
 Run local checks:
 
 ```powershell
-.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py
+.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py
 .venv\Scripts\python.exe -m unittest discover -s tests/unit
 ```
 

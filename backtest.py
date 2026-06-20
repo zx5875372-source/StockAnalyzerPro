@@ -19,7 +19,7 @@ def main() -> None:
     print("====================================")
     print(f"期間：{config.start_date} 到 {config.end_date}")
     print(f"初始資金：{config.initial_cash}")
-    print(f"Snapshot：{config.snapshot_path}")
+    print(f"Snapshot：{config.resolved_snapshot_path()}")
     print("------------------------------------")
 
     result = engine.run()

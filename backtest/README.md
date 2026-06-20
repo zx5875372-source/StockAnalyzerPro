@@ -112,6 +112,53 @@ historical financial statement dataset. Sprint 4 improves data integrity by
 removing current-score fallback, but formal production backtesting still requires
 historical SAP Score generation from point-in-time financial statements.
 
+## Sprint 5 Snapshot Builder Design
+
+Sprint 5 adds a snapshot generation pipeline:
+
+```text
+snapshot_builder.py
+  -> tests/sample_data/sample_stocks.json
+  -> current analyzer / scan proxy
+  -> data/snapshots/generated_sap_scores.csv
+```
+
+Generated snapshot columns:
+
+```text
+date,symbol,sap_score,piotroski_score,data_quality_score,source,warning
+```
+
+The builder currently creates quarterly rows for:
+
+- 2023-03-31
+- 2023-06-30
+- 2023-09-30
+- 2023-12-31
+- 2024-03-31
+- 2024-06-30
+- 2024-09-30
+- 2024-12-31
+- 2025-03-31
+- 2025-06-30
+- 2025-09-30
+- 2025-12-31
+
+Current limitation:
+
+`generated_sap_scores.csv` uses `source=current_analysis_proxy` and
+`warning=not_point_in_time`. It repeats the current analysis result across
+historical quarter dates because the analyzer cannot yet reconstruct historical
+financial statements for each date.
+
+Backtest snapshot priority:
+
+1. `data/snapshots/generated_sap_scores.csv`
+2. `data/snapshots/sample_sap_scores.csv`
+
+Formal point-in-time snapshots are deferred until historical financial statement
+data is available through FinMind, OpenBB, or another reliable provider.
+
 ## 1. Data Source
 
 The backtest engine should not depend directly on yfinance. Each provider should

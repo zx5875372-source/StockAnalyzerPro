@@ -1,5 +1,15 @@
 # Changelog
 
+## Sprint 5 - Snapshot Builder
+
+- Added `snapshot_builder.py`.
+- Generates quarterly proxy SAP Score snapshots from `tests/sample_data/sample_stocks.json`.
+- Outputs `data/snapshots/generated_sap_scores.csv`.
+- Adds `source=current_analysis_proxy` and `warning=not_point_in_time` to generated rows.
+- Backtest now prefers generated snapshots and falls back to sample snapshots.
+- Backtest report now includes snapshot warning statistics.
+- Added unit tests for snapshot builder output, proxy warnings, and generated snapshot loading.
+
 ## Sprint 4 - Backtest Data Integrity
 
 - Added historical SAP Score snapshot fixture at `data/snapshots/sample_sap_scores.csv`.
