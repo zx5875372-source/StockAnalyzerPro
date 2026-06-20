@@ -1,5 +1,7 @@
 # StockAnalyzerPro
 
+[![Python Tests](https://github.com/zx5875372-source/StockAnalyzerPro/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/zx5875372-source/StockAnalyzerPro/actions/workflows/python-tests.yml)
+
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
 Current version: v1.4 CLI UX Improvement
@@ -122,6 +124,19 @@ reports/watchlist_report.md
 ```
 
 Use the summary to review total sample count, success rate, average SAP Score, average data quality score, the stocks with the most missing data, and the top 10 SAP Score stocks. Use the watchlist report to review SAP Score, grade, whether price is below the reasonable buy point, first target price, and data quality for your selected stocks.
+
+## Tests and CI
+
+Run local checks:
+
+```powershell
+.venv\Scripts\python.exe -m py_compile app.py scan.py
+.venv\Scripts\python.exe -m unittest discover -s tests/unit
+```
+
+GitHub Actions runs the same compile and unit test checks on push or pull request to `main` and `develop`.
+
+`scan.py` is not executed in CI because it depends on yfinance network availability.
 
 ## Notes
 

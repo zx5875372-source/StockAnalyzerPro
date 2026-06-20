@@ -1,5 +1,14 @@
 # Changelog
 
+## CI - GitHub Actions 自動測試
+
+- Added `.github/workflows/python-tests.yml`.
+- Runs on push and pull request to `main` and `develop`.
+- Installs Python dependencies from `requirements.txt`.
+- Compiles `app.py` and `scan.py`.
+- Runs unit tests under `tests/unit`.
+- Keeps `scan.py` out of CI to avoid network-dependent yfinance failures.
+
 ## v1.4 - CLI UX Improvement
 
 - Added an interactive main menu in `app.py`.
