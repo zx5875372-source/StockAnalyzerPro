@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3 - Ranking & Watchlist
+
+- Added `data/watchlist.json`.
+- Added scan source arguments: `--sample` and `--watchlist`.
+- Made watchlist the default scan source.
+- Added ranking report at `reports/top10.md`.
+- Added watchlist summary at `reports/watchlist_report.md`.
+- Added price, reasonable buy point, and below-buy-point fields to scan output.
+
 ## v1.2 - Data Quality Improvement
 
 - Added explicit scan fields for missing data and data quality.

@@ -2,7 +2,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v1.2 Data Quality Improvement
+Current version: v1.3 Ranking & Watchlist
 
 ## Current Features
 
@@ -54,16 +54,34 @@ Reports are generated in the `reports/` folder.
 
 ## Batch Scan
 
-Run the validation scan against the sample stock universe:
+Run the default watchlist scan:
 
 ```powershell
 .venv\Scripts\python.exe scan.py
 ```
 
-The scan reads:
+Run the sample universe scan:
+
+```powershell
+.venv\Scripts\python.exe scan.py --sample
+```
+
+Run the watchlist scan explicitly:
+
+```powershell
+.venv\Scripts\python.exe scan.py --watchlist
+```
+
+The sample scan reads:
 
 ```text
 tests/sample_data/sample_stocks.json
+```
+
+The watchlist scan reads:
+
+```text
+data/watchlist.json
 ```
 
 The CSV output is written to:
@@ -91,10 +109,17 @@ The scan also writes a summary report:
 reports/scan_summary.md
 ```
 
-Use the summary to review total sample count, success rate, average SAP Score, average data quality score, the stocks with the most missing data, and the top 10 SAP Score stocks.
+Additional ranking reports:
+
+```text
+reports/top10.md
+reports/watchlist_report.md
+```
+
+Use the summary to review total sample count, success rate, average SAP Score, average data quality score, the stocks with the most missing data, and the top 10 SAP Score stocks. Use the watchlist report to review SAP Score, grade, whether price is below the reasonable buy point, first target price, and data quality for your selected stocks.
 
 ## Notes
 
 - This project is for research and learning, not investment advice.
 - Data quality depends on yfinance availability.
-- Future versions may add additional data sources and backtesting workflows, but v1.2 keeps the validation foundation simple.
+- Future versions may add additional data sources and backtesting workflows, but v1.3 keeps the ranking and watchlist workflow simple.

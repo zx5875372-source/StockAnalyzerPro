@@ -246,7 +246,7 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十三、投資建議
 
-目前版本為 SAP v1.2 Data Quality Improvement。
+目前版本為 SAP v1.3 Ranking & Watchlist。
 
 初步判斷：
 

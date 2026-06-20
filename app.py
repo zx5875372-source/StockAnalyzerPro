@@ -5,9 +5,9 @@ from modules.report import generate_markdown_report
 
 def main():
     print("====================================")
-    print(" StockAnalyzerPro v1.2")
+    print(" StockAnalyzerPro v1.3")
     print("====================================")
-    print("目前版本：v1.2 Data Quality Improvement")
+    print("目前版本：v1.3 Ranking & Watchlist")
     print("請輸入股票代號開始分析，例如 2330")
     print("輸入 q 離開")
     print("------------------------------------")
