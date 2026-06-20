@@ -46,6 +46,7 @@ def generate_markdown_report(result: dict) -> str:
 
     piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
     piotroski_total = piotroski.get("total", 9)
+    valuation = result.get("valuation", {})
     piotroski_rows = "\n".join(
         [
             "| "
@@ -130,6 +131,13 @@ def generate_markdown_report(result: dict) -> str:
 |---|---:|---|
 | 本益比 PE | {fmt(result["pe"])} | {result["pe_judgement"]} |
 | 股價淨值比 PB | {fmt(result["pb"])} | {result["pb_judgement"]} |
+| EPS | {metric(valuation.get("eps"))} | 估值輸入 |
+| 每股淨值 | {metric(valuation.get("book_value_per_share"))} | 估值輸入 |
+| 合理 PE | {metric(valuation.get("reasonable_pe"))} | v1.0 固定假設 |
+| 合理 PB | {metric(valuation.get("reasonable_pb"))} | v1.0 固定假設 |
+| PE 合理價 | {metric(valuation.get("pe_fair_price"))} | EPS × 合理 PE |
+| PB 合理價 | {metric(valuation.get("pb_fair_price"))} | 每股淨值 × 合理 PB |
+| 綜合合理價 | {metric(valuation.get("fair_price"))} | PE/PB 合理價平均 |
 
 ---
 
@@ -137,9 +145,9 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 結果 |
 |---|---|
-| 合理買點 | 後續版本加入 |
-| 保守買點 | 後續版本加入 |
-| 積極買點 | 後續版本加入 |
+| 保守買點 | {metric(valuation.get("conservative_buy"))} |
+| 合理買點 | {metric(valuation.get("reasonable_buy"))} |
+| 積極買點 | {metric(valuation.get("aggressive_buy"))} |
 
 ---
 
@@ -147,8 +155,8 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 結果 |
 |---|---|
-| 第一目標價 | 後續版本加入 |
-| 預估上漲空間 | 後續版本加入 |
+| 第一目標價 | {metric(valuation.get("first_target_price"))} |
+| 預估上漲空間 | {fmt(valuation.get("upside_percent"), "%")} |
 
 ---
 
@@ -179,7 +187,7 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十三、投資建議
 
-目前版本為 SAP v0.6，已加入完整 Piotroski F-Score 9 項。
+目前版本為 SAP v0.7，已加入 Valuation Engine v1.0。
 
 初步判斷：
 
@@ -187,6 +195,8 @@ def generate_markdown_report(result: dict) -> str:
 - Piotroski 可計算項目：{piotroski["score"]} / {piotroski["available"]}
 - SAP Score：{result["sap_score"]} / 100
 - 投資等級：{result["grade"]}
+- 綜合合理價：{metric(valuation.get("fair_price"))}
+- 第一目標價：{metric(valuation.get("first_target_price"))}
 
 Piotroski 明細使用 current / previous 財報資料計算；資料不足的項目不計入可計算項目。
 

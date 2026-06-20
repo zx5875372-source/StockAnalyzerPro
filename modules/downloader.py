@@ -1,7 +1,7 @@
 import pandas as pd
 import yfinance as yf
 
-from models.financial_data import FinancialData, FinancialPeriod
+from models.financial_data import FinancialData, FinancialPeriod, safe_divide
 
 
 FIELD_ALIASES = {
@@ -60,6 +60,11 @@ INFO_FALLBACKS = {
     "operating_cashflow": "operatingCashflow",
     "free_cashflow": "freeCashflow",
     "shares_outstanding": "sharesOutstanding",
+}
+
+VALUATION_INFO_FALLBACKS = {
+    "eps": "trailingEps",
+    "book_value_per_share": "bookValue",
 }
 
 
@@ -174,6 +179,28 @@ def build_period(period_index: int, statements: dict, info: dict, missing_fields
         if value is None:
             period_name = "current" if period_index == 0 else "previous"
             missing_fields.append(f"{period_name}.{field_name}")
+
+    values["eps"] = safe_divide(values["net_income"], values["shares_outstanding"], precision=4)
+    values["book_value_per_share"] = safe_divide(
+        values["total_equity"],
+        values["shares_outstanding"],
+        precision=4,
+    )
+
+    if period_index == 0:
+        values["eps"] = first_available(
+            values["eps"],
+            normalize_number(safe_info_get(info, VALUATION_INFO_FALLBACKS["eps"])),
+        )
+        values["book_value_per_share"] = first_available(
+            values["book_value_per_share"],
+            normalize_number(safe_info_get(info, VALUATION_INFO_FALLBACKS["book_value_per_share"])),
+        )
+
+    for valuation_field in ["eps", "book_value_per_share"]:
+        if values[valuation_field] is None:
+            period_name = "current" if period_index == 0 else "previous"
+            missing_fields.append(f"{period_name}.{valuation_field}")
 
     return FinancialPeriod(period=label, **values)
 

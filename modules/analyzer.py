@@ -1,5 +1,6 @@
 from models.financial_data import FinancialData
 from modules.piotroski import calculate_piotroski
+from modules.valuation import calculate_valuation
 
 
 def judge_roe(roe: float | None) -> str:
@@ -76,6 +77,9 @@ def analyze_stock(data: FinancialData) -> dict:
     debt_to_equity = data.debt_to_equity()
     current_ratio = data.current_ratio()
 
+    valuation = calculate_valuation(data)
+    diagnostics = data.diagnostics + valuation["diagnostics"]
+
     result = {
         "symbol": data.symbol,
         "company_name": data.company_name or "未知公司",
@@ -93,7 +97,7 @@ def analyze_stock(data: FinancialData) -> dict:
         "free_cashflow": data.current.free_cashflow,
         "operating_cashflow": data.current.operating_cashflow,
         "missing_fields": data.missing_fields,
-        "diagnostics": data.diagnostics,
+        "diagnostics": diagnostics,
         "roe_judgement": judge_roe(roe),
         "roa_judgement": judge_roa(roa),
         "debt_to_equity_judgement": judge_debt_to_equity(debt_to_equity),
@@ -203,6 +207,7 @@ def analyze_stock(data: FinancialData) -> dict:
         "grade": grade,
         "reasons": reasons,
         "piotroski": piotroski,
+        "valuation": valuation,
     })
 
     return result

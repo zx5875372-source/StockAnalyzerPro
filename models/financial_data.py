@@ -18,6 +18,8 @@ class FinancialPeriod:
     operating_cashflow: float | None = None
     free_cashflow: float | None = None
     shares_outstanding: float | None = None
+    eps: float | None = None
+    book_value_per_share: float | None = None
 
 
 @dataclass
