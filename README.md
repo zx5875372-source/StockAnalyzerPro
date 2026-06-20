@@ -19,6 +19,7 @@ Current version: v1.4 CLI UX Improvement
 - Provides a validation scan over a sample stock universe and exports CSV results.
 - Provides an interactive CLI menu for single-stock analysis, watchlist scan, and sample scan.
 - Provides a Backtest Engine MVP for historical price validation of SAP Score selections.
+- Provides an initial data provider framework for Yahoo Finance, CSV snapshots, and unit-test mocks.
 
 ## Installation
 
@@ -125,6 +126,28 @@ reports/watchlist_report.md
 ```
 
 Use the summary to review total sample count, success rate, average SAP Score, average data quality score, the stocks with the most missing data, and the top 10 SAP Score stocks. Use the watchlist report to review SAP Score, grade, whether price is below the reasonable buy point, first target price, and data quality for your selected stocks.
+
+## Data Layer
+
+Milestone 3 Sprint 1 adds the initial Provider Framework under:
+
+```text
+data_provider/
+```
+
+The framework introduces:
+
+- `IDataProvider`: stable provider contract for normalized financial data, price history, universes, and diagnostics.
+- `YahooFinanceProvider`: yfinance adapter with access to `info`, `financials`, `balance_sheet`, `cashflow`, and `history`.
+- `CSVProvider`: strict CSV reader for SAP Score snapshot CSV files.
+- `MockProvider`: deterministic in-memory provider for unit tests.
+- `ProviderFactory`: factory for `yahoo`, `yfinance`, `yahoo_finance`, `csv`, and `mock`.
+
+Current Sprint boundary:
+
+- Analyzer is not changed.
+- Existing downloader flow remains active.
+- Provider Framework is covered by unit tests and is ready for later integration.
 
 ## Backtest MVP
 
