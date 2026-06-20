@@ -1,5 +1,15 @@
 # Changelog
 
+## Sprint 3 - Backtest Engine MVP
+
+- Added Backtest Engine MVP modules under `backtest/`.
+- Added `BaseStrategy` and `SAPScoreStrategy`.
+- Added MVP portfolio, performance, and report layers.
+- Added executable `backtest.py`.
+- Outputs `reports/backtest_summary.md` and `reports/backtest_equity_curve.csv`.
+- Added unit tests for strategy, portfolio, performance, and engine MVP behavior.
+- Documented the MVP limitation: current SAP Score snapshot with historical prices, not yet full historical financial statement scoring.
+
 ## CI - GitHub Actions 自動測試
 
 - Added `.github/workflows/python-tests.yml`.

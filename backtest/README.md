@@ -13,7 +13,9 @@ This is not a trading simulator. The first goal is to answer:
 
 ## Design Scope
 
-This phase only defines the architecture. It does not implement the backtest engine.
+The first phase defined the architecture before implementation. Sprint 3 adds a
+minimal implementation that follows this design without attempting a complete
+historical financial statement backtest.
 
 Planned folder structure:
 
@@ -42,6 +44,37 @@ backtest/
     csv/
     json/
 ```
+
+## Sprint 3 MVP Design
+
+Sprint 3 implements the smallest usable backtest engine following this architecture.
+
+MVP scope:
+
+- Universe: `tests/sample_data/sample_stocks.json`.
+- Period: `2023-01-01` to `2025-12-31`.
+- Initial cash: `1000000`.
+- Rebalance frequency: monthly.
+- Allocation: equal weight across selected stocks.
+- Price data: yfinance historical adjusted close or close prices.
+- Signal data: current SAP Score pipeline from the existing analyzer/scan flow.
+- Output: `reports/backtest_summary.md` and `reports/backtest_equity_curve.csv`.
+
+Important limitation:
+
+This MVP uses the current SAP Score snapshot to filter stocks, then validates
+historical price behavior for the selected set. It is useful for testing the
+backtest plumbing, report output, and portfolio math, but it is not yet a
+look-ahead-safe historical financial statement backtest. A future version must
+calculate SAP Score from historical financial snapshots as of each rebalance date.
+
+MVP module responsibilities:
+
+- `backtest/strategy.py`: selection rules and target weights only.
+- `backtest/engine.py`: load universe, load price history, run monthly loop.
+- `backtest/portfolio.py`: cash, positions, total value, and equity curve.
+- `backtest/performance.py`: performance metrics from equity curve.
+- `backtest/report.py`: Markdown and CSV output only.
 
 ## 1. Data Source
 

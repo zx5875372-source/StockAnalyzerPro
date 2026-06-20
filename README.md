@@ -18,6 +18,7 @@ Current version: v1.4 CLI UX Improvement
 - Shows diagnostics when required financial fields are missing.
 - Provides a validation scan over a sample stock universe and exports CSV results.
 - Provides an interactive CLI menu for single-stock analysis, watchlist scan, and sample scan.
+- Provides a Backtest Engine MVP for historical price validation of SAP Score selections.
 
 ## Installation
 
@@ -125,12 +126,38 @@ reports/watchlist_report.md
 
 Use the summary to review total sample count, success rate, average SAP Score, average data quality score, the stocks with the most missing data, and the top 10 SAP Score stocks. Use the watchlist report to review SAP Score, grade, whether price is below the reasonable buy point, first target price, and data quality for your selected stocks.
 
+## Backtest MVP
+
+Run the Sprint 3 Backtest Engine MVP:
+
+```powershell
+.venv\Scripts\python.exe backtest.py
+```
+
+The MVP uses:
+
+- `tests/sample_data/sample_stocks.json` as the universe.
+- Current SAP Score snapshot from the existing analyzer flow.
+- yfinance historical price data from `2023-01-01` to `2025-12-31`.
+- Monthly rebalance.
+- Equal-weight positions.
+- Initial cash of `1000000`.
+
+Outputs:
+
+```text
+reports/backtest_summary.md
+reports/backtest_equity_curve.csv
+```
+
+Important limitation: this MVP validates the backtest plumbing with current SAP Score signals and historical prices. It is not yet a look-ahead-safe historical financial statement backtest.
+
 ## Tests and CI
 
 Run local checks:
 
 ```powershell
-.venv\Scripts\python.exe -m py_compile app.py scan.py
+.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py
 .venv\Scripts\python.exe -m unittest discover -s tests/unit
 ```
 

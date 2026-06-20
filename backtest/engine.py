@@ -1,0 +1,193 @@
+from dataclasses import dataclass
+from pathlib import Path
+
+import pandas as pd
+import yfinance as yf
+
+from backtest.performance import PerformanceReport
+from backtest.portfolio import Portfolio
+from backtest.strategy import BaseStrategy
+from modules.downloader import normalize_symbol
+from scan import load_sample_stocks, scan_stock
+
+
+@dataclass
+class BacktestConfig:
+    initial_cash: float = 1_000_000
+    start_date: str = "2023-01-01"
+    end_date: str = "2025-12-31"
+    universe_path: Path = Path("tests/sample_data/sample_stocks.json")
+    min_sap_score: int = 80
+    min_piotroski_score: int = 7
+    min_data_quality_score: int = 80
+
+
+class YFinancePriceProvider:
+    def load_price_history(self, symbols: list[str], start_date: str, end_date: str) -> tuple[dict[str, pd.Series], list[str]]:
+        prices = {}
+        diagnostics = []
+        download_end_date = (pd.Timestamp(end_date) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+
+        for symbol in symbols:
+            yf_symbol = normalize_symbol(symbol)
+            try:
+                frame = yf.download(
+                    yf_symbol,
+                    start=start_date,
+                    end=download_end_date,
+                    progress=False,
+                    auto_adjust=True,
+                    threads=False,
+                )
+            except Exception as error:
+                diagnostics.append(f"{yf_symbol}: price download failed - {error}")
+                continue
+
+            if frame.empty:
+                diagnostics.append(f"{yf_symbol}: no historical price data")
+                continue
+
+            close = self._close_series(frame)
+            if close is None or close.dropna().empty:
+                diagnostics.append(f"{yf_symbol}: missing close price data")
+                continue
+
+            prices[yf_symbol] = close.dropna()
+
+        return prices, diagnostics
+
+    @staticmethod
+    def _close_series(frame: pd.DataFrame):
+        if "Close" in frame:
+            close = frame["Close"]
+            if isinstance(close, pd.DataFrame):
+                return close.iloc[:, 0]
+            return close
+        if ("Close",) in frame:
+            close = frame[("Close",)]
+            if isinstance(close, pd.DataFrame):
+                return close.iloc[:, 0]
+            return close
+        if isinstance(frame.columns, pd.MultiIndex):
+            close_columns = [column for column in frame.columns if "Close" in column]
+            if close_columns:
+                close = frame[close_columns[0]]
+                if isinstance(close, pd.DataFrame):
+                    return close.iloc[:, 0]
+                return close
+        return None
+
+
+class BacktestEngine:
+    def __init__(
+        self,
+        strategy: BaseStrategy,
+        portfolio: Portfolio,
+        config: BacktestConfig | None = None,
+        price_provider: YFinancePriceProvider | None = None,
+    ):
+        self.strategy = strategy
+        self.portfolio = portfolio
+        self.config = config or BacktestConfig()
+        self.price_provider = price_provider or YFinancePriceProvider()
+        self.universe = []
+        self.score_rows = {}
+        self.price_history = {}
+        self.diagnostics = []
+        self.selected_symbols = []
+
+    def load_data(self) -> None:
+        raw_universe = load_sample_stocks(self.config.universe_path)
+        self.universe = [
+            {
+                **stock,
+                "symbol": normalize_symbol(stock["symbol"]),
+            }
+            for stock in raw_universe
+        ]
+
+        print("載入 SAP Score 快照...")
+        for index, stock in enumerate(self.universe, start=1):
+            print(f"[{index}/{len(self.universe)}] 評分 {stock['symbol']} {stock.get('name', '')}")
+            row = scan_stock(stock)
+            if row["status"] == "success":
+                self.score_rows[row["symbol"]] = row
+            else:
+                self.diagnostics.append(f"{stock['symbol']}: score failed - {row['error']}")
+
+        print("下載歷史價格...")
+        symbols = [stock["symbol"] for stock in self.universe]
+        self.price_history, price_diagnostics = self.price_provider.load_price_history(
+            symbols,
+            self.config.start_date,
+            self.config.end_date,
+        )
+        self.diagnostics.extend(price_diagnostics)
+
+    def run(self) -> dict:
+        if not self.universe:
+            self.load_data()
+
+        rebalance_dates = self._rebalance_dates()
+        data = {
+            "score_rows": self.score_rows,
+            "price_history": self.price_history,
+        }
+
+        self.portfolio.record_equity(
+            pd.Timestamp(self.config.start_date),
+            self._price_snapshot(pd.Timestamp(self.config.start_date)),
+        )
+
+        for date in rebalance_dates:
+            price_snapshot = self._price_snapshot(date)
+            selected = self.strategy.select_stocks(date, self.universe, data)
+            selected = [symbol for symbol in selected if symbol in price_snapshot]
+            self.selected_symbols = selected
+
+            if selected:
+                target_weights = self.strategy.rebalance(date, self.portfolio, selected)
+                self.portfolio.update_positions(date, target_weights, price_snapshot)
+            else:
+                self.portfolio.record_history(date, "no selected stocks")
+
+            self.portfolio.record_equity(date, price_snapshot)
+
+        metrics = PerformanceReport(self.portfolio.equity_curve).calculate()
+        return {
+            "config": self.summary(),
+            "strategy_name": self.strategy.name,
+            "metrics": metrics,
+            "equity_curve": self.portfolio.equity_curve,
+            "history": self.portfolio.history,
+            "selected_symbols": self.selected_symbols,
+            "diagnostics": self.diagnostics,
+        }
+
+    def summary(self) -> dict:
+        return {
+            "initial_cash": self.config.initial_cash,
+            "start_date": self.config.start_date,
+            "end_date": self.config.end_date,
+            "universe_path": str(self.config.universe_path),
+            "min_sap_score": self.config.min_sap_score,
+            "min_piotroski_score": self.config.min_piotroski_score,
+            "min_data_quality_score": self.config.min_data_quality_score,
+        }
+
+    def _rebalance_dates(self) -> list[pd.Timestamp]:
+        dates = pd.date_range(
+            start=self.config.start_date,
+            end=self.config.end_date,
+            freq="ME",
+        )
+        return list(dates)
+
+    def _price_snapshot(self, date: pd.Timestamp) -> dict[str, float]:
+        snapshot = {}
+        for symbol, series in self.price_history.items():
+            available = series.loc[series.index <= date]
+            if available.empty:
+                continue
+            snapshot[symbol] = float(available.iloc[-1])
+        return snapshot
