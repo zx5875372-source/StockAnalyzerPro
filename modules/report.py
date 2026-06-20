@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from datetime import datetime
 
 
@@ -11,7 +11,7 @@ def fmt(value, suffix=""):
 def money(value):
     if value is None:
         return "資料不足"
-    return f"{value:,}"
+    return f"{value:,.0f}"
 
 
 def yes_no(value):
@@ -59,7 +59,7 @@ def generate_markdown_report(result: dict) -> str:
 | 項目 | 結果 |
 |---|---:|
 | 目前可計算分數 | {piotroski["score"]} / {piotroski["available"]} |
-| 完整 9 項版本 | v0.4 補齊年度財報比較 |
+| 完整 9 項版本 | 後續版本補齊年度財報比較 |
 
 | 細項 | 結果 | 說明 |
 |---|---|---|
@@ -71,8 +71,8 @@ def generate_markdown_report(result: dict) -> str:
 
 | 指標 | 數值 | 判斷 |
 |---|---:|---|
-| ROE | {fmt(result["roe"], "%")} | {'佳' if result["roe"] is not None and result["roe"] >= 15 else '普通或資料不足'} |
-| ROA | {fmt(result["roa"], "%")} | {'佳' if result["roa"] is not None and result["roa"] >= 8 else '普通或資料不足'} |
+| ROE | {fmt(result["roe"], "%")} | {result["roe_judgement"]} |
+| ROA | {fmt(result["roa"], "%")} | {result["roa_judgement"]} |
 
 ---
 
@@ -80,8 +80,8 @@ def generate_markdown_report(result: dict) -> str:
 
 | 指標 | 數值 | 判斷 |
 |---|---:|---|
-| 負債權益比 | {fmt(result["debt_to_equity"])} | {'安全' if result["debt_to_equity"] is not None and result["debt_to_equity"] < 80 else '需觀察'} |
-| 流動比率 | {fmt(result["current_ratio"])} | {'良好' if result["current_ratio"] is not None and result["current_ratio"] >= 1.5 else '普通或資料不足'} |
+| 負債權益比 | {fmt(result["debt_to_equity"], "%")} | {result["debt_to_equity_judgement"]} |
+| 流動比率 | {fmt(result["current_ratio"])} | {result["current_ratio_judgement"]} |
 
 ---
 
@@ -89,8 +89,8 @@ def generate_markdown_report(result: dict) -> str:
 
 | 指標 | 數值 | 判斷 |
 |---|---:|---|
-| 營業現金流 | {money(result["operating_cashflow"])} | {'正向' if result["operating_cashflow"] is not None and result["operating_cashflow"] > 0 else '需觀察'} |
-| 自由現金流 | {money(result["free_cashflow"])} | {'正向' if result["free_cashflow"] is not None and result["free_cashflow"] > 0 else '需觀察'} |
+| 營業現金流 | {money(result["operating_cashflow"])} | {result["operating_cashflow_judgement"]} |
+| 自由現金流 | {money(result["free_cashflow"])} | {result["free_cashflow_judgement"]} |
 
 ---
 
@@ -98,9 +98,9 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 結果 |
 |---|---|
-| 營收成長 | v0.4 加入 |
-| EPS 成長 | v0.4 加入 |
-| 自由現金流成長 | v0.4 加入 |
+| 營收成長 | 後續版本加入 |
+| EPS 成長 | 後續版本加入 |
+| 自由現金流成長 | 後續版本加入 |
 
 ---
 
@@ -108,8 +108,8 @@ def generate_markdown_report(result: dict) -> str:
 
 | 指標 | 數值 | 判斷 |
 |---|---:|---|
-| 本益比 PE | {fmt(result["pe"])} | {'偏低' if result["pe"] is not None and result["pe"] < 15 else '合理或偏高'} |
-| 股價淨值比 PB | {fmt(result["pb"])} | {'偏低' if result["pb"] is not None and result["pb"] < 2 else '合理或偏高'} |
+| 本益比 PE | {fmt(result["pe"])} | {result["pe_judgement"]} |
+| 股價淨值比 PB | {fmt(result["pb"])} | {result["pb_judgement"]} |
 
 ---
 
@@ -117,9 +117,9 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 結果 |
 |---|---|
-| 合理買點 | v0.4 加入 |
-| 保守買點 | v0.4 加入 |
-| 積極買點 | v0.4 加入 |
+| 合理買點 | 後續版本加入 |
+| 保守買點 | 後續版本加入 |
+| 積極買點 | 後續版本加入 |
 
 ---
 
@@ -127,8 +127,8 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 結果 |
 |---|---|
-| 第一目標價 | v0.4 加入 |
-| 預估上漲空間 | v0.4 加入 |
+| 第一目標價 | 後續版本加入 |
+| 預估上漲空間 | 後續版本加入 |
 
 ---
 
@@ -152,7 +152,7 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十二、投資建議
 
-目前版本為 SAP v0.3，已加入 Piotroski F-Score 架構。
+目前版本為 SAP v0.4，已加入 Financial Engine v1.0。
 
 初步判斷：
 

@@ -1,11 +1,11 @@
-﻿from modules.downloader import get_stock_data
+from modules.downloader import get_stock_data
 from modules.analyzer import analyze_stock
 from modules.report import generate_markdown_report
 
 
 def main():
     print("====================================")
-    print(" StockAnalyzerPro v0.1")
+    print(" StockAnalyzerPro v0.4")
     print("====================================")
 
     while True:
