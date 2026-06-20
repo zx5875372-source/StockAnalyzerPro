@@ -14,6 +14,14 @@ def money(value):
     return f"{value:,}"
 
 
+def yes_no(value):
+    if value is True:
+        return "通過"
+    if value is False:
+        return "未通過"
+    return "資料不足"
+
+
 def generate_markdown_report(result: dict) -> str:
     reports_dir = Path("reports")
     reports_dir.mkdir(exist_ok=True)
@@ -23,6 +31,14 @@ def generate_markdown_report(result: dict) -> str:
     path = reports_dir / f"{symbol}_{today}.md"
 
     reasons_text = "\n".join([f"- {r}" for r in result["reasons"]])
+
+    piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
+    piotroski_rows = "\n".join(
+        [
+            f"| {item['name']} | {yes_no(item['passed'])} | {item['note']} |"
+            for item in piotroski["items"]
+        ]
+    )
 
     content = f"""# {symbol} 固定格式股票分析報告
 
@@ -42,8 +58,12 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 結果 |
 |---|---:|
-| Piotroski F-Score | v0.3 加入 |
-| 初步品質判斷 | v0.3 加入 |
+| 目前可計算分數 | {piotroski["score"]} / {piotroski["available"]} |
+| 完整 9 項版本 | v0.4 補齊年度財報比較 |
+
+| 細項 | 結果 | 說明 |
+|---|---|---|
+{piotroski_rows}
 
 ---
 
@@ -124,6 +144,7 @@ def generate_markdown_report(result: dict) -> str:
 
 | 項目 | 分數 |
 |---|---:|
+| Piotroski 可計算分數 | {piotroski["score"]} / {piotroski["available"]} |
 | SAP Score | {result["sap_score"]} / 100 |
 | 投資等級 | {result["grade"]} |
 
@@ -131,13 +152,15 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十二、投資建議
 
-目前版本為 SAP v0.2，已套用固定股票分析格式。
+目前版本為 SAP v0.3，已加入 Piotroski F-Score 架構。
 
 初步判斷：
 
+- Piotroski 可計算分數：{piotroski["score"]} / {piotroski["available"]}
 - SAP Score：{result["sap_score"]} / 100
 - 投資等級：{result["grade"]}
-- 後續版本會加入完整 Piotroski F-Score、成長性、合理買點、第一目標價與正式投資建議。
+
+後續版本會補齊完整年度財報比較，讓 Piotroski F-Score 9 項完整計算。
 
 """
 

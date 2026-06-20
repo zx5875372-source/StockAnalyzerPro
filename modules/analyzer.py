@@ -9,6 +9,36 @@ def pct(value):
     return round(value * 100, 2)
 
 
+def calc_piotroski(result: dict) -> dict:
+    items = []
+
+    def add(name, passed, note):
+        items.append({
+            "name": name,
+            "passed": passed,
+            "note": note,
+        })
+
+    add("1. ROA 為正", result["roa"] is not None and result["roa"] > 0, "ROA > 0 加 1 分")
+    add("2. 營業現金流為正", result["operating_cashflow"] is not None and result["operating_cashflow"] > 0, "CFO > 0 加 1 分")
+    add("3. ROA 較去年提升", None, "v0.4 加入年度比較")
+    add("4. 營業現金流大於淨利", None, "v0.4 加入")
+    add("5. 長期負債比下降", None, "v0.4 加入")
+    add("6. 流動比率提升", None, "v0.4 加入")
+    add("7. 股本未稀釋", None, "v0.4 加入")
+    add("8. 毛利率提升", None, "v0.4 加入")
+    add("9. 資產週轉率提升", None, "v0.4 加入")
+
+    score = sum(1 for item in items if item["passed"] is True)
+    available = sum(1 for item in items if item["passed"] is not None)
+
+    return {
+        "score": score,
+        "available": available,
+        "items": items,
+    }
+
+
 def analyze_stock(data: dict) -> dict:
     info = data["info"]
     symbol = data["symbol"]
@@ -27,8 +57,29 @@ def analyze_stock(data: dict) -> dict:
     free_cashflow = safe_get(info, "freeCashflow")
     operating_cashflow = safe_get(info, "operatingCashflow")
 
+    result = {
+        "symbol": symbol,
+        "company_name": company_name,
+        "industry": industry,
+        "sector": sector,
+        "price": price,
+        "pe": pe,
+        "pb": pb,
+        "roe": roe,
+        "roa": roa,
+        "debt_to_equity": debt_to_equity,
+        "current_ratio": current_ratio,
+        "free_cashflow": free_cashflow,
+        "operating_cashflow": operating_cashflow,
+    }
+
+    piotroski = calc_piotroski(result)
+
     score = 0
     reasons = []
+
+    score += piotroski["score"] * 5
+    reasons.append(f"Piotroski 目前可計算 {piotroski['score']} / {piotroski['available']} 項通過")
 
     if roe is not None:
         if roe >= 15:
@@ -113,21 +164,11 @@ def analyze_stock(data: dict) -> dict:
     else:
         grade = "D級 ⭐"
 
-    return {
-        "symbol": symbol,
-        "company_name": company_name,
-        "industry": industry,
-        "sector": sector,
-        "price": price,
-        "pe": pe,
-        "pb": pb,
-        "roe": roe,
-        "roa": roa,
-        "debt_to_equity": debt_to_equity,
-        "current_ratio": current_ratio,
-        "free_cashflow": free_cashflow,
-        "operating_cashflow": operating_cashflow,
+    result.update({
         "sap_score": score,
         "grade": grade,
         "reasons": reasons,
-    }
+        "piotroski": piotroski,
+    })
+
+    return result
