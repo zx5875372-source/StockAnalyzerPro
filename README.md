@@ -137,7 +137,7 @@ Run the Sprint 3 Backtest Engine MVP:
 The MVP uses:
 
 - `tests/sample_data/sample_stocks.json` as the universe.
-- Current SAP Score snapshot from the existing analyzer flow.
+- Historical SAP Score snapshots from `data/snapshots/sample_sap_scores.csv`.
 - yfinance historical price data from `2023-01-01` to `2025-12-31`.
 - Monthly rebalance.
 - Equal-weight positions.
@@ -150,7 +150,13 @@ reports/backtest_summary.md
 reports/backtest_equity_curve.csv
 ```
 
-Important limitation: this MVP validates the backtest plumbing with current SAP Score signals and historical prices. It is not yet a look-ahead-safe historical financial statement backtest.
+Snapshot CSV columns:
+
+```text
+date,symbol,sap_score,piotroski_score,data_quality_score
+```
+
+Important limitation: Sprint 3 used current SAP Score signals with historical prices, so its result should not be treated as formal backtest performance. Sprint 4 removes that fallback and only uses snapshots available on or before each rebalance date. The sample snapshot file is still a simplified fixture, not a complete point-in-time financial statement dataset.
 
 ## Tests and CI
 

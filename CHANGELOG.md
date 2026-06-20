@@ -1,5 +1,15 @@
 # Changelog
 
+## Sprint 4 - Backtest Data Integrity
+
+- Added historical SAP Score snapshot fixture at `data/snapshots/sample_sap_scores.csv`.
+- Added snapshot loading layer for point-in-time score lookup.
+- Updated `SAPScoreStrategy` to use only the latest snapshot on or before each rebalance date.
+- Removed current score fallback from the backtest selection path.
+- Added skipped stock reasons, selected/skipped counts, snapshot source, and look-ahead-safe flag to backtest reports.
+- Added unit tests for future snapshot prevention, missing snapshot skips, and no current-score fallback.
+- Documented that Sprint 3 results should not be treated as formal backtest performance.
+
 ## Sprint 3 - Backtest Engine MVP
 
 - Added Backtest Engine MVP modules under `backtest/`.

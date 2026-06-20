@@ -6,9 +6,10 @@ import yfinance as yf
 
 from backtest.performance import PerformanceReport
 from backtest.portfolio import Portfolio
+from backtest.snapshot import SnapshotScoreStore
 from backtest.strategy import BaseStrategy
 from modules.downloader import normalize_symbol
-from scan import load_sample_stocks, scan_stock
+from scan import load_sample_stocks
 
 
 @dataclass
@@ -17,6 +18,7 @@ class BacktestConfig:
     start_date: str = "2023-01-01"
     end_date: str = "2025-12-31"
     universe_path: Path = Path("tests/sample_data/sample_stocks.json")
+    snapshot_path: Path = Path("data/snapshots/sample_sap_scores.csv")
     min_sap_score: int = 80
     min_piotroski_score: int = 7
     min_data_quality_score: int = 80
@@ -91,10 +93,12 @@ class BacktestEngine:
         self.config = config or BacktestConfig()
         self.price_provider = price_provider or YFinancePriceProvider()
         self.universe = []
-        self.score_rows = {}
+        self.snapshots = SnapshotScoreStore()
         self.price_history = {}
         self.diagnostics = []
         self.selected_symbols = []
+        self.skipped_reasons = {}
+        self.look_ahead_safe = False
 
     def load_data(self) -> None:
         raw_universe = load_sample_stocks(self.config.universe_path)
@@ -106,14 +110,10 @@ class BacktestEngine:
             for stock in raw_universe
         ]
 
-        print("載入 SAP Score 快照...")
-        for index, stock in enumerate(self.universe, start=1):
-            print(f"[{index}/{len(self.universe)}] 評分 {stock['symbol']} {stock.get('name', '')}")
-            row = scan_stock(stock)
-            if row["status"] == "success":
-                self.score_rows[row["symbol"]] = row
-            else:
-                self.diagnostics.append(f"{stock['symbol']}: score failed - {row['error']}")
+        print("載入 historical SAP Score snapshot...")
+        self.snapshots = SnapshotScoreStore.from_csv(self.config.snapshot_path)
+        self.diagnostics.extend(self.snapshots.diagnostics)
+        self.look_ahead_safe = self.snapshots.available()
 
         print("下載歷史價格...")
         symbols = [stock["symbol"] for stock in self.universe]
@@ -130,7 +130,7 @@ class BacktestEngine:
 
         rebalance_dates = self._rebalance_dates()
         data = {
-            "score_rows": self.score_rows,
+            "snapshots": self.snapshots,
             "price_history": self.price_history,
         }
 
@@ -141,8 +141,18 @@ class BacktestEngine:
 
         for date in rebalance_dates:
             price_snapshot = self._price_snapshot(date)
-            selected = self.strategy.select_stocks(date, self.universe, data)
-            selected = [symbol for symbol in selected if symbol in price_snapshot]
+            selected_candidates = self.strategy.select_stocks(date, self.universe, data)
+            self.skipped_reasons.update(getattr(self.strategy, "skipped_reasons", {}))
+            selected = [symbol for symbol in selected_candidates if symbol in price_snapshot]
+            missing_price_symbols = [
+                symbol
+                for symbol in selected_candidates
+                if symbol not in price_snapshot
+            ]
+            for symbol in missing_price_symbols:
+                self.skipped_reasons[symbol] = f"missing price on or before {date.date()}"
+            for symbol in selected:
+                self.skipped_reasons.pop(symbol, None)
             self.selected_symbols = selected
 
             if selected:
@@ -161,6 +171,11 @@ class BacktestEngine:
             "equity_curve": self.portfolio.equity_curve,
             "history": self.portfolio.history,
             "selected_symbols": self.selected_symbols,
+            "selected_stock_count": len(self.selected_symbols),
+            "skipped_stock_count": len(self.skipped_reasons),
+            "skipped_reasons": self.skipped_reasons,
+            "snapshot_source": str(self.config.snapshot_path),
+            "look_ahead_safe": self.look_ahead_safe,
             "diagnostics": self.diagnostics,
         }
 
@@ -170,6 +185,7 @@ class BacktestEngine:
             "start_date": self.config.start_date,
             "end_date": self.config.end_date,
             "universe_path": str(self.config.universe_path),
+            "snapshot_path": str(self.config.snapshot_path),
             "min_sap_score": self.config.min_sap_score,
             "min_piotroski_score": self.config.min_piotroski_score,
             "min_data_quality_score": self.config.min_data_quality_score,

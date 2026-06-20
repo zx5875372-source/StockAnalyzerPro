@@ -25,13 +25,19 @@ class BacktestReportWriter:
         config = result["config"]
         diagnostics = result.get("diagnostics", [])
         selected = result.get("selected_symbols", [])
+        skipped_reasons = result.get("skipped_reasons", {})
 
         diagnostics_rows = "\n".join(f"- {item}" for item in diagnostics) if diagnostics else "- 無"
         selected_rows = "\n".join(f"- {symbol}" for symbol in selected) if selected else "- 無"
+        skipped_rows = (
+            "\n".join(f"- {symbol}: {reason}" for symbol, reason in sorted(skipped_reasons.items()))
+            if skipped_reasons
+            else "- 無"
+        )
 
         content = f"""# Backtest Summary
 
-Version: Sprint 3 Backtest Engine MVP
+Version: Sprint 4 Backtest Data Integrity
 
 ## Config
 
@@ -42,6 +48,8 @@ Version: Sprint 3 Backtest Engine MVP
 | Initial Cash | {config['initial_cash']} |
 | Rebalance | Monthly |
 | Universe | {config['universe_path']} |
+| Snapshot Source | {result['snapshot_source']} |
+| Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
 
 ## Strategy
 
@@ -63,9 +71,22 @@ Version: Sprint 3 Backtest Engine MVP
 | Sharpe | TODO |
 | Sortino | TODO |
 
+## Data Integrity
+
+| Item | Value |
+|---|---:|
+| Snapshot Source | {result['snapshot_source']} |
+| Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
+| Selected Stock Count | {result['selected_stock_count']} |
+| Skipped Stock Count | {result['skipped_stock_count']} |
+
 ## Selected Symbols
 
 {selected_rows}
+
+## Skipped Reasons
+
+{skipped_rows}
 
 ## Diagnostics
 
@@ -73,8 +94,9 @@ Version: Sprint 3 Backtest Engine MVP
 
 ## Notes
 
-This MVP uses the current SAP Score snapshot with historical price data. It is
-not yet a look-ahead-safe historical financial statement backtest.
+This MVP uses historical SAP Score snapshots from the configured snapshot source.
+It does not fallback to current scores. The sample snapshot file is still a
+simplified fixture and not a complete point-in-time financial statement dataset.
 """
         self.summary_path.write_text(content, encoding="utf-8")
 

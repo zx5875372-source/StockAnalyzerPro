@@ -68,6 +68,9 @@ backtest plumbing, report output, and portfolio math, but it is not yet a
 look-ahead-safe historical financial statement backtest. A future version must
 calculate SAP Score from historical financial snapshots as of each rebalance date.
 
+Sprint 3 performance must not be treated as formal backtest performance because
+it combines today's SAP Score with past prices. That creates look-ahead bias risk.
+
 MVP module responsibilities:
 
 - `backtest/strategy.py`: selection rules and target weights only.
@@ -75,6 +78,39 @@ MVP module responsibilities:
 - `backtest/portfolio.py`: cash, positions, total value, and equity curve.
 - `backtest/performance.py`: performance metrics from equity curve.
 - `backtest/report.py`: Markdown and CSV output only.
+
+## Sprint 4 Data Integrity Design
+
+Sprint 4 replaces current-score fallback with historical SAP Score snapshots.
+
+Snapshot source:
+
+```text
+data/snapshots/sample_sap_scores.csv
+```
+
+Required columns:
+
+```text
+date,symbol,sap_score,piotroski_score,data_quality_score
+```
+
+Rules:
+
+- Strategy must use the latest snapshot with `snapshot.date <= rebalance_date`.
+- Strategy must never use snapshots after the rebalance date.
+- Strategy must never fallback to current analyzer or scan results.
+- If a symbol has no valid snapshot as of the rebalance date, it is skipped.
+- Skipped reasons must be shown in the backtest report.
+- `look-ahead-safe` is true only when a snapshot source is loaded and no current
+  score fallback is used.
+
+MVP limitation after Sprint 4:
+
+The sample snapshot file is still a simplified research fixture, not a complete
+historical financial statement dataset. Sprint 4 improves data integrity by
+removing current-score fallback, but formal production backtesting still requires
+historical SAP Score generation from point-in-time financial statements.
 
 ## 1. Data Source
 

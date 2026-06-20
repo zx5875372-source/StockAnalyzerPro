@@ -19,6 +19,7 @@ def main() -> None:
     print("====================================")
     print(f"期間：{config.start_date} 到 {config.end_date}")
     print(f"初始資金：{config.initial_cash}")
+    print(f"Snapshot：{config.snapshot_path}")
     print("------------------------------------")
 
     result = engine.run()
@@ -31,6 +32,9 @@ def main() -> None:
     print(f"CAGR：{metrics['cagr'] * 100:.2f}%")
     print(f"Max Drawdown：{metrics['max_drawdown'] * 100:.2f}%")
     print(f"Win Rate：{metrics['win_rate'] * 100:.2f}%")
+    print(f"Look-ahead-safe：{str(result['look_ahead_safe']).lower()}")
+    print(f"Selected：{result['selected_stock_count']}")
+    print(f"Skipped：{result['skipped_stock_count']}")
     print("Summary：reports\\backtest_summary.md")
     print("Equity Curve：reports\\backtest_equity_curve.csv")
 
