@@ -48,10 +48,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_scan_source(args: argparse.Namespace) -> tuple[str, list[dict]]:
+def resolve_scan_mode(args: argparse.Namespace) -> str:
     if args.sample:
+        return "sample"
+    return "watchlist"
+
+
+def load_scan_source(mode: str = "watchlist") -> tuple[str, list[dict]]:
+    if mode == "sample":
         return "sample", load_sample_stocks()
-    return "watchlist", load_watchlist()
+    if mode == "watchlist":
+        return "watchlist", load_watchlist()
+    raise ValueError(f"不支援的掃描模式：{mode}")
 
 
 def data_quality_score(missing_count: int) -> int:
@@ -245,7 +253,7 @@ def write_summary(rows: list[dict], output_path: Path = SUMMARY_PATH) -> None:
 
     content = f"""# Scan Summary
 
-Version: v1.3 Ranking & Watchlist
+Version: v1.4 CLI UX Improvement
 
 | Metric | Value |
 |---|---:|
@@ -289,7 +297,7 @@ def write_top10(rows: list[dict], output_path: Path = TOP10_PATH) -> None:
 
     content = f"""# Top 10 Ranking
 
-Version: v1.3 Ranking & Watchlist
+Version: v1.4 CLI UX Improvement
 
 | 股票代號 | 名稱 | 類別 | SAP Score | 等級 | 資料品質 | Piotroski | 合理買點 | 第一目標價 |
 |---|---|---|---:|---|---:|---:|---:|---:|
@@ -312,7 +320,7 @@ def write_watchlist_report(rows: list[dict], output_path: Path = WATCHLIST_REPOR
 
     content = f"""# Watchlist Report
 
-Version: v1.3 Ranking & Watchlist
+Version: v1.4 CLI UX Improvement
 
 | 股票代號 | SAP Score | 等級 | 低於合理買點 | 第一目標價 | 資料品質 |
 |---|---:|---|---|---:|---:|
@@ -322,13 +330,12 @@ Version: v1.3 Ranking & Watchlist
     output_path.write_text(content, encoding="utf-8")
 
 
-def main() -> None:
-    args = parse_args()
-    source_name, stocks = load_scan_source(args)
+def run_scan(mode: str = "watchlist") -> list[dict]:
+    source_name, stocks = load_scan_source(mode)
     rows = []
 
     print("====================================")
-    print(" StockAnalyzerPro Scan v1.3")
+    print(" StockAnalyzerPro Scan v1.4")
     print("====================================")
     print(f"來源：{source_name}")
     print(f"樣本數：{len(stocks)}")
@@ -351,6 +358,13 @@ def main() -> None:
     print(f"Summary：{SUMMARY_PATH}")
     print(f"Top 10：{TOP10_PATH}")
     print(f"Watchlist：{WATCHLIST_REPORT_PATH}")
+
+    return sorted_rows
+
+
+def main() -> None:
+    args = parse_args()
+    run_scan(resolve_scan_mode(args))
 
 
 if __name__ == "__main__":

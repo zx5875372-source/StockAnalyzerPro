@@ -1,6 +1,6 @@
 # Watchlist Report
 
-Version: v1.3 Ranking & Watchlist
+Version: v1.4 CLI UX Improvement
 
 | 股票代號 | SAP Score | 等級 | 低於合理買點 | 第一目標價 | 資料品質 |
 |---|---:|---|---|---:|---:|

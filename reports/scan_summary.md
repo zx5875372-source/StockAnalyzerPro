@@ -1,6 +1,6 @@
 # Scan Summary
 
-Version: v1.3 Ranking & Watchlist
+Version: v1.4 CLI UX Improvement
 
 | Metric | Value |
 |---|---:|

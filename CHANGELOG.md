@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4 - CLI UX Improvement
+
+- Added an interactive main menu in `app.py`.
+- Kept single-stock analysis under menu option 1.
+- Added menu options for watchlist scan and sample stock scan.
+- Extracted reusable `run_scan(mode="watchlist")` in `scan.py`.
+- Preserved existing `scan.py`, `scan.py --sample`, and `scan.py --watchlist` commands.
+- Updated version text to v1.4.
+
 ## v1.3 - Ranking & Watchlist
 
 - Added `data/watchlist.json`.

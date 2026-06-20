@@ -1,6 +1,6 @@
 # Top 10 Ranking
 
-Version: v1.3 Ranking & Watchlist
+Version: v1.4 CLI UX Improvement
 
 | 股票代號 | 名稱 | 類別 | SAP Score | 等級 | 資料品質 | Piotroski | 合理買點 | 第一目標價 |
 |---|---|---|---:|---|---:|---:|---:|---:|
