@@ -2,8 +2,9 @@ from models.financial_data import safe_divide
 
 
 class PerformanceReport:
-    def __init__(self, equity_curve: list[dict]):
+    def __init__(self, equity_curve: list[dict], benchmark_curve: list[dict] | None = None):
         self.equity_curve = equity_curve
+        self.benchmark_curve = benchmark_curve or []
 
     def calculate(self) -> dict:
         if len(self.equity_curve) < 2:
@@ -14,6 +15,11 @@ class PerformanceReport:
                 "win_rate": 0,
                 "sharpe": None,
                 "sortino": None,
+                "benchmark_total_return": None,
+                "benchmark_cagr": None,
+                "excess_return": None,
+                "excess_cagr": None,
+                "strategy_vs_benchmark": "benchmark unavailable",
             }
 
         start_value = self.equity_curve[0]["total_value"]
@@ -22,6 +28,7 @@ class PerformanceReport:
         cagr = self._cagr(start_value, end_value)
         max_drawdown = self._max_drawdown()
         win_rate = self._win_rate()
+        benchmark = self._benchmark_metrics(total_return, cagr)
 
         return {
             "total_return": round(total_return, 4),
@@ -30,6 +37,7 @@ class PerformanceReport:
             "win_rate": round(win_rate, 4),
             "sharpe": None,
             "sortino": None,
+            **benchmark,
         }
 
     def summary(self) -> dict:
@@ -75,3 +83,46 @@ class PerformanceReport:
 
         wins = sum(1 for value in returns if value > 0)
         return wins / len(returns)
+
+    def _benchmark_metrics(self, total_return: float, cagr: float) -> dict:
+        if len(self.benchmark_curve) < 2:
+            return {
+                "benchmark_total_return": None,
+                "benchmark_cagr": None,
+                "excess_return": None,
+                "excess_cagr": None,
+                "strategy_vs_benchmark": "benchmark unavailable",
+            }
+
+        benchmark_start = self.benchmark_curve[0]["total_value"]
+        benchmark_end = self.benchmark_curve[-1]["total_value"]
+        benchmark_total_return = safe_divide(
+            benchmark_end - benchmark_start,
+            benchmark_start,
+            precision=6,
+        )
+        if benchmark_total_return is None:
+            return {
+                "benchmark_total_return": None,
+                "benchmark_cagr": None,
+                "excess_return": None,
+                "excess_cagr": None,
+                "strategy_vs_benchmark": "benchmark unavailable",
+            }
+
+        benchmark_cagr = self._curve_cagr(self.benchmark_curve)
+        excess_return = total_return - benchmark_total_return
+        excess_cagr = cagr - benchmark_cagr
+
+        return {
+            "benchmark_total_return": round(benchmark_total_return, 4),
+            "benchmark_cagr": round(benchmark_cagr, 4),
+            "excess_return": round(excess_return, 4),
+            "excess_cagr": round(excess_cagr, 4),
+            "strategy_vs_benchmark": "outperform" if excess_return > 0 else "underperform",
+        }
+
+    def _curve_cagr(self, curve: list[dict]) -> float:
+        if len(curve) < 2:
+            return 0
+        return self._cagr(curve[0]["total_value"], curve[-1]["total_value"])

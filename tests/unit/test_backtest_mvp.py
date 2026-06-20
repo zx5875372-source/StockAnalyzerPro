@@ -60,6 +60,35 @@ class BacktestMVPTests(unittest.TestCase):
         self.assertIsNone(metrics["sharpe"])
         self.assertIsNone(metrics["sortino"])
 
+    def test_performance_report_calculates_benchmark_metrics(self):
+        equity_curve = [
+            {"date": "2024-01-01", "total_value": 1_000_000},
+            {"date": "2024-01-31", "total_value": 1_200_000},
+        ]
+        benchmark_curve = [
+            {"date": "2024-01-01", "total_value": 1_000_000},
+            {"date": "2024-01-31", "total_value": 1_100_000},
+        ]
+
+        metrics = PerformanceReport(equity_curve, benchmark_curve).calculate()
+
+        self.assertEqual(metrics["benchmark_total_return"], 0.1)
+        self.assertEqual(metrics["excess_return"], 0.1)
+        self.assertEqual(metrics["strategy_vs_benchmark"], "outperform")
+
+    def test_performance_report_handles_missing_benchmark(self):
+        equity_curve = [
+            {"date": "2024-01-01", "total_value": 1_000_000},
+            {"date": "2024-01-31", "total_value": 1_200_000},
+        ]
+
+        metrics = PerformanceReport(equity_curve, []).calculate()
+
+        self.assertIsNone(metrics["benchmark_total_return"])
+        self.assertIsNone(metrics["benchmark_cagr"])
+        self.assertIsNone(metrics["excess_return"])
+        self.assertEqual(metrics["strategy_vs_benchmark"], "benchmark unavailable")
+
     def test_engine_runs_with_prefilled_data_without_network(self):
         config = BacktestConfig(
             initial_cash=1_000_000,

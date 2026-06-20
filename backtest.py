@@ -32,12 +32,22 @@ def main() -> None:
     print(f"CAGR：{metrics['cagr'] * 100:.2f}%")
     print(f"Max Drawdown：{metrics['max_drawdown'] * 100:.2f}%")
     print(f"Win Rate：{metrics['win_rate'] * 100:.2f}%")
+    print(f"Benchmark：{config.benchmark_symbol}")
+    print(f"Benchmark Total Return：{format_cli_percent(metrics['benchmark_total_return'])}")
+    print(f"Excess Return：{format_cli_percent(metrics['excess_return'])}")
+    print(f"Strategy vs Benchmark：{metrics['strategy_vs_benchmark']}")
     print(f"Look-ahead-safe：{str(result['look_ahead_safe']).lower()}")
     print(f"Credibility：{result['credibility_grade']} - {result['credibility_reason']}")
     print(f"Selected：{result['selected_stock_count']}")
     print(f"Skipped：{result['skipped_stock_count']}")
     print("Summary：reports\\backtest_summary.md")
     print("Equity Curve：reports\\backtest_equity_curve.csv")
+
+
+def format_cli_percent(value) -> str:
+    if value is None:
+        return "benchmark unavailable"
+    return f"{value * 100:.2f}%"
 
 
 if __name__ == "__main__":

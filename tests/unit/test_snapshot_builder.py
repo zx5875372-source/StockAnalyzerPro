@@ -80,6 +80,8 @@ class SnapshotBuilderTests(unittest.TestCase):
         self.assertEqual(result["snapshot_warning_counts"], {"not_point_in_time": 1})
         self.assertTrue(result["look_ahead_safe"])
         self.assertFalse(result["snapshot_point_in_time"])
+        self.assertEqual(result["metrics"]["strategy_vs_benchmark"], "benchmark unavailable")
+        self.assertIn("benchmark unavailable: 0050.TW", result["diagnostics"])
 
 
 def fake_scan_stock(stock):

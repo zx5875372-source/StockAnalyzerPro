@@ -22,6 +22,7 @@ class BacktestConfig:
     initial_cash: float = 1_000_000
     start_date: str = "2023-01-01"
     end_date: str = "2025-12-31"
+    benchmark_symbol: str = "0050.TW"
     universe_path: Path = Path("tests/sample_data/sample_stocks.json")
     snapshot_path: Path | None = None
     min_sap_score: int = 80
@@ -107,6 +108,8 @@ class BacktestEngine:
         self.universe = []
         self.snapshots = SnapshotScoreStore()
         self.price_history = {}
+        self.benchmark_history = {}
+        self.benchmark_curve = []
         self.diagnostics = []
         self.selected_symbols = []
         self.skipped_reasons = {}
@@ -137,6 +140,17 @@ class BacktestEngine:
             self.config.end_date,
         )
         self.diagnostics.extend(price_diagnostics)
+
+        print("下載 benchmark 歷史價格...")
+        benchmark_symbol = normalize_symbol(self.config.benchmark_symbol)
+        self.benchmark_history, benchmark_diagnostics = self.price_provider.load_price_history(
+            [benchmark_symbol],
+            self.config.start_date,
+            self.config.end_date,
+        )
+        self.diagnostics.extend(f"benchmark {item}" for item in benchmark_diagnostics)
+        if benchmark_symbol not in self.benchmark_history:
+            self.diagnostics.append(f"benchmark unavailable: {benchmark_symbol}")
 
     def run(self) -> dict:
         if not self.universe:
@@ -177,13 +191,15 @@ class BacktestEngine:
 
             self.portfolio.record_equity(date, price_snapshot)
 
-        metrics = PerformanceReport(self.portfolio.equity_curve).calculate()
+        self.benchmark_curve = self._benchmark_curve(rebalance_dates)
+        metrics = PerformanceReport(self.portfolio.equity_curve, self.benchmark_curve).calculate()
         summary = self.summary()
         return {
             "config": summary,
             "strategy_name": self.strategy.name,
             "metrics": metrics,
             "equity_curve": self.portfolio.equity_curve,
+            "benchmark_curve": self.benchmark_curve,
             "history": self.portfolio.history,
             "selected_symbols": self.selected_symbols,
             "selected_stock_count": summary["selected_stock_count"],
@@ -215,6 +231,7 @@ class BacktestEngine:
             "initial_cash": self.config.initial_cash,
             "start_date": self.config.start_date,
             "end_date": self.config.end_date,
+            "benchmark_symbol": normalize_symbol(self.config.benchmark_symbol),
             "universe_path": str(self.config.universe_path),
             "snapshot_path": str(self.config.resolved_snapshot_path()),
             "min_sap_score": self.config.min_sap_score,
@@ -246,3 +263,42 @@ class BacktestEngine:
                 continue
             snapshot[symbol] = float(available.iloc[-1])
         return snapshot
+
+    def _benchmark_curve(self, rebalance_dates: list[pd.Timestamp]) -> list[dict]:
+        benchmark_symbol = normalize_symbol(self.config.benchmark_symbol)
+        series = self.benchmark_history.get(benchmark_symbol)
+        if series is None or series.dropna().empty:
+            return []
+
+        clean_series = series.dropna()
+        start_date = pd.Timestamp(self.config.start_date)
+        start_candidates = clean_series.loc[clean_series.index >= start_date]
+        if start_candidates.empty:
+            self.diagnostics.append(f"benchmark unavailable after start date: {benchmark_symbol}")
+            return []
+
+        base_price = float(start_candidates.iloc[0])
+        if base_price <= 0:
+            self.diagnostics.append(f"benchmark invalid base price: {benchmark_symbol}")
+            return []
+
+        curve = [
+            {
+                "date": str(start_date.date()),
+                "total_value": float(self.config.initial_cash),
+            }
+        ]
+
+        for date in rebalance_dates:
+            available = clean_series.loc[clean_series.index <= date]
+            if available.empty:
+                continue
+            benchmark_value = self.config.initial_cash * float(available.iloc[-1]) / base_price
+            curve.append(
+                {
+                    "date": str(date.date()),
+                    "total_value": round(benchmark_value, 2),
+                }
+            )
+
+        return curve

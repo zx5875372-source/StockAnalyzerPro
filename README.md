@@ -145,6 +145,7 @@ The MVP uses:
 - `tests/sample_data/sample_stocks.json` as the universe.
 - Historical SAP Score snapshots from `data/snapshots/generated_sap_scores.csv` when available.
 - Falls back to `data/snapshots/sample_sap_scores.csv` when generated snapshots do not exist.
+- Default benchmark `0050.TW`.
 - yfinance historical price data from `2023-01-01` to `2025-12-31`.
 - Monthly rebalance.
 - Equal-weight positions.
@@ -173,6 +174,13 @@ Backtest credibility grades:
 - `D`: data is insufficient, or selected stock count is too low.
 
 When the grade is `C` or `D`, the report states that the result is only for system testing and must not be used as investment strategy performance evidence.
+
+Benchmark comparison:
+
+- Backtest reports compare strategy return and CAGR against the benchmark.
+- Default benchmark is `0050.TW`.
+- If benchmark data is unavailable, the report shows `benchmark unavailable` and records diagnostics.
+- Benchmark availability does not directly downgrade credibility.
 
 ## Tests and CI
 

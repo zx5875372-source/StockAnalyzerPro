@@ -181,6 +181,40 @@ When the grade is C or D, the report must show:
 Current Sprint 5 generated snapshots are expected to receive a low credibility
 grade because they are marked `warning=not_point_in_time`.
 
+## Sprint 7 Benchmark Comparison Design
+
+Sprint 7 adds benchmark comparison without changing the strategy.
+
+Default benchmark:
+
+```text
+0050.TW
+```
+
+Responsibilities:
+
+- `BacktestEngine` loads benchmark historical prices using the same start and
+  end dates as the strategy backtest.
+- `PerformanceReport` calculates benchmark return, benchmark CAGR, excess
+  return, excess CAGR, and whether the strategy outperformed the benchmark.
+- `BacktestReportWriter` presents benchmark metrics only. It does not calculate
+  benchmark logic.
+
+If benchmark data is unavailable:
+
+- The backtest must not crash.
+- Benchmark fields are shown as unavailable.
+- Diagnostics must include the benchmark data issue.
+- Credibility grade is not downgraded solely because benchmark data is missing.
+
+Benchmark metrics:
+
+- Benchmark Total Return
+- Benchmark CAGR
+- Excess Return
+- Excess CAGR
+- Strategy vs Benchmark
+
 ## 1. Data Source
 
 The backtest engine should not depend directly on yfinance. Each provider should

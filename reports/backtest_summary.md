@@ -1,6 +1,6 @@
 # Backtest Summary
 
-Version: Sprint 6 Backtest Report Integrity
+Version: Sprint 7 Benchmark Comparison
 
 ## Config
 
@@ -10,6 +10,7 @@ Version: Sprint 6 Backtest Report Integrity
 | End Date | 2025-12-31 |
 | Initial Cash | 1000000 |
 | Rebalance | Monthly |
+| Benchmark | 0050.TW |
 | Universe | tests\sample_data\sample_stocks.json |
 | Snapshot Source | data\snapshots\generated_sap_scores.csv |
 | Look-ahead-safe | true |
@@ -43,6 +44,19 @@ Version: Sprint 6 Backtest Report Integrity
 | Win Rate | 61.11% |
 | Sharpe | TODO |
 | Sortino | TODO |
+
+## Benchmark Comparison
+
+| Metric | Value |
+|---|---:|
+| Strategy Total Return | 205.24% |
+| Strategy CAGR | 45.06% |
+| Benchmark | 0050.TW |
+| Benchmark Total Return | 158.12% |
+| Benchmark CAGR | 37.17% |
+| Excess Return | 47.12% |
+| Excess CAGR | 7.89% |
+| Strategy vs Benchmark | 是 |
 
 ## Data Integrity
 

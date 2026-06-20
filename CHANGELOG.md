@@ -1,5 +1,14 @@
 # Changelog
 
+## Sprint 7 - Benchmark Comparison
+
+- Added default benchmark setting `0050.TW`.
+- Backtest now loads benchmark historical prices with the same date range.
+- Added benchmark total return, benchmark CAGR, excess return, excess CAGR, and strategy-vs-benchmark status.
+- Backtest report now includes a benchmark comparison section.
+- Benchmark unavailable cases no longer crash and are recorded in diagnostics.
+- Added unit tests for benchmark calculation, missing benchmark handling, and excess return.
+
 ## Sprint 6 - Backtest Report Integrity
 
 - Added backtest credibility grading.

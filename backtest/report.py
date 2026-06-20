@@ -44,7 +44,7 @@ class BacktestReportWriter:
 
         content = f"""# Backtest Summary
 
-Version: Sprint 6 Backtest Report Integrity
+Version: Sprint 7 Benchmark Comparison
 
 ## Config
 
@@ -54,6 +54,7 @@ Version: Sprint 6 Backtest Report Integrity
 | End Date | {config['end_date']} |
 | Initial Cash | {config['initial_cash']} |
 | Rebalance | Monthly |
+| Benchmark | {config['benchmark_symbol']} |
 | Universe | {config['universe_path']} |
 | Snapshot Source | {result['snapshot_source']} |
 | Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
@@ -87,6 +88,19 @@ Version: Sprint 6 Backtest Report Integrity
 | Win Rate | {format_percent(metrics['win_rate'])} |
 | Sharpe | TODO |
 | Sortino | TODO |
+
+## Benchmark Comparison
+
+| Metric | Value |
+|---|---:|
+| Strategy Total Return | {format_percent(metrics['total_return'])} |
+| Strategy CAGR | {format_percent(metrics['cagr'])} |
+| Benchmark | {config['benchmark_symbol']} |
+| Benchmark Total Return | {format_percent(metrics['benchmark_total_return'])} |
+| Benchmark CAGR | {format_percent(metrics['benchmark_cagr'])} |
+| Excess Return | {format_percent(metrics['excess_return'])} |
+| Excess CAGR | {format_percent(metrics['excess_cagr'])} |
+| Strategy vs Benchmark | {format_benchmark_result(metrics['strategy_vs_benchmark'])} |
 
 ## Data Integrity
 
@@ -138,5 +152,13 @@ not formal point-in-time financial statement snapshots.
 
 def format_percent(value) -> str:
     if value is None:
-        return "TODO"
+        return "benchmark unavailable"
     return f"{value * 100:.2f}%"
+
+
+def format_benchmark_result(value: str) -> str:
+    if value == "outperform":
+        return "是"
+    if value == "underperform":
+        return "否"
+    return "benchmark unavailable"
