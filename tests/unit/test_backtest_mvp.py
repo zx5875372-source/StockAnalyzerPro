@@ -88,6 +88,9 @@ class BacktestMVPTests(unittest.TestCase):
         self.assertGreaterEqual(len(result["equity_curve"]), 2)
         self.assertTrue(result["look_ahead_safe"])
         self.assertNotIn("2330.TW", result["skipped_reasons"])
+        self.assertIn("credibility_grade", result["config"])
+        self.assertIn("credibility_reason", result["config"])
+        self.assertIn("snapshot_warning_counts", result["config"])
 
     def test_snapshot_date_does_not_use_future_data(self):
         strategy = SAPScoreStrategy()

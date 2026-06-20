@@ -78,7 +78,8 @@ class SnapshotBuilderTests(unittest.TestCase):
         self.assertEqual(result["snapshot_source"], str(snapshot_path))
         self.assertEqual(result["selected_symbols"], ["2330.TW"])
         self.assertEqual(result["snapshot_warning_counts"], {"not_point_in_time": 1})
-        self.assertFalse(result["look_ahead_safe"])
+        self.assertTrue(result["look_ahead_safe"])
+        self.assertFalse(result["snapshot_point_in_time"])
 
 
 def fake_scan_stock(stock):

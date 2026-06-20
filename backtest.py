@@ -33,6 +33,7 @@ def main() -> None:
     print(f"Max Drawdown：{metrics['max_drawdown'] * 100:.2f}%")
     print(f"Win Rate：{metrics['win_rate'] * 100:.2f}%")
     print(f"Look-ahead-safe：{str(result['look_ahead_safe']).lower()}")
+    print(f"Credibility：{result['credibility_grade']} - {result['credibility_reason']}")
     print(f"Selected：{result['selected_stock_count']}")
     print(f"Skipped：{result['skipped_stock_count']}")
     print("Summary：reports\\backtest_summary.md")

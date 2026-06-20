@@ -159,6 +159,28 @@ Backtest snapshot priority:
 Formal point-in-time snapshots are deferred until historical financial statement
 data is available through FinMind, OpenBB, or another reliable provider.
 
+## Sprint 6 Report Integrity Design
+
+Sprint 6 adds a credibility grade to the backtest report. The report presents
+the grade calculated by the engine; it does not calculate strategy or credibility
+logic by itself.
+
+Credibility grades:
+
+- A: `look_ahead_safe=true` and all snapshots have no warning.
+- B: `look_ahead_safe=true` but some snapshots have warnings.
+- C: `look_ahead_safe=false` or any `not_point_in_time` warning exists.
+- D: data is insufficient or selected stock count is too low.
+
+When the grade is C or D, the report must show:
+
+```text
+此結果僅供系統測試，不可作為投資策略績效依據。
+```
+
+Current Sprint 5 generated snapshots are expected to receive a low credibility
+grade because they are marked `warning=not_point_in_time`.
+
 ## 1. Data Source
 
 The backtest engine should not depend directly on yfinance. Each provider should

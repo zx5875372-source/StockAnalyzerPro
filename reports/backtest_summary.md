@@ -1,6 +1,6 @@
 # Backtest Summary
 
-Version: Sprint 5 Snapshot Builder
+Version: Sprint 6 Backtest Report Integrity
 
 ## Config
 
@@ -12,7 +12,17 @@ Version: Sprint 5 Snapshot Builder
 | Rebalance | Monthly |
 | Universe | tests\sample_data\sample_stocks.json |
 | Snapshot Source | data\snapshots\generated_sap_scores.csv |
-| Look-ahead-safe | false |
+| Look-ahead-safe | true |
+| Snapshot Point-in-time | false |
+
+## Credibility
+
+| Item | Value |
+|---|---|
+| Credibility Grade | D |
+| Credibility Reason | 入選股票數 1 低於最低門檻 2。 |
+
+此結果僅供系統測試，不可作為投資策略績效依據。
 
 ## Strategy
 
@@ -39,7 +49,8 @@ Version: Sprint 5 Snapshot Builder
 | Item | Value |
 |---|---:|
 | Snapshot Source | data\snapshots\generated_sap_scores.csv |
-| Look-ahead-safe | false |
+| Look-ahead-safe | true |
+| Snapshot Point-in-time | false |
 | Selected Stock Count | 1 |
 | Skipped Stock Count | 29 |
 

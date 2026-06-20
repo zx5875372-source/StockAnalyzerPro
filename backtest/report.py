@@ -27,6 +27,7 @@ class BacktestReportWriter:
         selected = result.get("selected_symbols", [])
         skipped_reasons = result.get("skipped_reasons", {})
         warning_counts = result.get("snapshot_warning_counts", {})
+        credibility_notice = result.get("credibility_notice", "")
 
         diagnostics_rows = "\n".join(f"- {item}" for item in diagnostics) if diagnostics else "- 無"
         selected_rows = "\n".join(f"- {symbol}" for symbol in selected) if selected else "- 無"
@@ -43,7 +44,7 @@ class BacktestReportWriter:
 
         content = f"""# Backtest Summary
 
-Version: Sprint 5 Snapshot Builder
+Version: Sprint 6 Backtest Report Integrity
 
 ## Config
 
@@ -56,6 +57,16 @@ Version: Sprint 5 Snapshot Builder
 | Universe | {config['universe_path']} |
 | Snapshot Source | {result['snapshot_source']} |
 | Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
+| Snapshot Point-in-time | {str(result['snapshot_point_in_time']).lower()} |
+
+## Credibility
+
+| Item | Value |
+|---|---|
+| Credibility Grade | {result['credibility_grade']} |
+| Credibility Reason | {result['credibility_reason']} |
+
+{credibility_notice}
 
 ## Strategy
 
@@ -83,6 +94,7 @@ Version: Sprint 5 Snapshot Builder
 |---|---:|
 | Snapshot Source | {result['snapshot_source']} |
 | Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
+| Snapshot Point-in-time | {str(result['snapshot_point_in_time']).lower()} |
 | Selected Stock Count | {result['selected_stock_count']} |
 | Skipped Stock Count | {result['skipped_stock_count']} |
 

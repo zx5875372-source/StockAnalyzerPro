@@ -165,6 +165,15 @@ date,symbol,sap_score,piotroski_score,data_quality_score,source,warning
 
 Important limitation: Sprint 3 used current SAP Score signals with historical prices, so its result should not be treated as formal backtest performance. Sprint 4 removes current-score fallback during backtest selection. Sprint 5 adds `generated_sap_scores.csv`, but it is still a proxy marked `source=current_analysis_proxy` and `warning=not_point_in_time`. Formal point-in-time snapshot generation is deferred until historical financial statements are available through FinMind, OpenBB, or another reliable provider.
 
+Backtest credibility grades:
+
+- `A`: look-ahead-safe and all snapshots have no warning.
+- `B`: look-ahead-safe but some snapshots have warnings.
+- `C`: not look-ahead-safe, or any snapshot has `not_point_in_time`.
+- `D`: data is insufficient, or selected stock count is too low.
+
+When the grade is `C` or `D`, the report states that the result is only for system testing and must not be used as investment strategy performance evidence.
+
 ## Tests and CI
 
 Run local checks:

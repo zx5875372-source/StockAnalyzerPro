@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import yfinance as yf
 
+from backtest.integrity import calculate_credibility
 from backtest.performance import PerformanceReport
 from backtest.portfolio import Portfolio
 from backtest.snapshot import SnapshotScoreStore
@@ -126,7 +127,7 @@ class BacktestEngine:
         self.snapshot_source = self.config.resolved_snapshot_path()
         self.snapshots = SnapshotScoreStore.from_csv(self.snapshot_source)
         self.diagnostics.extend(self.snapshots.diagnostics)
-        self.look_ahead_safe = self.snapshots.available() and not self.snapshots.has_warnings()
+        self.look_ahead_safe = self.snapshots.available()
 
         print("下載歷史價格...")
         symbols = [stock["symbol"] for stock in self.universe]
@@ -177,23 +178,39 @@ class BacktestEngine:
             self.portfolio.record_equity(date, price_snapshot)
 
         metrics = PerformanceReport(self.portfolio.equity_curve).calculate()
+        summary = self.summary()
         return {
-            "config": self.summary(),
+            "config": summary,
             "strategy_name": self.strategy.name,
             "metrics": metrics,
             "equity_curve": self.portfolio.equity_curve,
             "history": self.portfolio.history,
             "selected_symbols": self.selected_symbols,
-            "selected_stock_count": len(self.selected_symbols),
-            "skipped_stock_count": len(self.skipped_reasons),
+            "selected_stock_count": summary["selected_stock_count"],
+            "skipped_stock_count": summary["skipped_stock_count"],
             "skipped_reasons": self.skipped_reasons,
-            "snapshot_source": str(self.snapshot_source),
-            "snapshot_warning_counts": self.snapshots.warning_counts(),
-            "look_ahead_safe": self.look_ahead_safe,
+            "snapshot_source": summary["snapshot_path"],
+            "snapshot_warning_counts": summary["snapshot_warning_counts"],
+            "snapshot_point_in_time": summary["snapshot_point_in_time"],
+            "look_ahead_safe": summary["look_ahead_safe"],
+            "credibility_grade": summary["credibility_grade"],
+            "credibility_reason": summary["credibility_reason"],
+            "credibility_notice": summary["credibility_notice"],
             "diagnostics": self.diagnostics,
         }
 
     def summary(self) -> dict:
+        snapshot_warning_counts = self.snapshots.warning_counts()
+        selected_stock_count = len(self.selected_symbols)
+        skipped_stock_count = len(self.skipped_reasons)
+        snapshot_point_in_time = snapshot_warning_counts.get("not_point_in_time", 0) == 0
+        credibility = calculate_credibility(
+            look_ahead_safe=self.look_ahead_safe,
+            snapshot_warning_counts=snapshot_warning_counts,
+            selected_stock_count=selected_stock_count,
+            data_available=self.snapshots.available() and bool(self.price_history),
+        )
+
         return {
             "initial_cash": self.config.initial_cash,
             "start_date": self.config.start_date,
@@ -203,6 +220,14 @@ class BacktestEngine:
             "min_sap_score": self.config.min_sap_score,
             "min_piotroski_score": self.config.min_piotroski_score,
             "min_data_quality_score": self.config.min_data_quality_score,
+            "credibility_grade": credibility["credibility_grade"],
+            "credibility_reason": credibility["credibility_reason"],
+            "look_ahead_safe": self.look_ahead_safe,
+            "snapshot_point_in_time": snapshot_point_in_time,
+            "snapshot_warning_counts": snapshot_warning_counts,
+            "selected_stock_count": selected_stock_count,
+            "skipped_stock_count": skipped_stock_count,
+            "credibility_notice": credibility["credibility_notice"],
         }
 
     def _rebalance_dates(self) -> list[pd.Timestamp]:

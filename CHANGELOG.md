@@ -1,5 +1,13 @@
 # Changelog
 
+## Sprint 6 - Backtest Report Integrity
+
+- Added backtest credibility grading.
+- Added credibility reason and low-credibility warning text to backtest reports.
+- Added snapshot point-in-time status to backtest summaries.
+- Moved credibility calculation out of the report layer.
+- Added unit tests for credibility grades A, C, and D.
+
 ## Sprint 5 - Snapshot Builder
 
 - Added `snapshot_builder.py`.
