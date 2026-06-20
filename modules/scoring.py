@@ -1,14 +1,14 @@
 from models.financial_data import FinancialData
 
 
-def calculate_sap_score(data: FinancialData, piotroski: dict, valuation: dict) -> dict:
+def calculate_sap_score(data: FinancialData, piotroski: dict, valuation: dict, growth: dict) -> dict:
     categories = {
         "piotroski": score_piotroski(piotroski),
         "profitability": score_profitability(data),
         "financial_health": score_financial_health(data),
         "cashflow": score_cashflow(data),
         "valuation": score_valuation(data),
-        "growth": score_growth(),
+        "growth": score_growth(growth),
     }
 
     total_score = min(sum(category["score"] for category in categories.values()), 100)
@@ -163,11 +163,11 @@ def score_valuation(data: FinancialData) -> dict:
     }
 
 
-def score_growth() -> dict:
+def score_growth(growth: dict) -> dict:
     return {
-        "score": 0,
+        "score": growth.get("score", 0),
         "max": 13,
-        "items": ["v0.9 加入"],
+        "items": growth.get("items", []),
     }
 
 

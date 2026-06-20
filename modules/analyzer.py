@@ -1,4 +1,5 @@
 from models.financial_data import FinancialData
+from modules.growth import calculate_growth
 from modules.piotroski import calculate_piotroski
 from modules.scoring import calculate_sap_score
 from modules.valuation import calculate_valuation
@@ -79,7 +80,8 @@ def analyze_stock(data: FinancialData) -> dict:
     current_ratio = data.current_ratio()
 
     valuation = calculate_valuation(data)
-    diagnostics = data.diagnostics + valuation["diagnostics"]
+    growth = calculate_growth(data)
+    diagnostics = data.diagnostics + valuation["diagnostics"] + growth["diagnostics"]
 
     result = {
         "symbol": data.symbol,
@@ -110,7 +112,7 @@ def analyze_stock(data: FinancialData) -> dict:
     }
 
     piotroski = calculate_piotroski(data)
-    scoring = calculate_sap_score(data, piotroski, valuation)
+    scoring = calculate_sap_score(data, piotroski, valuation, growth)
 
     result.update({
         "sap_score": scoring["total_score"],
@@ -118,6 +120,7 @@ def analyze_stock(data: FinancialData) -> dict:
         "reasons": scoring["reasons"],
         "piotroski": piotroski,
         "valuation": valuation,
+        "growth": growth,
         "scoring": scoring,
     })
 

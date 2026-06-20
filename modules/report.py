@@ -18,6 +18,12 @@ def metric(value):
     return str(value)
 
 
+def percent(value):
+    if value is None:
+        return "資料不足"
+    return f"{round(value * 100, 2)}%"
+
+
 def money(value):
     if value is None:
         return "資料不足"
@@ -63,7 +69,7 @@ def default_scoring_categories() -> dict:
         "financial_health": {"score": 0, "max": 15, "items": []},
         "cashflow": {"score": 0, "max": 15, "items": []},
         "valuation": {"score": 0, "max": 10, "items": []},
-        "growth": {"score": 0, "max": 13, "items": ["v0.9 加入"]},
+        "growth": {"score": 0, "max": 13, "items": []},
     }
 
 
@@ -82,6 +88,7 @@ def generate_markdown_report(result: dict) -> str:
     piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
     piotroski_total = piotroski.get("total", 9)
     valuation = result.get("valuation", {})
+    growth = result.get("growth", {"score": 0, "max": 13, "items": []})
     scoring = result.get("scoring", {"categories": {}})
     scoring_categories = default_scoring_categories()
     scoring_categories.update(scoring.get("categories", {}))
@@ -156,11 +163,11 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 六、成長性
 
-| 項目 | 結果 |
-|---|---|
-| 營收成長 | 後續版本加入 |
-| EPS 成長 | 後續版本加入 |
-| 自由現金流成長 | 後續版本加入 |
+| 項目 | 成長率 | 分數 | 判斷 |
+|---|---:|---:|---|
+| 營收成長 | {percent(growth["items"][0]["growth_rate"]) if len(growth["items"]) > 0 else "資料不足"} | {growth["items"][0]["score"] if len(growth["items"]) > 0 else 0} / {growth["items"][0]["max"] if len(growth["items"]) > 0 else 5} | {growth["items"][0]["note"] if len(growth["items"]) > 0 else "資料不足"} |
+| EPS 成長 | {percent(growth["items"][1]["growth_rate"]) if len(growth["items"]) > 1 else "資料不足"} | {growth["items"][1]["score"] if len(growth["items"]) > 1 else 0} / {growth["items"][1]["max"] if len(growth["items"]) > 1 else 5} | {growth["items"][1]["note"] if len(growth["items"]) > 1 else "資料不足"} |
+| 自由現金流成長 | {percent(growth["items"][2]["growth_rate"]) if len(growth["items"]) > 2 else "資料不足"} | {growth["items"][2]["score"] if len(growth["items"]) > 2 else 0} / {growth["items"][2]["max"] if len(growth["items"]) > 2 else 3} | {growth["items"][2]["note"] if len(growth["items"]) > 2 else "資料不足"} |
 
 ---
 
@@ -239,7 +246,7 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十三、投資建議
 
-目前版本為 SAP v0.8，已加入 SAP Score Engine v1.0。
+目前版本為 SAP v0.9，已加入 Growth Engine v1.0。
 
 初步判斷：
 
@@ -247,6 +254,7 @@ def generate_markdown_report(result: dict) -> str:
 - Piotroski 可計算項目：{piotroski["score"]} / {piotroski["available"]}
 - SAP Score：{result["sap_score"]} / 100
 - 投資等級：{result["grade"]}
+- 成長性分數：{growth.get("score", 0)} / {growth.get("max", 13)}
 - 綜合合理價：{metric(valuation.get("fair_price"))}
 - 第一目標價：{metric(valuation.get("first_target_price"))}
 
