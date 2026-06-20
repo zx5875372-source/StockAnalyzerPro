@@ -2,7 +2,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v1.1 Validation & Backtesting Foundation
+Current version: v1.2 Data Quality Improvement
 
 ## Current Features
 
@@ -74,8 +74,27 @@ reports/scan_results.csv
 
 The scan result includes SAP Score, Piotroski F-Score, fair price, first target price, diagnostics count, runtime, and per-symbol error messages when analysis fails.
 
+v1.2 scan output also includes:
+
+- `missing_count`: number of missing normalized financial fields.
+- `missing_fields`: the missing field names.
+- `data_quality_score`: `100 - missing_count * 5`, with a minimum of 0.
+- `piotroski_available`: number of Piotroski items that can be calculated.
+- `valuation_available`: number of valuation base prices available.
+- `growth_available`: number of growth rates available.
+
+The CSV is sorted by SAP Score from high to low, then data quality score from high to low.
+
+The scan also writes a summary report:
+
+```text
+reports/scan_summary.md
+```
+
+Use the summary to review total sample count, success rate, average SAP Score, average data quality score, the stocks with the most missing data, and the top 10 SAP Score stocks.
+
 ## Notes
 
 - This project is for research and learning, not investment advice.
 - Data quality depends on yfinance availability.
-- Future versions may add additional data sources and backtesting workflows, but v1.1 keeps the validation foundation simple.
+- Future versions may add additional data sources and backtesting workflows, but v1.2 keeps the validation foundation simple.

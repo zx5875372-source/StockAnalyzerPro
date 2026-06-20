@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2 - Data Quality Improvement
+
+- Added explicit scan fields for missing data and data quality.
+- Added data quality score using `100 - missing_count * 5`.
+- Sorted scan CSV by SAP Score and data quality score.
+- Added `reports/scan_summary.md`.
+- Documented scan result interpretation in README.
+
 ## v1.1 - Validation & Backtesting Foundation
 
 - Added sample stock universe under `tests/sample_data/sample_stocks.json`.

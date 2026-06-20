@@ -1,6 +1,6 @@
 # Benchmark
 
-Version: v1.1 Validation & Backtesting Foundation
+Version: v1.2 Data Quality Improvement
 
 This file records the validation baseline for the current core engine. Use `scan.py` to generate `reports/scan_results.csv`, then update these numbers when running a fresh benchmark.
 
@@ -18,10 +18,10 @@ This file records the validation baseline for the current core engine. Use `scan
 | Successful analyses | 30 |
 | Failed analyses | 0 |
 | Success rate | 100.0% |
-| Total runtime | 23.08 seconds |
-| Average runtime per stock | 0.77 seconds |
-| Stocks with diagnostics | 15 |
-| Missing-data ratio | 50.0% |
+| Total runtime | 23.94 seconds |
+| Average runtime per stock | 0.8 seconds |
+| Stocks with diagnostics | 7 |
+| Missing-data ratio | 23.33% |
 
 ## Notes
 

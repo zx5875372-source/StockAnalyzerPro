@@ -62,6 +62,8 @@ INFO_FALLBACKS = {
     "shares_outstanding": "sharesOutstanding",
 }
 
+OPTIONAL_FIELDS = {"operating_income"}
+
 VALUATION_INFO_FALLBACKS = {
     "eps": "trailingEps",
     "book_value_per_share": "bookValue",
@@ -176,7 +178,7 @@ def build_period(period_index: int, statements: dict, info: dict, missing_fields
     for field_name in FIELD_ALIASES:
         value = get_field_value(field_name, statements, info, period_index)
         values[field_name] = value
-        if value is None:
+        if value is None and field_name not in OPTIONAL_FIELDS:
             period_name = "current" if period_index == 0 else "previous"
             missing_fields.append(f"{period_name}.{field_name}")
 
