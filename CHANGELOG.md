@@ -1,5 +1,12 @@
 # Changelog
 
+## Sprint 8 - Backtest CLI Options
+
+- Added CLI options to `backtest.py`: `--start`, `--end`, `--capital`, `--benchmark`, `--snapshot`, and `--universe`.
+- Added argument validation for date order, positive capital, snapshot path, and universe path.
+- Backtest reports now reflect the exact parameters used for each run.
+- Added unit tests for default arguments, custom benchmark, invalid capital, and invalid date order.
+
 ## Sprint 7 - Benchmark Comparison
 
 - Added default benchmark setting `0050.TW`.

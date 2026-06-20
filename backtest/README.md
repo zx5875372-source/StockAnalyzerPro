@@ -215,6 +215,40 @@ Benchmark metrics:
 - Excess CAGR
 - Strategy vs Benchmark
 
+## Sprint 8 Backtest CLI Options Design
+
+Sprint 8 makes backtest settings configurable from the command line.
+
+Default command:
+
+```powershell
+.venv\Scripts\python.exe backtest.py
+```
+
+Examples:
+
+```powershell
+.venv\Scripts\python.exe backtest.py --start 2024-01-01 --end 2025-12-31
+.venv\Scripts\python.exe backtest.py --benchmark 006208.TW
+.venv\Scripts\python.exe backtest.py --capital 500000
+```
+
+Supported arguments:
+
+- `--start`, default `2023-01-01`.
+- `--end`, default `2025-12-31`.
+- `--capital`, default `1000000`.
+- `--benchmark`, default `0050.TW`.
+- `--snapshot`, default `data/snapshots/generated_sap_scores.csv`.
+- `--universe`, default `tests/sample_data/sample_stocks.json`.
+
+Validation rules:
+
+- `start` must not be later than `end`.
+- `capital` must be greater than 0.
+- `snapshot` must exist.
+- `universe` must exist.
+
 ## 1. Data Source
 
 The backtest engine should not depend directly on yfinance. Each provider should

@@ -1,6 +1,6 @@
 # Backtest Summary
 
-Version: Sprint 7 Benchmark Comparison
+Version: Sprint 8 Backtest CLI Options
 
 ## Config
 
@@ -8,7 +8,7 @@ Version: Sprint 7 Benchmark Comparison
 |---|---:|
 | Start Date | 2023-01-01 |
 | End Date | 2025-12-31 |
-| Initial Cash | 1000000 |
+| Initial Cash | 500000.0 |
 | Rebalance | Monthly |
 | Benchmark | 0050.TW |
 | Universe | tests\sample_data\sample_stocks.json |

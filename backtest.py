@@ -1,11 +1,18 @@
-from backtest.engine import BacktestConfig, BacktestEngine
+from backtest.cli import build_config_from_args, create_parser
+from backtest.engine import BacktestEngine
 from backtest.portfolio import Portfolio
 from backtest.report import BacktestReportWriter
 from backtest.strategy import SAPScoreStrategy
 
 
-def main() -> None:
-    config = BacktestConfig()
+def main(argv=None) -> None:
+    parser = create_parser()
+    args = parser.parse_args(argv)
+    try:
+        config = build_config_from_args(args)
+    except ValueError as error:
+        parser.error(str(error))
+
     strategy = SAPScoreStrategy(
         min_sap_score=config.min_sap_score,
         min_piotroski_score=config.min_piotroski_score,
@@ -19,7 +26,9 @@ def main() -> None:
     print("====================================")
     print(f"期間：{config.start_date} 到 {config.end_date}")
     print(f"初始資金：{config.initial_cash}")
+    print(f"Benchmark：{config.benchmark_symbol}")
     print(f"Snapshot：{config.resolved_snapshot_path()}")
+    print(f"Universe：{config.universe_path}")
     print("------------------------------------")
 
     result = engine.run()

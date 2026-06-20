@@ -132,6 +132,9 @@ Run the Sprint 3 Backtest Engine MVP:
 
 ```powershell
 .venv\Scripts\python.exe backtest.py
+.venv\Scripts\python.exe backtest.py --start 2024-01-01 --end 2025-12-31
+.venv\Scripts\python.exe backtest.py --benchmark 006208.TW
+.venv\Scripts\python.exe backtest.py --capital 500000
 ```
 
 Build generated SAP Score snapshots:
@@ -181,6 +184,15 @@ Benchmark comparison:
 - Default benchmark is `0050.TW`.
 - If benchmark data is unavailable, the report shows `benchmark unavailable` and records diagnostics.
 - Benchmark availability does not directly downgrade credibility.
+
+Backtest CLI options:
+
+- `--start`: start date, default `2023-01-01`.
+- `--end`: end date, default `2025-12-31`.
+- `--capital`: initial capital, default `1000000`.
+- `--benchmark`: benchmark symbol, default `0050.TW`.
+- `--snapshot`: snapshot CSV path, default `data/snapshots/generated_sap_scores.csv`.
+- `--universe`: universe JSON path, default `tests/sample_data/sample_stocks.json`.
 
 ## Tests and CI
 

@@ -44,7 +44,7 @@ class BacktestReportWriter:
 
         content = f"""# Backtest Summary
 
-Version: Sprint 7 Benchmark Comparison
+Version: Sprint 8 Backtest CLI Options
 
 ## Config
 
