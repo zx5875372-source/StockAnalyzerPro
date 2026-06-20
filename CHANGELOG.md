@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1 - Validation & Backtesting Foundation
+
+- Added sample stock universe under `tests/sample_data/sample_stocks.json`.
+- Added batch scan command in `scan.py`.
+- Added CSV scan output at `reports/scan_results.csv`.
+- Added unit tests for safe division, Piotroski, growth, valuation, and SAP Score.
+- Added benchmark tracking document.
+- Updated README with scan instructions.
+
 ## v1.0 - Stable Core Release
 
 - Stabilized the core CLI workflow.

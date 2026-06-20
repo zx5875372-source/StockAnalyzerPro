@@ -246,7 +246,7 @@ def generate_markdown_report(result: dict) -> str:
 
 ## 十三、投資建議
 
-目前版本為 SAP v1.0 Stable Core Release。
+目前版本為 SAP v1.1 Validation & Backtesting Foundation。
 
 初步判斷：
 

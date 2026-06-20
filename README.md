@@ -2,7 +2,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v1.0 Stable Core Release
+Current version: v1.1 Validation & Backtesting Foundation
 
 ## Current Features
 
@@ -14,6 +14,7 @@ Current version: v1.0 Stable Core Release
 - Includes profitability, financial health, cashflow, valuation, and growth analysis.
 - Estimates simplified valuation, buy zones, and first target price.
 - Shows diagnostics when required financial fields are missing.
+- Provides a validation scan over a sample stock universe and exports CSV results.
 
 ## Installation
 
@@ -51,8 +52,30 @@ When prompted:
 
 Reports are generated in the `reports/` folder.
 
+## Batch Scan
+
+Run the validation scan against the sample stock universe:
+
+```powershell
+.venv\Scripts\python.exe scan.py
+```
+
+The scan reads:
+
+```text
+tests/sample_data/sample_stocks.json
+```
+
+The CSV output is written to:
+
+```text
+reports/scan_results.csv
+```
+
+The scan result includes SAP Score, Piotroski F-Score, fair price, first target price, diagnostics count, runtime, and per-symbol error messages when analysis fails.
+
 ## Notes
 
 - This project is for research and learning, not investment advice.
 - Data quality depends on yfinance availability.
-- Future versions may add additional data sources, but v1.0 keeps the core stable and simple.
+- Future versions may add additional data sources and backtesting workflows, but v1.1 keeps the validation foundation simple.
