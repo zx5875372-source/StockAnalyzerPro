@@ -5,7 +5,7 @@ from modules.report import generate_markdown_report
 
 def main():
     print("====================================")
-    print(" StockAnalyzerPro v0.7")
+    print(" StockAnalyzerPro v0.8")
     print("====================================")
 
     while True:

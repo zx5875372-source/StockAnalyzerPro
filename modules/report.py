@@ -32,6 +32,41 @@ def yes_no(value):
     return "資料不足"
 
 
+def scoring_item_rows(categories: dict) -> str:
+    category_names = {
+        "piotroski": "Piotroski F-Score",
+        "profitability": "獲利能力",
+        "financial_health": "財務體質",
+        "cashflow": "現金流",
+        "valuation": "估值",
+        "growth": "成長性",
+    }
+    rows = []
+
+    for key, category in categories.items():
+        category_name = category_names.get(key, key)
+        for item in category["items"]:
+            if isinstance(item, dict):
+                rows.append(
+                    f"| {category_name} | {item['name']} | {item['score']} / {item['max']} | {item['note']} |"
+                )
+            else:
+                rows.append(f"| {category_name} | {item} | 0 / {category['max']} | 後續版本加入 |")
+
+    return "\n".join(rows)
+
+
+def default_scoring_categories() -> dict:
+    return {
+        "piotroski": {"score": 0, "max": 27, "items": []},
+        "profitability": {"score": 0, "max": 20, "items": []},
+        "financial_health": {"score": 0, "max": 15, "items": []},
+        "cashflow": {"score": 0, "max": 15, "items": []},
+        "valuation": {"score": 0, "max": 10, "items": []},
+        "growth": {"score": 0, "max": 13, "items": ["v0.9 加入"]},
+    }
+
+
 def generate_markdown_report(result: dict) -> str:
     reports_dir = Path("reports")
     reports_dir.mkdir(exist_ok=True)
@@ -47,6 +82,10 @@ def generate_markdown_report(result: dict) -> str:
     piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
     piotroski_total = piotroski.get("total", 9)
     valuation = result.get("valuation", {})
+    scoring = result.get("scoring", {"categories": {}})
+    scoring_categories = default_scoring_categories()
+    scoring_categories.update(scoring.get("categories", {}))
+    scoring_rows = scoring_item_rows(scoring_categories)
     piotroski_rows = "\n".join(
         [
             "| "
@@ -183,11 +222,24 @@ def generate_markdown_report(result: dict) -> str:
 | SAP Score | {result["sap_score"]} / 100 |
 | 投資等級 | {result["grade"]} |
 
+| 大類 | 分數 |
+|---|---:|
+| Piotroski F-Score | {scoring_categories["piotroski"]["score"]} / {scoring_categories["piotroski"]["max"]} |
+| 獲利能力 | {scoring_categories["profitability"]["score"]} / {scoring_categories["profitability"]["max"]} |
+| 財務體質 | {scoring_categories["financial_health"]["score"]} / {scoring_categories["financial_health"]["max"]} |
+| 現金流 | {scoring_categories["cashflow"]["score"]} / {scoring_categories["cashflow"]["max"]} |
+| 估值 | {scoring_categories["valuation"]["score"]} / {scoring_categories["valuation"]["max"]} |
+| 成長性 | {scoring_categories["growth"]["score"]} / {scoring_categories["growth"]["max"]} |
+
+| 大類 | 項目 | 分數 | 加分原因 |
+|---|---|---:|---|
+{scoring_rows}
+
 ---
 
 ## 十三、投資建議
 
-目前版本為 SAP v0.7，已加入 Valuation Engine v1.0。
+目前版本為 SAP v0.8，已加入 SAP Score Engine v1.0。
 
 初步判斷：
 

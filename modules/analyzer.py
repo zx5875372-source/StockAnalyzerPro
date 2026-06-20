@@ -1,5 +1,6 @@
 from models.financial_data import FinancialData
 from modules.piotroski import calculate_piotroski
+from modules.scoring import calculate_sap_score
 from modules.valuation import calculate_valuation
 
 
@@ -109,105 +110,15 @@ def analyze_stock(data: FinancialData) -> dict:
     }
 
     piotroski = calculate_piotroski(data)
-
-    score = 0
-    reasons = []
-
-    score += piotroski["score"] * 3
-    reasons.append(
-        f"Piotroski F-Score {piotroski['score']} / {piotroski['total']}，"
-        f"可計算 {piotroski['score']} / {piotroski['available']} 項通過"
-    )
-
-    if roe is not None:
-        if roe >= 15:
-            score += 20
-            reasons.append("ROE 高於 15%，獲利能力佳")
-        elif roe >= 10:
-            score += 14
-            reasons.append("ROE 高於 10%，獲利能力尚可")
-        elif roe >= 5:
-            score += 8
-            reasons.append("ROE 偏低但仍為正")
-        else:
-            reasons.append("ROE 偏弱")
-
-    if roa is not None:
-        if roa >= 8:
-            score += 15
-            reasons.append("ROA 高於 8%，資產運用效率佳")
-        elif roa >= 5:
-            score += 10
-            reasons.append("ROA 尚可")
-        elif roa >= 2:
-            score += 5
-            reasons.append("ROA 偏低")
-
-    if data.current.free_cashflow is not None and data.current.free_cashflow > 0:
-        score += 15
-        reasons.append("自由現金流為正")
-    else:
-        reasons.append("自由現金流不佳或資料不足")
-
-    if data.current.operating_cashflow is not None and data.current.operating_cashflow > 0:
-        score += 10
-        reasons.append("營業現金流為正")
-
-    if debt_to_equity is not None:
-        if debt_to_equity < 80:
-            score += 15
-            reasons.append("負債比相對安全")
-        elif debt_to_equity < 150:
-            score += 8
-            reasons.append("負債比中等")
-        else:
-            reasons.append("負債偏高")
-
-    if current_ratio is not None:
-        if current_ratio >= 1.5:
-            score += 10
-            reasons.append("流動比率良好")
-        elif current_ratio >= 1:
-            score += 5
-            reasons.append("流動比率尚可")
-
-    if data.pe is not None:
-        if data.pe < 15:
-            score += 10
-            reasons.append("本益比偏低")
-        elif data.pe < 25:
-            score += 6
-            reasons.append("本益比合理")
-        else:
-            reasons.append("本益比偏高")
-
-    if data.pb is not None:
-        if data.pb < 2:
-            score += 5
-            reasons.append("股價淨值比偏低")
-        elif data.pb < 4:
-            score += 3
-            reasons.append("股價淨值比合理")
-
-    score = min(score, 100)
-
-    if score >= 90:
-        grade = "S級"
-    elif score >= 80:
-        grade = "A級"
-    elif score >= 70:
-        grade = "B級"
-    elif score >= 60:
-        grade = "C級"
-    else:
-        grade = "D級"
+    scoring = calculate_sap_score(data, piotroski, valuation)
 
     result.update({
-        "sap_score": score,
-        "grade": grade,
-        "reasons": reasons,
+        "sap_score": scoring["total_score"],
+        "grade": scoring["grade"],
+        "reasons": scoring["reasons"],
         "piotroski": piotroski,
         "valuation": valuation,
+        "scoring": scoring,
     })
 
     return result
