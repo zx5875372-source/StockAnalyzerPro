@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.8 - Snapshot Generator MVP
+
+- Added `historical/generator.py`.
+- Added `SnapshotGenerator` for writing current analyzer proxy SAP Score snapshots into `HistoricalSnapshotRepository`.
+- Added `snapshot_repository_builder.py` to read `tests/sample_data/sample_stocks.json`, run the existing analyzer flow, and write repository snapshots.
+- Outputs `reports/snapshot_repository_summary.md`.
+- Marks generated repository snapshots with `source=current_analysis_proxy`, `source_version=v0`, `is_point_in_time=false`, and `warning=not_point_in_time`.
+- Only `SAPScoreSnapshot` rows are written; `FinancialStatementSnapshot` generation is deferred.
+- Added unit tests for generator output, proxy warning, and repository query behavior.
+- No analyzer, provider, SAP Score, or backtest behavior changed.
+
 ## v2.7 - Historical Snapshot Repository
 
 - Added `historical/repository.py`.

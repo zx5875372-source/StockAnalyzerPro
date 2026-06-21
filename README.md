@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.7 Historical Snapshot Repository
+Current version: v2.8 Snapshot Generator MVP
 
 ## Current Features
 
@@ -26,6 +26,7 @@ Current version: v2.7 Historical Snapshot Repository
 - Provides a research report generated from strategy comparison results.
 - Provides initial point-in-time historical snapshot dataclasses and SQLite schema definitions.
 - Provides a repository layer for storing and querying historical snapshots in SQLite.
+- Provides a Snapshot Generator MVP that writes current analyzer proxy SAP Score snapshots into the historical repository.
 
 ## Installation
 
@@ -223,12 +224,47 @@ The historical layer introduces:
 - `SnapshotMetadata`: generation and provenance metadata.
 - `HISTORICAL_SNAPSHOT_SCHEMA`: SQLite schema string for `financial_statement_snapshots`, `sap_score_snapshots`, and `snapshot_metadata`.
 - `HistoricalSnapshotRepository`: SQLite repository for initializing schema, inserting financial/SAP snapshots, querying snapshots, and listing snapshot dates or symbols.
+- `SnapshotGenerator`: runs the current analyzer flow through `scan_stock()`, builds `SAPScoreSnapshot` rows, and writes them to `HistoricalSnapshotRepository`.
+
+Build current-analysis proxy SAP Score snapshots into the repository:
+
+```powershell
+.venv\Scripts\python.exe snapshot_repository_builder.py
+```
+
+The repository builder reads:
+
+```text
+tests/sample_data/sample_stocks.json
+```
+
+It writes SAP Score snapshots to:
+
+```text
+historical_snapshots.db
+```
+
+It also writes a summary report to:
+
+```text
+reports/snapshot_repository_summary.md
+```
+
+Snapshot Generator MVP fields:
+
+- `snapshot_date`: today's date unless `--snapshot-date` is provided.
+- `source`: `current_analysis_proxy`.
+- `source_version`: `v0`.
+- `is_point_in_time`: `false`.
+- `warning`: `not_point_in_time`.
+
+Only `SAPScoreSnapshot` rows are written in this Sprint. `FinancialStatementSnapshot` generation is deferred.
 
 Current boundary:
 
 - No historical data fetching is implemented yet.
 - Analyzer, provider, and backtest behavior are unchanged.
-- Snapshot Generator is not implemented yet.
+- Snapshot Generator MVP uses current analyzer output as a proxy and must not be treated as formal point-in-time data.
 
 ## Backtest MVP
 
@@ -281,6 +317,7 @@ reports/backtest_equity_curve.csv
 reports/strategy_comparison.md
 reports/strategy_comparison.csv
 reports/research_report.md
+reports/snapshot_repository_summary.md
 ```
 
 Snapshot CSV columns:
@@ -322,7 +359,7 @@ Backtest CLI options:
 Run local checks:
 
 ```powershell
-.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py
+.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py snapshot_repository_builder.py
 .venv\Scripts\python.exe -m unittest discover -s tests/unit
 ```
 
