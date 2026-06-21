@@ -48,6 +48,10 @@ class MemoryCache(ICache):
     def clear(self) -> None:
         self._entries.clear()
 
+    def is_expired(self, key: CacheKey) -> bool:
+        entry = self._entries.get(key)
+        return entry is not None and entry.is_expired(self._now())
+
     def entry(self, key: CacheKey) -> CacheEntry | None:
         entry = self._entries.get(key)
         if entry is None or entry.is_expired(self._now()):

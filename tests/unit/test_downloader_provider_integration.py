@@ -19,7 +19,7 @@ class DownloaderProviderIntegrationTests(unittest.TestCase):
             result = get_stock_data("2330")
 
         self.assertIs(result, expected_data)
-        self.assertEqual(factory.created_provider_names, ["yahoo"])
+        self.assertEqual(factory.created_provider_names, ["cached_yahoo"])
         self.assertEqual(provider.requested_symbols, ["2330"])
 
 

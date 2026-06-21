@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from data_provider import ProviderError, create_provider
+from data_provider import CachedDataProvider, ProviderError, create_provider
+from data_provider.cache import MemoryCache
 from data_provider.interfaces import PriceHistory
 from data_provider.provider_factory import ProviderFactory
 from data_provider.providers.csv_provider import CSVProvider
@@ -94,9 +95,19 @@ class CSVProviderTests(unittest.TestCase):
 
 class ProviderFactoryTests(unittest.TestCase):
     def test_default_factory_creates_supported_providers(self):
+        cached_provider = create_provider("cached_yahoo")
+
+        self.assertIsInstance(cached_provider, CachedDataProvider)
+        self.assertIsInstance(cached_provider.cache, MemoryCache)
         self.assertIsInstance(create_provider("mock"), MockProvider)
         self.assertIsInstance(create_provider("csv"), CSVProvider)
         self.assertIsInstance(create_provider("yfinance"), YahooFinanceProvider)
+
+    def test_cached_yahoo_uses_shared_memory_cache_by_default(self):
+        first_provider = create_provider("cached_yahoo")
+        second_provider = create_provider("cached_yahoo")
+
+        self.assertIs(first_provider.cache, second_provider.cache)
 
     def test_factory_supports_custom_registration(self):
         factory = ProviderFactory()

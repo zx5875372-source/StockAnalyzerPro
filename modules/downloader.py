@@ -221,5 +221,5 @@ def build_diagnostics(current: FinancialPeriod | None, previous: FinancialPeriod
 
 
 def get_stock_data(symbol: str) -> FinancialData:
-    provider = ProviderFactory.with_defaults().create("yahoo")
+    provider = ProviderFactory.with_defaults().create("cached_yahoo")
     return provider.get_financial_data(symbol)

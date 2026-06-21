@@ -151,15 +151,29 @@ Cache layer design and implementation status:
 - `CacheEntry`: stores Python object payloads with fetched and expiration metadata.
 - `ICache`: storage-agnostic cache contract for `get`, `set`, `exists`, `invalidate`, and `clear`.
 - `MemoryCache`: in-memory cache with TTL expiration checks.
+- `CachedDataProvider`: wraps any `IDataProvider`, checks cache first, calls the provider only on cache miss or expired cache, then writes successful provider results back to cache.
 - SQLite cache is not implemented yet.
+
+Cached provider flow:
+
+```mermaid
+flowchart TD
+    Request["downloader.get_stock_data(symbol)"] --> Factory["ProviderFactory.create(cached_yahoo)"]
+    Factory --> Cached["CachedDataProvider"]
+    Cached --> Cache{"MemoryCache hit?"}
+    Cache -->|yes| ReturnCached["Return cached FinancialData"]
+    Cache -->|no or expired| Provider["YahooFinanceProvider"]
+    Provider --> Store["MemoryCache.set(key, value)"]
+    Store --> ReturnFresh["Return fresh FinancialData"]
+```
 
 Current Sprint boundary:
 
-- `modules/downloader.py` now creates `YahooFinanceProvider` through `ProviderFactory`.
+- `modules/downloader.py` now creates `cached_yahoo` through `ProviderFactory`.
 - The public downloader API remains `get_stock_data(symbol)`.
 - Analyzer is not changed and still receives `FinancialData`.
 - App, scan, and analyzer flows continue to call the existing downloader API.
-- `MemoryCache` is not connected to `YahooFinanceProvider`, `ProviderFactory`, or downloader yet.
+- `cached_yahoo` uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
 - Provider Framework is covered by unit tests and is ready for later integration.
 
 ## Backtest MVP

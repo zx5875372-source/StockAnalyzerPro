@@ -1,7 +1,9 @@
+from data_provider.cached_provider import CachedDataProvider
 from data_provider.interfaces import IDataProvider, PriceHistory, ProviderDiagnostic, ProviderError
 from data_provider.provider_factory import ProviderFactory, create_provider
 
 __all__ = [
+    "CachedDataProvider",
     "IDataProvider",
     "PriceHistory",
     "ProviderDiagnostic",
