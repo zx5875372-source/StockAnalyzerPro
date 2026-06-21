@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.4 - Strategy Comparison Report
+
+- Added `strategy_compare.py` for running multiple strategies with the same backtest parameters.
+- Supports `--start`, `--end`, `--capital`, `--benchmark`, `--snapshot`, `--universe`, and `--strategies`.
+- Outputs `reports/strategy_comparison.md` and `reports/strategy_comparison.csv`.
+- Sorts comparison rows by credibility grade, then excess return.
+- Added unit tests for two-strategy comparison, unknown strategy errors, and CSV/Markdown report generation.
+
 ## v2.3 - Piotroski Strategy Implementation
 
 - Added `strategy/piotroski_strategy.py` as the second formal strategy.

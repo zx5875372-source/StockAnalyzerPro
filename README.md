@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.3 Piotroski Strategy Implementation
+Current version: v2.4 Strategy Comparison Report
 
 ## Current Features
 
@@ -22,6 +22,7 @@ Current version: v2.3 Piotroski Strategy Implementation
 - Provides an initial data provider framework for Yahoo Finance, CSV snapshots, and unit-test mocks.
 - Provides a formal strategy framework with registry-based SAP Score strategy wiring.
 - Provides multiple backtest strategies through `--strategy sap` and `--strategy piotroski`.
+- Provides a strategy comparison report for SAP and Piotroski backtests.
 
 ## Installation
 
@@ -217,6 +218,13 @@ Run the Sprint 3 Backtest Engine MVP:
 .venv\Scripts\python.exe backtest.py --strategy piotroski
 ```
 
+Compare strategies with the same backtest parameters:
+
+```powershell
+.venv\Scripts\python.exe strategy_compare.py
+.venv\Scripts\python.exe strategy_compare.py --strategies sap piotroski
+```
+
 Build generated SAP Score snapshots:
 
 ```powershell
@@ -239,6 +247,8 @@ Outputs:
 ```text
 reports/backtest_summary.md
 reports/backtest_equity_curve.csv
+reports/strategy_comparison.md
+reports/strategy_comparison.csv
 ```
 
 Snapshot CSV columns:

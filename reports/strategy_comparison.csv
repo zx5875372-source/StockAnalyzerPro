@@ -1,0 +1,3 @@
+﻿strategy,total_return,cagr,max_drawdown,win_rate,benchmark_total_return,excess_return,credibility_grade,selected_stock_count,skipped_stock_count,strategy_vs_benchmark
+Piotroski Strategy,0.7128,0.1965,-0.3276,0.5,1.5812,-0.8684,C,5,25,underperform
+SAP Score Strategy MVP,2.0524,0.4506,-0.1963,0.6111,1.5812,0.4712,D,1,29,outperform
