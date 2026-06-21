@@ -152,7 +152,9 @@ Cache layer design and implementation status:
 - `ICache`: storage-agnostic cache contract for `get`, `set`, `exists`, `invalidate`, and `clear`.
 - `MemoryCache`: in-memory cache with TTL expiration checks.
 - `CachedDataProvider`: wraps any `IDataProvider`, checks cache first, calls the provider only on cache miss or expired cache, then writes successful provider results back to cache.
-- SQLite cache is not implemented yet.
+- `SQLiteCache`: durable cache MVP backed by `cache.db`, with automatic `cache_entries` schema creation, TTL checks, JSON payload storage, and payload hash validation.
+- `SQLiteCache` currently supports `dict`, JSON-compatible values, `FinancialData`, and `PriceHistory`. Direct DataFrame payloads are intentionally not supported.
+- `SQLiteCache` is implemented but is not connected to `CachedDataProvider` or `ProviderFactory` by default yet.
 
 Cached provider flow:
 
@@ -174,6 +176,7 @@ Current Sprint boundary:
 - Analyzer is not changed and still receives `FinancialData`.
 - App, scan, and analyzer flows continue to call the existing downloader API.
 - `cached_yahoo` uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
+- `SQLiteCache` remains available for tests and future integration, but runtime provider flow still uses `MemoryCache`.
 - Provider Framework is covered by unit tests and is ready for later integration.
 
 ## Backtest MVP
