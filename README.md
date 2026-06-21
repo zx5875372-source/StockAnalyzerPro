@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.4 Strategy Comparison Report
+Current version: v2.5 Research Report Engine
 
 ## Current Features
 
@@ -23,6 +23,7 @@ Current version: v2.4 Strategy Comparison Report
 - Provides a formal strategy framework with registry-based SAP Score strategy wiring.
 - Provides multiple backtest strategies through `--strategy sap` and `--strategy piotroski`.
 - Provides a strategy comparison report for SAP and Piotroski backtests.
+- Provides a research report generated from strategy comparison results.
 
 ## Installation
 
@@ -225,6 +226,12 @@ Compare strategies with the same backtest parameters:
 .venv\Scripts\python.exe strategy_compare.py --strategies sap piotroski
 ```
 
+Generate the research report from strategy comparison output:
+
+```powershell
+.venv\Scripts\python.exe research_report.py
+```
+
 Build generated SAP Score snapshots:
 
 ```powershell
@@ -249,6 +256,7 @@ reports/backtest_summary.md
 reports/backtest_equity_curve.csv
 reports/strategy_comparison.md
 reports/strategy_comparison.csv
+reports/research_report.md
 ```
 
 Snapshot CSV columns:

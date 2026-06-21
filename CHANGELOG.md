@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.5 - Research Report Engine
+
+- Added `research_report.py` to generate a Markdown research report from `reports/strategy_comparison.csv`.
+- Outputs `reports/research_report.md`.
+- Added executive summary, strategy ranking, risk comparison, credibility analysis, and recommendation sections.
+- Recommendation explicitly marks C/D credibility results as research-only and not formal investment performance.
+- Added unit tests for CSV loading, Markdown generation, and empty CSV errors.
+
 ## v2.4 - Strategy Comparison Report
 
 - Added `strategy_compare.py` for running multiple strategies with the same backtest parameters.
