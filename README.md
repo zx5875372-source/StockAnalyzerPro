@@ -143,12 +143,23 @@ The framework introduces:
 - `MockProvider`: deterministic in-memory provider for unit tests.
 - `ProviderFactory`: factory for `yahoo`, `yfinance`, `yahoo_finance`, `csv`, and `mock`.
 
+Cache layer design and implementation status:
+
+- `docs/CACHE_LAYER_ARCHITECTURE.md` defines the cache key, TTL, interface, SQLite schema, failure handling, and migration plan.
+- `data_provider/cache/` contains the first cache implementation.
+- `CacheKey`: canonical key using provider, symbol, data type, period, start date, and end date.
+- `CacheEntry`: stores Python object payloads with fetched and expiration metadata.
+- `ICache`: storage-agnostic cache contract for `get`, `set`, `exists`, `invalidate`, and `clear`.
+- `MemoryCache`: in-memory cache with TTL expiration checks.
+- SQLite cache is not implemented yet.
+
 Current Sprint boundary:
 
 - `modules/downloader.py` now creates `YahooFinanceProvider` through `ProviderFactory`.
 - The public downloader API remains `get_stock_data(symbol)`.
 - Analyzer is not changed and still receives `FinancialData`.
 - App, scan, and analyzer flows continue to call the existing downloader API.
+- `MemoryCache` is not connected to `YahooFinanceProvider`, `ProviderFactory`, or downloader yet.
 - Provider Framework is covered by unit tests and is ready for later integration.
 
 ## Backtest MVP
