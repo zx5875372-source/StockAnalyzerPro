@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.7 - Historical Snapshot Repository
+
+- Added `historical/repository.py`.
+- Added `HistoricalSnapshotRepository` for initializing schema, inserting financial snapshots, inserting SAP score snapshots, querying snapshots, listing snapshot dates, and listing symbols.
+- Uses `historical_snapshots.db` by default and creates schema on first use.
+- Added unit tests for schema initialization, inserts, queries, date listing, and symbol listing.
+- No analyzer, provider, backtest, SAP Score, generator, or historical data fetching behavior changed.
+
 ## v2.6 - Historical Snapshot Schema
 
 - Added initial `historical/` package for point-in-time snapshot infrastructure.

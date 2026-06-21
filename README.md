@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.6 Historical Snapshot Schema
+Current version: v2.7 Historical Snapshot Repository
 
 ## Current Features
 
@@ -25,6 +25,7 @@ Current version: v2.6 Historical Snapshot Schema
 - Provides a strategy comparison report for SAP and Piotroski backtests.
 - Provides a research report generated from strategy comparison results.
 - Provides initial point-in-time historical snapshot dataclasses and SQLite schema definitions.
+- Provides a repository layer for storing and querying historical snapshots in SQLite.
 
 ## Installation
 
@@ -221,11 +222,13 @@ The historical layer introduces:
 - `SAPScoreSnapshot`: historical SAP / Piotroski score snapshot metadata.
 - `SnapshotMetadata`: generation and provenance metadata.
 - `HISTORICAL_SNAPSHOT_SCHEMA`: SQLite schema string for `financial_statement_snapshots`, `sap_score_snapshots`, and `snapshot_metadata`.
+- `HistoricalSnapshotRepository`: SQLite repository for initializing schema, inserting financial/SAP snapshots, querying snapshots, and listing snapshot dates or symbols.
 
 Current boundary:
 
 - No historical data fetching is implemented yet.
 - Analyzer, provider, and backtest behavior are unchanged.
+- Snapshot Generator is not implemented yet.
 
 ## Backtest MVP
 
