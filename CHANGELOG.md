@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.9 - Historical Import Framework
+
+- Added the initial `importers/` package.
+- Added `BaseImporter` with `supports()`, `import_snapshot()`, `import_financial_statements()`, `name`, and `version`.
+- Added `ImportResult` for normalized import counts, imported snapshots, and row-level errors.
+- Added `ImporterRegistry` with register, unregister, get, and list support.
+- Added `MockImporter` for deterministic unit tests.
+- Added `CSVHistoricalImporter` for CSV import of `FinancialStatementSnapshot` and `SAPScoreSnapshot`.
+- Added unit tests for registry behavior, duplicate registration errors, mock imports, and CSV historical imports.
+- No analyzer, provider, backtest, strategy, SAP Score, Snapshot Generator, Historical Repository, or real data acquisition behavior changed.
+
 ## v2.8 - Snapshot Generator MVP
 
 - Added `historical/generator.py`.

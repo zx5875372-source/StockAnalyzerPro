@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.8 Snapshot Generator MVP
+Current version: v2.9 Historical Import Framework
 
 ## Current Features
 
@@ -27,6 +27,7 @@ Current version: v2.8 Snapshot Generator MVP
 - Provides initial point-in-time historical snapshot dataclasses and SQLite schema definitions.
 - Provides a repository layer for storing and querying historical snapshots in SQLite.
 - Provides a Snapshot Generator MVP that writes current analyzer proxy SAP Score snapshots into the historical repository.
+- Provides a Historical Import Framework for future CSV and external data imports.
 
 ## Installation
 
@@ -265,6 +266,29 @@ Current boundary:
 - No historical data fetching is implemented yet.
 - Analyzer, provider, and backtest behavior are unchanged.
 - Snapshot Generator MVP uses current analyzer output as a proxy and must not be treated as formal point-in-time data.
+
+## Historical Import Framework
+
+Milestone 5.5 Sprint 1 adds the initial import framework under:
+
+```text
+importers/
+```
+
+The framework introduces:
+
+- `BaseImporter`: shared importer contract with `supports()`, `import_snapshot()`, `import_financial_statements()`, `name`, and `version`.
+- `ImportResult`: normalized import output with imported/skipped/failed counts, imported snapshot objects, and row-level errors.
+- `ImporterRegistry`: registry for `register`, `unregister`, `get`, and `list`.
+- `MockImporter`: deterministic importer for unit tests.
+- `CSVHistoricalImporter`: CSV importer for `FinancialStatementSnapshot` and `SAPScoreSnapshot` rows.
+
+Current import boundary:
+
+- CSV import returns historical snapshot dataclasses and an `ImportResult`.
+- CSV import does not write to `HistoricalSnapshotRepository` yet.
+- No real historical data provider is called.
+- Analyzer, provider, backtest, strategy, SAP Score, Snapshot Generator, and Historical Repository behavior are unchanged.
 
 ## Backtest MVP
 
