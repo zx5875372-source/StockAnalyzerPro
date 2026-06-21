@@ -1,10 +1,12 @@
 from strategy.base_strategy import BaseStrategy, StrategyContext
+from strategy.piotroski_strategy import PiotroskiStrategy
 from strategy.registry import StrategyRegistry, StrategyRegistryError, create_default_registry
 from strategy.sap_strategy import SAPScoreStrategy, date_to_text
 from strategy.strategy_result import StrategyResult
 
 __all__ = [
     "BaseStrategy",
+    "PiotroskiStrategy",
     "SAPScoreStrategy",
     "StrategyContext",
     "StrategyRegistry",

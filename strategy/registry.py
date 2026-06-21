@@ -45,8 +45,11 @@ class StrategyRegistry:
 
 
 def create_default_registry() -> StrategyRegistry:
+    from strategy.piotroski_strategy import PiotroskiStrategy
     from strategy.sap_strategy import SAPScoreStrategy
 
     registry = StrategyRegistry()
+    registry.register("sap", SAPScoreStrategy)
     registry.register("sap_score", SAPScoreStrategy)
+    registry.register("piotroski", PiotroskiStrategy)
     return registry

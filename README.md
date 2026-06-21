@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.2 Strategy Registry Implementation
+Current version: v2.3 Piotroski Strategy Implementation
 
 ## Current Features
 
@@ -21,6 +21,7 @@ Current version: v2.2 Strategy Registry Implementation
 - Provides a Backtest Engine MVP for historical price validation of SAP Score selections.
 - Provides an initial data provider framework for Yahoo Finance, CSV snapshots, and unit-test mocks.
 - Provides a formal strategy framework with registry-based SAP Score strategy wiring.
+- Provides multiple backtest strategies through `--strategy sap` and `--strategy piotroski`.
 
 ## Installation
 
@@ -194,11 +195,13 @@ The framework introduces:
 - `StrategyResult`: normalized strategy output with score, rank, selected flag, reasons, warnings, and metrics.
 - `StrategyRegistry`: registry for `register`, `unregister`, `get`, and `list`.
 - `SAPScoreStrategy`: current SAP Score backtest selection logic moved into the formal strategy package without changing threshold behavior.
+- `PiotroskiStrategy`: selects stocks with Piotroski score >= 7 and data quality score >= 80.
 
 Backtest integration status:
 
 - `BacktestEngine` now depends on `strategy.base_strategy.BaseStrategy`.
 - `backtest/strategy.py` remains as a compatibility re-export for existing imports.
+- `backtest.py --strategy` supports `sap` and `piotroski`.
 - Current SAP Score algorithm and analyzer behavior are unchanged.
 
 ## Backtest MVP
@@ -210,6 +213,8 @@ Run the Sprint 3 Backtest Engine MVP:
 .venv\Scripts\python.exe backtest.py --start 2024-01-01 --end 2025-12-31
 .venv\Scripts\python.exe backtest.py --benchmark 006208.TW
 .venv\Scripts\python.exe backtest.py --capital 500000
+.venv\Scripts\python.exe backtest.py --strategy sap
+.venv\Scripts\python.exe backtest.py --strategy piotroski
 ```
 
 Build generated SAP Score snapshots:
@@ -268,6 +273,7 @@ Backtest CLI options:
 - `--benchmark`: benchmark symbol, default `0050.TW`.
 - `--snapshot`: snapshot CSV path, default `data/snapshots/generated_sap_scores.csv`.
 - `--universe`: universe JSON path, default `tests/sample_data/sample_stocks.json`.
+- `--strategy`: strategy name, `sap` or `piotroski`, default `sap`.
 
 ## Tests and CI
 

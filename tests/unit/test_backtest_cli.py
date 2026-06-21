@@ -1,3 +1,5 @@
+import contextlib
+import io
 import unittest
 from pathlib import Path
 
@@ -15,12 +17,24 @@ class BacktestCLITests(unittest.TestCase):
         self.assertEqual(config.benchmark_symbol, "0050.TW")
         self.assertEqual(Path(config.snapshot_path).as_posix(), "data/snapshots/generated_sap_scores.csv")
         self.assertEqual(Path(config.universe_path).as_posix(), "tests/sample_data/sample_stocks.json")
+        self.assertEqual(config.strategy_name, "sap")
 
     def test_custom_benchmark(self):
         args = parse_args(["--benchmark", "006208.TW"])
         config = build_config_from_args(args)
 
         self.assertEqual(config.benchmark_symbol, "006208.TW")
+
+    def test_strategy_piotroski_argument(self):
+        args = parse_args(["--strategy", "piotroski"])
+        config = build_config_from_args(args)
+
+        self.assertEqual(config.strategy_name, "piotroski")
+
+    def test_unknown_strategy_argument_is_rejected(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                parse_args(["--strategy", "missing"])
 
     def test_capital_must_be_positive(self):
         args = parse_args(["--capital", "0"])

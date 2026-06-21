@@ -12,6 +12,7 @@ DEFAULT_CAPITAL = 1_000_000
 DEFAULT_BENCHMARK = "0050.TW"
 DEFAULT_SNAPSHOT = "data/snapshots/generated_sap_scores.csv"
 DEFAULT_UNIVERSE = "tests/sample_data/sample_stocks.json"
+DEFAULT_STRATEGY = "sap"
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -22,6 +23,12 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--benchmark", default=DEFAULT_BENCHMARK, help="benchmark symbol")
     parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT, help="snapshot CSV path")
     parser.add_argument("--universe", default=DEFAULT_UNIVERSE, help="universe JSON path")
+    parser.add_argument(
+        "--strategy",
+        default=DEFAULT_STRATEGY,
+        choices=["sap", "piotroski"],
+        help="strategy name: sap or piotroski",
+    )
     return parser
 
 
@@ -56,4 +63,5 @@ def build_config_from_args(args: argparse.Namespace) -> BacktestConfig:
         benchmark_symbol=args.benchmark,
         snapshot_path=snapshot_path,
         universe_path=universe_path,
+        strategy_name=args.strategy,
     )

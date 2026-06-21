@@ -2,7 +2,7 @@ from backtest.cli import build_config_from_args, create_parser
 from backtest.engine import BacktestEngine
 from backtest.portfolio import Portfolio
 from backtest.report import BacktestReportWriter
-from strategy.sap_strategy import SAPScoreStrategy
+from strategy.registry import create_default_registry
 
 
 def main(argv=None) -> None:
@@ -13,7 +13,9 @@ def main(argv=None) -> None:
     except ValueError as error:
         parser.error(str(error))
 
-    strategy = SAPScoreStrategy(
+    registry = create_default_registry()
+    strategy = registry.get(
+        config.strategy_name,
         min_sap_score=config.min_sap_score,
         min_piotroski_score=config.min_piotroski_score,
         min_data_quality_score=config.min_data_quality_score,
@@ -27,6 +29,7 @@ def main(argv=None) -> None:
     print(f"期間：{config.start_date} 到 {config.end_date}")
     print(f"初始資金：{config.initial_cash}")
     print(f"Benchmark：{config.benchmark_symbol}")
+    print(f"Strategy：{strategy.name}")
     print(f"Snapshot：{config.resolved_snapshot_path()}")
     print(f"Universe：{config.universe_path}")
     print("------------------------------------")

@@ -28,6 +28,7 @@ class BacktestConfig:
     min_sap_score: int = 80
     min_piotroski_score: int = 7
     min_data_quality_score: int = 80
+    strategy_name: str = "sap"
 
     def resolved_snapshot_path(self) -> Path:
         if self.snapshot_path is not None:
@@ -232,6 +233,7 @@ class BacktestEngine:
             "start_date": self.config.start_date,
             "end_date": self.config.end_date,
             "benchmark_symbol": normalize_symbol(self.config.benchmark_symbol),
+            "strategy_name": self.config.strategy_name,
             "universe_path": str(self.config.universe_path),
             "snapshot_path": str(self.config.resolved_snapshot_path()),
             "min_sap_score": self.config.min_sap_score,

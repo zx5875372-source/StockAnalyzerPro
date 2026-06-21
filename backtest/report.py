@@ -55,6 +55,7 @@ Version: Sprint 8 Backtest CLI Options
 | Initial Cash | {config['initial_cash']} |
 | Rebalance | Monthly |
 | Benchmark | {config['benchmark_symbol']} |
+| Strategy | {result['strategy_name']} |
 | Universe | {config['universe_path']} |
 | Snapshot Source | {result['snapshot_source']} |
 | Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |

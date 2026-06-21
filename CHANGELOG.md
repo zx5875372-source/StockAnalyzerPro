@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.3 - Piotroski Strategy Implementation
+
+- Added `strategy/piotroski_strategy.py` as the second formal strategy.
+- Registered both `sap` and `piotroski` in the default `StrategyRegistry`.
+- Added `backtest.py --strategy` with supported values `sap` and `piotroski`.
+- Backtest summaries now include the active strategy in the config section.
+- Added unit tests for Piotroski strategy selection, strategy CLI creation, and strategy registry defaults.
+
 ## v2.2 - Strategy Registry Implementation
 
 - Added formal `strategy/` package with `BaseStrategy`, `StrategyResult`, and `StrategyRegistry`.
