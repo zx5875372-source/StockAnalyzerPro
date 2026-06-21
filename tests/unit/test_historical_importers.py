@@ -125,6 +125,12 @@ class CSVHistoricalImporterTests(unittest.TestCase):
             with self.assertRaisesRegex(ImporterError, "missing required columns"):
                 CSVHistoricalImporter().import_snapshot(csv_path, snapshot_type="sap_score")
 
+    def test_csv_importer_accepts_validator_hook_without_changing_flow(self):
+        validator = object()
+        importer = CSVHistoricalImporter(validator=validator)
+
+        self.assertIs(importer.validator, validator)
+
 
 def financial_snapshot():
     return FinancialStatementSnapshot(

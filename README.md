@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.9 Historical Import Framework
+Current version: v2.10 Historical Validation Framework
 
 ## Current Features
 
@@ -28,6 +28,7 @@ Current version: v2.9 Historical Import Framework
 - Provides a repository layer for storing and querying historical snapshots in SQLite.
 - Provides a Snapshot Generator MVP that writes current analyzer proxy SAP Score snapshots into the historical repository.
 - Provides a Historical Import Framework for future CSV and external data imports.
+- Provides a Historical Validation Framework for validating snapshot metadata, dates, scores, and duplicate keys.
 
 ## Installation
 
@@ -289,6 +290,39 @@ Current import boundary:
 - CSV import does not write to `HistoricalSnapshotRepository` yet.
 - No real historical data provider is called.
 - Analyzer, provider, backtest, strategy, SAP Score, Snapshot Generator, and Historical Repository behavior are unchanged.
+
+## Historical Validation Framework
+
+Milestone 5.5 Sprint 2 adds the initial validation framework under:
+
+```text
+historical/validation/
+```
+
+The framework introduces:
+
+- `HistoricalValidator`: validates `FinancialStatementSnapshot` and `SAPScoreSnapshot` dataclasses.
+- `ValidationResult`: normalized validation output with `is_valid`, `errors`, `warnings`, `field_count`, and `missing_fields`.
+- `rules.py`: shared validation rules for required fields, ISO dates, fiscal periods, score ranges, credibility grades, point-in-time flags, and duplicate snapshot warnings.
+
+Validation rules currently cover:
+
+- `symbol`
+- `snapshot_date`
+- `published_date`
+- `fiscal_year`
+- `fiscal_quarter`
+- `sap_score`
+- `piotroski_score`
+- `data_quality_score`
+- `credibility_grade`
+- `is_point_in_time`
+
+Current validation boundary:
+
+- Validation runs on in-memory snapshot dataclasses only.
+- `CSVHistoricalImporter` exposes a reserved `validator` hook, but CSV import flow is unchanged.
+- No API calls, repository writes, analyzer changes, SAP Score changes, or backtest behavior changes are included in this Sprint.
 
 ## Backtest MVP
 

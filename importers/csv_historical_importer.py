@@ -29,6 +29,9 @@ class CSVHistoricalImporter(BaseImporter):
     name = "csv_historical"
     version = "v0"
 
+    def __init__(self, validator=None):
+        self.validator = validator
+
     def supports(self, snapshot_type: str) -> bool:
         try:
             normalize_snapshot_type(snapshot_type)

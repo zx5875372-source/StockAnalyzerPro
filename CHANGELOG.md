@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.10 - Historical Validation Framework
+
+- Added `historical/validation/`.
+- Added `ValidationResult` with `is_valid`, `errors`, `warnings`, `field_count`, and `missing_fields`.
+- Added `HistoricalValidator` for validating `FinancialStatementSnapshot` and `SAPScoreSnapshot`.
+- Added validation rules for symbols, snapshot dates, published dates, fiscal periods, SAP Score, Piotroski Score, data quality score, credibility grade, point-in-time flags, and duplicate snapshot warnings.
+- Added a reserved `validator` hook to `CSVHistoricalImporter` without changing the CSV import flow.
+- Added unit tests for valid snapshots, missing fields, invalid dates, score ranges, duplicate warnings, and the importer validation hook.
+- No analyzer, provider, backtest, strategy, SAP Score, repository, API acquisition, or real data import behavior changed.
+
 ## v2.9 - Historical Import Framework
 
 - Added the initial `importers/` package.
