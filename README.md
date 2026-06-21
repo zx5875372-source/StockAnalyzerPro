@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v1.4 CLI UX Improvement
+Current version: v2.2 Strategy Registry Implementation
 
 ## Current Features
 
@@ -20,6 +20,7 @@ Current version: v1.4 CLI UX Improvement
 - Provides an interactive CLI menu for single-stock analysis, watchlist scan, and sample scan.
 - Provides a Backtest Engine MVP for historical price validation of SAP Score selections.
 - Provides an initial data provider framework for Yahoo Finance, CSV snapshots, and unit-test mocks.
+- Provides a formal strategy framework with registry-based SAP Score strategy wiring.
 
 ## Installation
 
@@ -178,6 +179,27 @@ Current Sprint boundary:
 - `cached_yahoo` uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
 - `SQLiteCache` remains available for tests and future integration, but runtime provider flow still uses `MemoryCache`.
 - Provider Framework is covered by unit tests and is ready for later integration.
+
+## Strategy Framework
+
+Milestone 4 Sprint 2 adds the formal strategy package under:
+
+```text
+strategy/
+```
+
+The framework introduces:
+
+- `BaseStrategy`: shared contract for strategy evaluation, ranking, selection, and rebalance behavior.
+- `StrategyResult`: normalized strategy output with score, rank, selected flag, reasons, warnings, and metrics.
+- `StrategyRegistry`: registry for `register`, `unregister`, `get`, and `list`.
+- `SAPScoreStrategy`: current SAP Score backtest selection logic moved into the formal strategy package without changing threshold behavior.
+
+Backtest integration status:
+
+- `BacktestEngine` now depends on `strategy.base_strategy.BaseStrategy`.
+- `backtest/strategy.py` remains as a compatibility re-export for existing imports.
+- Current SAP Score algorithm and analyzer behavior are unchanged.
 
 ## Backtest MVP
 

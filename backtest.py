@@ -2,7 +2,7 @@ from backtest.cli import build_config_from_args, create_parser
 from backtest.engine import BacktestEngine
 from backtest.portfolio import Portfolio
 from backtest.report import BacktestReportWriter
-from backtest.strategy import SAPScoreStrategy
+from strategy.sap_strategy import SAPScoreStrategy
 
 
 def main(argv=None) -> None:

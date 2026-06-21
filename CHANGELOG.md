@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.2 - Strategy Registry Implementation
+
+- Added formal `strategy/` package with `BaseStrategy`, `StrategyResult`, and `StrategyRegistry`.
+- Moved current SAP Score backtest strategy into `strategy/sap_strategy.py` without changing threshold behavior.
+- Updated `BacktestEngine` to depend on the formal `strategy.base_strategy.BaseStrategy`.
+- Kept `backtest/strategy.py` as a compatibility re-export for existing imports.
+- Added unit tests for strategy registration, duplicate registration, lookup, listing, unregister, and SAP strategy execution.
+
 ## Sprint 8 - Backtest CLI Options
 
 - Added CLI options to `backtest.py`: `--start`, `--end`, `--capital`, `--benchmark`, `--snapshot`, and `--universe`.

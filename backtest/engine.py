@@ -8,7 +8,7 @@ from backtest.integrity import calculate_credibility
 from backtest.performance import PerformanceReport
 from backtest.portfolio import Portfolio
 from backtest.snapshot import SnapshotScoreStore
-from backtest.strategy import BaseStrategy
+from strategy.base_strategy import BaseStrategy
 from modules.downloader import normalize_symbol
 from scan import load_sample_stocks
 
