@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.6 - Historical Snapshot Schema
+
+- Added initial `historical/` package for point-in-time snapshot infrastructure.
+- Added `FinancialStatementSnapshot`, `SAPScoreSnapshot`, and `SnapshotMetadata` dataclasses.
+- Added SQLite schema strings for `financial_statement_snapshots`, `sap_score_snapshots`, and `snapshot_metadata`.
+- Added unit tests for dataclass creation, required tables, and point-in-time fields.
+- No analyzer, provider, backtest, or data fetching behavior changed.
+
 ## v2.5 - Research Report Engine
 
 - Added `research_report.py` to generate a Markdown research report from `reports/strategy_comparison.csv`.
