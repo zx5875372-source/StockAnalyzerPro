@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.14 - Data Quality Profiling
+
+- Added `historical/profiling/`.
+- Added `ProfileResult` with row counts, warning counts, duplicate counts, missing-field metrics, point-in-time metrics, and quality score.
+- Added `HistoricalProfiler.profile_import()` and `HistoricalProfiler.profile_repository()`.
+- Added centralized quality metrics in `historical/profiling/metrics.py`.
+- Added `reports/data_quality_report.md`.
+- Added unit tests for quality score calculation, missing percentage, duplicate statistics, point-in-time percentage, empty repository profiling, and report generation.
+- No analyzer, provider, strategy, backtest, SAP Score, historical repository, or historical validator behavior changed.
+
 ## v2.13 - Historical Import Fixtures
 
 - Added reusable historical import sample CSV files under `tests/sample_data/historical/`.

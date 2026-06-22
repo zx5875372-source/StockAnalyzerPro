@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.13 Historical Import Fixtures
+Current version: v2.14 Data Quality Profiling
 
 ## Current Features
 
@@ -31,6 +31,7 @@ Current version: v2.13 Historical Import Fixtures
 - Provides a Historical Validation Framework for validating snapshot metadata, dates, scores, and duplicate keys.
 - Provides a Historical Import CLI for validating CSV files and writing snapshots into the historical repository.
 - Provides reusable historical import sample CSV fixtures and format documentation.
+- Provides a Data Quality Profiling Framework for imports and historical repositories.
 
 ## Installation
 
@@ -367,6 +368,46 @@ Current validation boundary:
 - Validation failures are excluded from imported snapshots, increment `failed_count`, and record row-level errors.
 - Validation warnings are recorded in `ImportResult.warnings`, but the snapshot is still imported.
 - No API calls, repository writes, analyzer changes, SAP Score changes, or backtest behavior changes are included in this Sprint.
+
+## Data Quality Profiling
+
+Milestone 5.6 Sprint 1 adds the profiling framework under:
+
+```text
+historical/profiling/
+```
+
+The framework introduces:
+
+- `HistoricalProfiler`: profiles import results and historical repositories.
+- `ProfileResult`: normalized profile output with row counts, warning counts, duplicate counts, missing-field metrics, point-in-time metrics, and quality score.
+- `metrics.py`: centralized calculations for percentages, duplicate/missing counts, and quality score.
+
+Supported profiling entry points:
+
+- `profile_import(import_result)`: profiles `ImportResult` from historical CSV import.
+- `profile_repository(repository)`: profiles rows currently stored in `HistoricalSnapshotRepository`.
+
+The initial quality score formula is:
+
+```text
+100 - failed_row_penalty - missing_field_penalty - duplicate_row_penalty
+```
+
+Current penalties:
+
+- Failed row: `10` points per row.
+- Missing field: `2` points per missing field.
+- Duplicate row: `5` points per duplicate row.
+- Minimum score: `0`.
+
+The default data quality report is:
+
+```text
+reports/data_quality_report.md
+```
+
+The report includes Imported Rows, Failed Rows, Warnings, Duplicates, Missing %, Point-in-Time %, and Quality Score.
 
 ## Backtest MVP
 
