@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.24 - Historical SAP Generator CLI
+
+- Added `historical_generate_sap.py`.
+- Added CLI arguments for `--db`, `--symbol`, `--year`, and `--quarter`.
+- Added filtered generation for symbol, fiscal year, and fiscal quarter.
+- Added summary output with database path, generated count, updated count, failed count, warning count, and filters used.
+- Updated `reports/historical_generator_summary.md` to include database and filter fields.
+- Added unit tests for default CLI args, symbol filtering, year/quarter filtering, summary generation, and repository SAP snapshot writes.
+- No Backtest, Strategy, Analyzer, Provider, or SAP Score scoring logic changes were added.
+
 ## v2.23 - Historical SAP Generator MVP
 
 - Added `historical/sap_generator.py`.

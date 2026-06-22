@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.23 Historical SAP Generator MVP
+Current version: v2.24 Historical SAP Generator CLI
 
 ## Current Features
 
@@ -40,6 +40,7 @@ Current version: v2.23 Historical SAP Generator MVP
 - Provides a FinMind import CLI for writing financial statement snapshots into the historical repository.
 - Provides a FinMind smoke test guide and helper script for safe real-API testing with a test database.
 - Provides a Historical SAP Generator MVP for turning financial statement snapshots into repository SAP score snapshots.
+- Provides a Historical SAP Generator CLI for filtered repository generation runs.
 
 ## Installation
 
@@ -473,8 +474,35 @@ The MVP generator introduces:
 - `HistoricalSAPGenerator.generate_all()`: reads all financial statement snapshots from `HistoricalSnapshotRepository` and writes generated SAP snapshots back into the repository.
 - `HistoricalSAPGenerationResult`: records generated, updated, failed, warnings, errors, and generated snapshots.
 - `reports/historical_generator_summary.md`: summary report for generator runs.
+- `historical_generate_sap.py`: CLI for generating SAP snapshots from repository financial snapshots.
 
 The generator reuses the existing analyzer/SAP scoring path and does not reimplement SAP Score logic.
+
+Generate SAP snapshots for all financial snapshots:
+
+```powershell
+.venv\Scripts\python.exe historical_generate_sap.py --db historical_snapshots.db
+```
+
+Generate only one symbol:
+
+```powershell
+.venv\Scripts\python.exe historical_generate_sap.py --db historical_snapshots.db --symbol 2330
+```
+
+Generate only one fiscal period:
+
+```powershell
+.venv\Scripts\python.exe historical_generate_sap.py --db historical_snapshots.db --year 2025 --quarter 1
+```
+
+The CLI writes:
+
+```text
+reports/historical_generator_summary.md
+```
+
+The summary includes database path, generated count, updated count, failed count, warning count, and filters used.
 
 Current boundary:
 

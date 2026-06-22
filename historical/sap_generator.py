@@ -97,8 +97,26 @@ class HistoricalSAPGenerator:
         if active_repository is None:
             raise ValueError("HistoricalSAPGenerator requires a repository for generate_all()")
 
+        result = self.generate_snapshots(
+            active_repository.list_financial_snapshots(),
+            repository=active_repository,
+            write_report=False,
+        )
+        write_summary(result, self.summary_path)
+        return result
+
+    def generate_snapshots(
+        self,
+        financial_snapshots: list[FinancialStatementSnapshot],
+        repository: HistoricalSnapshotRepository | None = None,
+        write_report: bool = True,
+    ) -> HistoricalSAPGenerationResult:
+        active_repository = repository or self.repository
+        if active_repository is None:
+            raise ValueError("HistoricalSAPGenerator requires a repository for generate_snapshots()")
+
         result = HistoricalSAPGenerationResult()
-        for financial_snapshot in active_repository.list_financial_snapshots():
+        for financial_snapshot in financial_snapshots:
             try:
                 sap_snapshot = self.generate_snapshot(financial_snapshot)
                 validation = self.validator.validate_sap_snapshot(sap_snapshot)
@@ -126,7 +144,8 @@ class HistoricalSAPGenerator:
                     f"{financial_snapshot.symbol} {financial_snapshot.fiscal_year}Q{financial_snapshot.fiscal_quarter}: {error}"
                 )
 
-        write_summary(result, self.summary_path)
+        if write_report:
+            write_summary(result, self.summary_path)
         return result
 
 
