@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.11 Validation Integration
+Current version: v2.12 Historical Import CLI
 
 ## Current Features
 
@@ -29,6 +29,7 @@ Current version: v2.11 Validation Integration
 - Provides a Snapshot Generator MVP that writes current analyzer proxy SAP Score snapshots into the historical repository.
 - Provides a Historical Import Framework for future CSV and external data imports.
 - Provides a Historical Validation Framework for validating snapshot metadata, dates, scores, and duplicate keys.
+- Provides a Historical Import CLI for validating CSV files and writing snapshots into the historical repository.
 
 ## Installation
 
@@ -283,13 +284,36 @@ The framework introduces:
 - `ImporterRegistry`: registry for `register`, `unregister`, `get`, and `list`.
 - `MockImporter`: deterministic importer for unit tests.
 - `CSVHistoricalImporter`: CSV importer for `FinancialStatementSnapshot` and `SAPScoreSnapshot` rows.
+- `historical_import.py`: CLI for importing validated historical CSV snapshots into `HistoricalSnapshotRepository`.
+
+Import historical SAP Score snapshots:
+
+```powershell
+.venv\Scripts\python.exe historical_import.py --type sap --file path\to\sap_scores.csv --db historical_snapshots.db
+```
+
+Import historical financial statement snapshots:
+
+```powershell
+.venv\Scripts\python.exe historical_import.py --type financial --file path\to\financial.csv --db historical_snapshots.db
+```
+
+The CLI writes a summary report to:
+
+```text
+reports/historical_import_summary.md
+```
+
+The summary includes imported count, failed count, warning count, row-level errors, and row-level warnings.
 
 Current import boundary:
 
-- CSV import returns historical snapshot dataclasses and an `ImportResult`.
-- CSV import does not write to `HistoricalSnapshotRepository` yet.
+- CSV import validates rows with `HistoricalValidator` before repository writes.
+- Valid `SAPScoreSnapshot` and `FinancialStatementSnapshot` rows are written to `HistoricalSnapshotRepository`.
+- Validation failures are not written and are reported in the summary.
+- Validation warnings are reported but still allow repository writes.
 - No real historical data provider is called.
-- Analyzer, provider, backtest, strategy, SAP Score, Snapshot Generator, and Historical Repository behavior are unchanged.
+- Analyzer, provider, backtest, strategy, SAP Score, and Snapshot Generator behavior are unchanged.
 
 ## Historical Validation Framework
 
@@ -378,6 +402,7 @@ reports/strategy_comparison.md
 reports/strategy_comparison.csv
 reports/research_report.md
 reports/snapshot_repository_summary.md
+reports/historical_import_summary.md
 ```
 
 Snapshot CSV columns:
@@ -419,7 +444,7 @@ Backtest CLI options:
 Run local checks:
 
 ```powershell
-.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py snapshot_repository_builder.py
+.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py snapshot_repository_builder.py historical_import.py
 .venv\Scripts\python.exe -m unittest discover -s tests/unit
 ```
 

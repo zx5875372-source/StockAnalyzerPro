@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.12 - Historical Import CLI
+
+- Added `historical_import.py`.
+- Added CLI arguments `--type sap`, `--type financial`, `--file`, and `--db`.
+- Uses `CSVHistoricalImporter` with `HistoricalValidator` before writing snapshots.
+- Writes valid `SAPScoreSnapshot` and `FinancialStatementSnapshot` rows into `HistoricalSnapshotRepository`.
+- Outputs `reports/historical_import_summary.md` with imported count, failed count, warning count, errors, and warnings.
+- Added unit tests for successful SAP import, invalid CSV failure, warning-preserving import, summary output, and missing file errors.
+- No analyzer, provider, backtest, strategy, SAP Score, or API acquisition behavior changed.
+
 ## v2.11 - Validation Integration
 
 - Integrated `HistoricalValidator` into `CSVHistoricalImporter`.
