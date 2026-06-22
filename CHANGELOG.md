@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.20 - FinMind Importer Integration
+
+- Integrated `FinMindImporter.import_financial_statements()` with `FinMindClient.get_financial_statement()`.
+- Added financial statement row mapping through `map_financial_statement_row()`.
+- Added validation through `HistoricalValidator.validate_financial_snapshot()`.
+- Added valid financial snapshot writes through `HistoricalSnapshotRepository.insert_financial_snapshot()`.
+- Added `ImportResult` error handling for invalid rows, mapping failures, validation failures, repository write failures, and FinMind API errors.
+- Added warning-preserving import behavior for validation warnings.
+- Added mock-client unit tests for valid import, invalid row rejection, warning-preserving import, and API error conversion.
+- SAP score snapshot import from FinMind remains unimplemented.
+- No analyzer changes, provider changes, backtest changes, strategy changes, SAP Score changes, or FinMindClient request logic changes were added.
+
 ## v2.19 - FinMind API Request Methods
 
 - Added `FinMindClient.get_financial_statement()`.

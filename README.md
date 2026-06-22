@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.19 FinMind API Request Methods
+Current version: v2.20 FinMind Importer Integration
 
 ## Current Features
 
@@ -32,10 +32,11 @@ Current version: v2.19 FinMind API Request Methods
 - Provides a Historical Import CLI for validating CSV files and writing snapshots into the historical repository.
 - Provides reusable historical import sample CSV fixtures and format documentation.
 - Provides a Data Quality Profiling Framework for imports and historical repositories.
-- Provides a planned FinMind importer architecture skeleton without API calls.
+- Provides a FinMind importer framework with partial financial statement import integration.
 - Provides a FinMind API Client with financial statement request methods, retry handling, and clear API exceptions.
 - Provides a consolidated architecture overview and dependency rules for all frameworks.
 - Provides FinMind API mapping helpers for converting raw rows into historical snapshot dataclasses.
+- Provides FinMind financial statement import integration through mapper, validator, and historical repository writes.
 
 ## Installation
 
@@ -211,7 +212,7 @@ Current and planned data-source roles:
 
 - Yahoo Finance: current runtime market and financial data source through `YahooFinanceProvider`.
 - CSV: current historical snapshot import source through `CSVHistoricalImporter`.
-- FinMind (Planned): historical Taiwan financial statement import source; `FinMindClient` can request supported datasets, but `FinMindImporter` still does not import or write data yet.
+- FinMind (Partial): historical Taiwan financial statement import source; `FinMindImporter` can import financial statement snapshots through mapper, validator, and repository writes. SAP score snapshot import is still planned.
 - OpenBB (Planned): future multi-source research data option.
 - Polygon (Planned): future market data option.
 
@@ -253,8 +254,35 @@ Client behavior:
 Current boundary:
 
 - Unit tests use mock sessions and do not call the real FinMind API.
-- `FinMindImporter` only owns a `FinMindClient`; its import flow remains architecture-only.
+- `FinMindImporter` uses `FinMindClient` for financial statement import, but unit tests use mock clients.
 - Historical Repository, Analyzer, Provider, Strategy, Backtest, and SAP Score behavior are unchanged.
+
+## FinMind Importer Integration
+
+Milestone 5.7 Sprint 5 connects the FinMind financial statement import pipeline:
+
+```mermaid
+flowchart TD
+    Importer["FinMindImporter.import_financial_statements(symbol)"] --> Client["FinMindClient.get_financial_statement()"]
+    Client --> Mapper["map_financial_statement_row()"]
+    Mapper --> Validator["HistoricalValidator.validate_financial_snapshot()"]
+    Validator -->|valid| Repository["HistoricalSnapshotRepository.insert_financial_snapshot()"]
+    Validator -->|failed| ResultError["ImportResult.errors"]
+    Validator -->|warning| ResultWarning["ImportResult.warnings"]
+```
+
+Supported behavior:
+
+- FinMind financial statement rows are mapped into `FinancialStatementSnapshot`.
+- Invalid rows are not written to the repository and are recorded in `ImportResult.errors`.
+- Validation warnings are recorded in `ImportResult.warnings` while still allowing repository writes.
+- FinMind API errors are converted into a failed `ImportResult`.
+
+Current boundary:
+
+- SAP score snapshot import from FinMind is not implemented yet.
+- Unit tests use a mock `FinMindClient` and do not call the real FinMind API.
+- Analyzer, Provider, Strategy, Backtest, and SAP Score behavior are unchanged.
 
 ## FinMind API Mapping
 
@@ -280,8 +308,8 @@ Mapping behavior:
 Current boundary:
 
 - Mapping does not call the FinMind API.
-- Mapping does not write to `HistoricalSnapshotRepository`.
-- FinMindImporter request/import flows remain unimplemented.
+- Mapping itself does not write to `HistoricalSnapshotRepository`.
+- `FinMindImporter` currently uses financial statement mapping only; SAP snapshot import remains planned.
 
 ## Strategy Framework
 
