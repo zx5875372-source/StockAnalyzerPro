@@ -73,6 +73,25 @@ Check:
 - `Imported Count` is greater than zero when FinMind returns data.
 - `Failed Count`, `Errors`, and `Warnings` are acceptable for the response being tested.
 
+## Missing Published Date Fallback
+
+FinMind financial statement responses may not include a published date field such as:
+
+- `published_date`
+- `release_date`
+- `filing_date`
+
+When those fields are missing, StockAnalyzerPro falls back to the statement `date` / `statement_date` so the row can still be imported for research.
+
+Fallback rows are marked with:
+
+```text
+warning=missing_published_date
+is_point_in_time=false
+```
+
+These rows are not formal point-in-time records and should not be treated as look-ahead-safe historical data.
+
 ## Confirm Test Database Has Data
 
 Use Python with SQLite:

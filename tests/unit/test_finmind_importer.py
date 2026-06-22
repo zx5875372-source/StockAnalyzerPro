@@ -78,6 +78,29 @@ class FinMindImporterTests(unittest.TestCase):
         self.assertEqual(client.calls[0]["start_date"], "2025-01-01")
         self.assertEqual(client.calls[0]["end_date"], "2025-12-31")
 
+    def test_missing_published_date_row_writes_with_warning(self):
+        row = valid_financial_row()
+        row.pop("release_date")
+        row.pop("snapshot_date")
+        importer = FinMindImporter(
+            client=MockFinMindClient(
+                response=FinMindResponse(status=200, message="success", data=[row])
+            )
+        )
+
+        with temp_repository() as repository:
+            result = importer.import_financial_statements("2330", repository=repository)
+            snapshot = repository.get_financial_snapshot("2330.TW", 2025, 1, "2025-03-31", "income_statement")
+
+        self.assertEqual(result.imported_count, 1)
+        self.assertEqual(result.failed_count, 0)
+        self.assertEqual(result.errors, [])
+        self.assertEqual(len(result.warnings), 1)
+        self.assertIn("missing_published_date", result.warnings[0])
+        self.assertIsNotNone(snapshot)
+        self.assertFalse(snapshot.is_point_in_time)
+        self.assertIn("missing_published_date", snapshot.warning)
+
     def test_invalid_row_does_not_write_to_repository(self):
         row = valid_financial_row()
         row["published_date"] = "2025-03-22"

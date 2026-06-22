@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Fix FinMind Missing Published Date Fallback
+
+- Fixed FinMind financial statement mapping when API rows do not include `published_date`, `release_date`, or `filing_date`.
+- Added fallback from missing published date to `statement_date` / `date`.
+- Marked fallback rows with `warning=missing_published_date` and `is_point_in_time=false`.
+- Updated historical validation to allow fallback rows while recording a clear warning.
+- Added tests for mapper fallback, validator warnings, importer repository writes, and official published-date point-in-time behavior.
+- Updated the FinMind smoke test guide to explain that fallback rows are not formal point-in-time records.
+- No analyzer changes, SAP Score changes, backtest changes, strategy changes, provider changes, FinMindClient request logic changes, or FinMindImporter flow changes were added.
+
 ## v2.22 - FinMind Smoke Test Guide
 
 - Added `docs/FINMIND_SMOKE_TEST.md`.

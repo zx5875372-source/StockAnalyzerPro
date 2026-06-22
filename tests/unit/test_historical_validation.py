@@ -82,6 +82,36 @@ class HistoricalValidationTests(unittest.TestCase):
         self.assertEqual(len(second_result.warnings), 1)
         self.assertIn("Duplicate historical snapshot key", second_result.warnings[0])
 
+    def test_missing_published_date_fallback_adds_warning(self):
+        validator = HistoricalValidator()
+        snapshot = financial_snapshot(
+            published_date="2025-12-31",
+            snapshot_date="2025-12-31",
+            is_point_in_time=False,
+            warning="missing_published_date",
+        )
+
+        result = validator.validate_financial_snapshot(snapshot)
+
+        self.assertTrue(result.is_valid)
+        self.assertEqual(result.errors, [])
+        self.assertEqual(len(result.warnings), 1)
+        self.assertIn("missing_published_date", result.warnings[0])
+
+    def test_missing_published_date_fallback_cannot_be_point_in_time(self):
+        validator = HistoricalValidator()
+        snapshot = financial_snapshot(
+            published_date="2025-12-31",
+            snapshot_date="2025-12-31",
+            is_point_in_time=True,
+            warning="missing_published_date",
+        )
+
+        result = validator.validate_financial_snapshot(snapshot)
+
+        self.assertFalse(result.is_valid)
+        self.assertIn("missing_published_date snapshots cannot be marked as point-in-time", result.errors)
+
 
 def sap_snapshot(**overrides):
     values = {

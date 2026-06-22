@@ -40,6 +40,23 @@ class FinMindMapperTests(unittest.TestCase):
         self.assertEqual(snapshot.statement_type, "income_statement")
         self.assertEqual(json.loads(snapshot.payload_json), {"net_income": 900, "revenue": 2500})
 
+    def test_financial_row_missing_published_date_falls_back_to_statement_date(self):
+        snapshot = map_financial_statement_row(
+            {
+                "stock_id": "2330",
+                "date": "2024-12-31",
+                "year": "2024",
+                "quarter": "Q4",
+                "statement_type": "income_statement",
+                "revenue": 2500,
+            }
+        )
+
+        self.assertEqual(snapshot.published_date, "2024-12-31")
+        self.assertEqual(snapshot.snapshot_date, "2024-12-31")
+        self.assertFalse(snapshot.is_point_in_time)
+        self.assertIn("missing_published_date", snapshot.warning)
+
     def test_valid_sap_row_maps_to_snapshot(self):
         snapshot = map_sap_snapshot_row(
             {

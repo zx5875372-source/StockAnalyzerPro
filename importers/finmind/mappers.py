@@ -9,6 +9,7 @@ from modules.downloader import normalize_symbol
 
 FINMIND_SOURCE = "finmind"
 FINMIND_SOURCE_VERSION = "v1"
+MISSING_PUBLISHED_DATE_WARNING = "missing_published_date"
 
 
 class FinMindMappingError(ValueError):
@@ -20,7 +21,15 @@ def map_financial_statement_row(row: dict) -> FinancialStatementSnapshot:
     statement_date = parse_date(required_value(row, "statement_date", "date"))
     fiscal_year = parse_year(row.get("fiscal_year") or row.get("year"), default_year=statement_date.year)
     fiscal_quarter = parse_quarter(row.get("fiscal_quarter") or row.get("quarter"), statement_date=statement_date)
-    published_date = parse_date(required_value(row, "published_date", "release_date", "filing_date"))
+    published_date_value = optional_value(row, "published_date", "release_date", "filing_date")
+    is_point_in_time = True
+    warning = str(row.get("warning") or "")
+    if published_date_value is None:
+        published_date = statement_date
+        is_point_in_time = False
+        warning = append_warning(warning, MISSING_PUBLISHED_DATE_WARNING)
+    else:
+        published_date = parse_date(published_date_value)
     snapshot_date = parse_date(row.get("snapshot_date") or published_date.isoformat())
     statement_type = str(required_value(row, "statement_type", "type"))
 
@@ -33,11 +42,11 @@ def map_financial_statement_row(row: dict) -> FinancialStatementSnapshot:
         snapshot_date=snapshot_date.isoformat(),
         source=FINMIND_SOURCE,
         source_version=FINMIND_SOURCE_VERSION,
-        is_point_in_time=True,
+        is_point_in_time=is_point_in_time,
         created_at=str(row.get("created_at") or ""),
         statement_type=statement_type,
         payload_json=build_payload_json(row),
-        warning=str(row.get("warning") or ""),
+        warning=warning,
     )
 
 
@@ -69,12 +78,26 @@ def map_sap_snapshot_row(row: dict) -> SAPScoreSnapshot:
 
 
 def required_value(row: dict, *field_names: str):
+    value = optional_value(row, *field_names)
+    if value is not None:
+        return value
+    names = ", ".join(field_names)
+    raise FinMindMappingError(f"Missing required FinMind field: {names}")
+
+
+def optional_value(row: dict, *field_names: str):
     for field_name in field_names:
         value = row.get(field_name)
         if value is not None and not (isinstance(value, str) and not value.strip()):
             return value
-    names = ", ".join(field_names)
-    raise FinMindMappingError(f"Missing required FinMind field: {names}")
+    return None
+
+
+def append_warning(existing_warning: str, warning: str) -> str:
+    warnings = [item.strip() for item in existing_warning.split(",") if item.strip()]
+    if warning not in warnings:
+        warnings.append(warning)
+    return ",".join(warnings)
 
 
 def parse_year(value, default_year: int | None = None) -> int:
