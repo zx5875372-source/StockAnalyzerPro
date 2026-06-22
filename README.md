@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.21 FinMind Import CLI
+Current version: v2.22 FinMind Smoke Test Guide
 
 ## Current Features
 
@@ -38,6 +38,7 @@ Current version: v2.21 FinMind Import CLI
 - Provides FinMind API mapping helpers for converting raw rows into historical snapshot dataclasses.
 - Provides FinMind financial statement import integration through mapper, validator, and historical repository writes.
 - Provides a FinMind import CLI for writing financial statement snapshots into the historical repository.
+- Provides a FinMind smoke test guide and helper script for safe real-API testing with a test database.
 
 ## Installation
 
@@ -296,7 +297,7 @@ finmind_import.py
 Example:
 
 ```powershell
-.venv\Scripts\python.exe finmind_import.py --symbol 2330 --start 2025-01-01 --end 2025-12-31 --db historical_snapshots.db
+.venv\Scripts\python.exe finmind_import.py --symbol 2330 --start 2025-01-01 --end 2025-12-31 --db historical_snapshots_test.db
 ```
 
 Token options:
@@ -322,6 +323,33 @@ Current boundary:
 - SAP score snapshot import from FinMind remains planned.
 - Unit tests use mock importers and do not call the real FinMind API.
 - Analyzer, Provider, Strategy, Backtest, SAP Score, and FinMindClient request logic are unchanged.
+
+## FinMind Smoke Test
+
+Milestone 5.7 Sprint 7 adds a real-API smoke test guide:
+
+```text
+docs/FINMIND_SMOKE_TEST.md
+```
+
+Recommended smoke test:
+
+```powershell
+.\scripts\finmind_smoke_test.ps1
+```
+
+The script runs:
+
+```powershell
+.venv\Scripts\python.exe finmind_import.py --symbol 2330 --start 2024-01-01 --end 2024-12-31 --db historical_snapshots_test.db
+```
+
+Safety notes:
+
+- Set `FINMIND_TOKEN` before testing when available.
+- Use `historical_snapshots_test.db` for smoke tests.
+- Review `reports/finmind_import_summary.md` after each run.
+- Do not run smoke tests against `historical_snapshots.db`.
 
 ## FinMind API Mapping
 

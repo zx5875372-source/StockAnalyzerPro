@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.22 - FinMind Smoke Test Guide
+
+- Added `docs/FINMIND_SMOKE_TEST.md`.
+- Added `scripts/finmind_smoke_test.ps1`.
+- Documented safe real-API smoke testing with `FINMIND_TOKEN`.
+- Documented the recommended smoke test symbol `2330` and date range `2024-01-01` to `2024-12-31`.
+- Documented use of `historical_snapshots_test.db` and warned against writing smoke test data to `historical_snapshots.db`.
+- Documented how to review `reports/finmind_import_summary.md`, confirm SQLite row counts, and delete the test database.
+- Updated README with the smoke test guide and helper script entry point.
+- No analyzer changes, provider changes, backtest changes, strategy changes, SAP Score changes, FinMindClient changes, or FinMindImporter changes were added.
+
 ## v2.21 - FinMind Import CLI
 
 - Added `finmind_import.py`.
