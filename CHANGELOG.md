@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.15 - FinMind Importer Architecture
+
+- Added `importers/finmind_importer.py`.
+- Added architecture-only `FinMindImporter` with metadata, `supports()`, `import_snapshot()`, and `import_financial_statements()`.
+- Registered `finmind` in the default `ImporterRegistry`.
+- Added `docs/FINMIND_IMPORTER_ARCHITECTURE.md` with API mapping, financial statement mapping, quarter mapping, snapshot flow, rate limit, retry, error handling, point-in-time considerations, diagrams, and migration plan.
+- Added unit tests for default registry registration, importer metadata, and supported snapshot types.
+- Documented planned data sources in README.
+- No network calls, API implementation, repository writes, analyzer, provider, strategy, backtest, or SAP Score behavior changed.
+
 ## v2.14 - Data Quality Profiling
 
 - Added `historical/profiling/`.

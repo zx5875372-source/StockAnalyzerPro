@@ -46,10 +46,12 @@ class ImporterRegistry:
 
 def create_default_registry() -> ImporterRegistry:
     from importers.csv_historical_importer import CSVHistoricalImporter
+    from importers.finmind_importer import FinMindImporter
     from importers.mock_importer import MockImporter
 
     registry = ImporterRegistry()
     registry.register("csv", CSVHistoricalImporter)
     registry.register("csv_historical", CSVHistoricalImporter)
+    registry.register("finmind", FinMindImporter)
     registry.register("mock", MockImporter)
     return registry

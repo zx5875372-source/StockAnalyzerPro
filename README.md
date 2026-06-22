@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.14 Data Quality Profiling
+Current version: v2.15 FinMind Importer Architecture
 
 ## Current Features
 
@@ -32,6 +32,7 @@ Current version: v2.14 Data Quality Profiling
 - Provides a Historical Import CLI for validating CSV files and writing snapshots into the historical repository.
 - Provides reusable historical import sample CSV fixtures and format documentation.
 - Provides a Data Quality Profiling Framework for imports and historical repositories.
+- Provides a planned FinMind importer architecture skeleton without API calls.
 
 ## Installation
 
@@ -190,6 +191,22 @@ Current Sprint boundary:
 - `cached_yahoo` uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
 - `SQLiteCache` remains available for tests and future integration, but runtime provider flow still uses `MemoryCache`.
 - Provider Framework is covered by unit tests and is ready for later integration.
+
+## Planned Data Sources
+
+Current and planned data-source roles:
+
+- Yahoo Finance: current runtime market and financial data source through `YahooFinanceProvider`.
+- CSV: current historical snapshot import source through `CSVHistoricalImporter`.
+- FinMind (Planned): historical Taiwan financial statement import source; architecture skeleton exists as `FinMindImporter`, but it does not call the API yet.
+- OpenBB (Planned): future multi-source research data option.
+- Polygon (Planned): future market data option.
+
+FinMind architecture documentation:
+
+```text
+docs/FINMIND_IMPORTER_ARCHITECTURE.md
+```
 
 ## Strategy Framework
 
