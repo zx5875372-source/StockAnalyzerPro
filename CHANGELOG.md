@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.25 - Historical Pipeline Smoke Test
+
+- Added `scripts/historical_pipeline_smoke_test.ps1`.
+- Added end-to-end smoke flow from `tests/sample_data/historical/financial_snapshots_valid.csv` through `historical_import.py`, `HistoricalSnapshotRepository`, and `historical_generate_sap.py`.
+- Added `reports/historical_pipeline_smoke_test.md` summary output.
+- Added summary fields for imported financial snapshot count, generated SAP snapshot count, failed count, warning count, database path, and point-in-time status.
+- Added integration test coverage for the historical pipeline and repository financial/SAP snapshot checks.
+- No SAP Score scoring logic, Analyzer, Provider, Backtest, or Strategy changes were added.
+
 ## v2.24 - Historical SAP Generator CLI
 
 - Added `historical_generate_sap.py`.

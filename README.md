@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.24 Historical SAP Generator CLI
+Current version: v2.25 Historical Pipeline Smoke Test
 
 ## Current Features
 
@@ -41,6 +41,7 @@ Current version: v2.24 Historical SAP Generator CLI
 - Provides a FinMind smoke test guide and helper script for safe real-API testing with a test database.
 - Provides a Historical SAP Generator MVP for turning financial statement snapshots into repository SAP score snapshots.
 - Provides a Historical SAP Generator CLI for filtered repository generation runs.
+- Provides an end-to-end historical pipeline smoke test from financial CSV import to SAP snapshot generation.
 
 ## Installation
 
@@ -503,6 +504,31 @@ reports/historical_generator_summary.md
 ```
 
 The summary includes database path, generated count, updated count, failed count, warning count, and filters used.
+
+End-to-end historical pipeline smoke test:
+
+```powershell
+.\scripts\historical_pipeline_smoke_test.ps1
+```
+
+The smoke test runs:
+
+```text
+CSV financial snapshots
+-> historical_import.py
+-> HistoricalSnapshotRepository
+-> historical_generate_sap.py
+-> SAPScoreSnapshot rows
+-> reports/historical_pipeline_smoke_test.md
+```
+
+It uses:
+
+```text
+historical_pipeline_test.db
+```
+
+The pipeline report includes imported financial snapshot count, generated SAP snapshot count, failed count, warnings, database path, and point-in-time status.
 
 Current boundary:
 
