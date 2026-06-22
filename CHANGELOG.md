@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.11 - Validation Integration
+
+- Integrated `HistoricalValidator` into `CSVHistoricalImporter`.
+- CSV rows are validated before being added to imported snapshot results.
+- Validation failures are excluded from imported snapshots, increment `failed_count`, and record clear row-level errors.
+- Validation warnings are recorded in `ImportResult.warnings` while still allowing the snapshot to import.
+- Added unit tests for valid CSV import, missing required field validation, invalid score validation, and warning-preserving import.
+- No analyzer, provider, backtest, strategy, SAP Score, API acquisition, or repository behavior changed.
+
 ## v2.10 - Historical Validation Framework
 
 - Added `historical/validation/`.

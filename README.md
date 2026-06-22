@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.10 Historical Validation Framework
+Current version: v2.11 Validation Integration
 
 ## Current Features
 
@@ -321,7 +321,9 @@ Validation rules currently cover:
 Current validation boundary:
 
 - Validation runs on in-memory snapshot dataclasses only.
-- `CSVHistoricalImporter` exposes a reserved `validator` hook, but CSV import flow is unchanged.
+- `CSVHistoricalImporter` validates each CSV row before adding it to `ImportResult`.
+- Validation failures are excluded from imported snapshots, increment `failed_count`, and record row-level errors.
+- Validation warnings are recorded in `ImportResult.warnings`, but the snapshot is still imported.
 - No API calls, repository writes, analyzer changes, SAP Score changes, or backtest behavior changes are included in this Sprint.
 
 ## Backtest MVP

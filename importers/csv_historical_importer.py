@@ -4,6 +4,7 @@ import csv
 from pathlib import Path
 
 from historical.models import FinancialStatementSnapshot, SAPScoreSnapshot
+from historical.validation import HistoricalValidator
 from importers.base_importer import BaseImporter, ImporterError
 from importers.import_result import ImportResult
 from modules.downloader import normalize_symbol
@@ -29,7 +30,7 @@ class CSVHistoricalImporter(BaseImporter):
     name = "csv_historical"
     version = "v0"
 
-    def __init__(self, validator=None):
+    def __init__(self, validator: HistoricalValidator | None = None):
         self.validator = validator
 
     def supports(self, snapshot_type: str) -> bool:
@@ -57,14 +58,32 @@ class CSVHistoricalImporter(BaseImporter):
             financial_snapshots = []
             sap_snapshots = []
             errors = []
+            warnings = []
+            failed_count = 0
+            validator = self.validator or HistoricalValidator()
 
             for row_number, row in enumerate(reader, start=2):
                 try:
                     if resolved_type == "financial_statement":
-                        financial_snapshots.append(financial_snapshot_from_row(row))
+                        snapshot = financial_snapshot_from_row(row)
+                        validation = validator.validate_financial_snapshot(snapshot)
+                        if not validation.is_valid:
+                            failed_count += 1
+                            errors.extend(format_validation_messages(row_number, validation.errors))
+                            continue
+                        warnings.extend(format_validation_messages(row_number, validation.warnings))
+                        financial_snapshots.append(snapshot)
                     else:
-                        sap_snapshots.append(sap_score_snapshot_from_row(row))
+                        snapshot = sap_score_snapshot_from_row(row)
+                        validation = validator.validate_sap_snapshot(snapshot)
+                        if not validation.is_valid:
+                            failed_count += 1
+                            errors.extend(format_validation_messages(row_number, validation.errors))
+                            continue
+                        warnings.extend(format_validation_messages(row_number, validation.warnings))
+                        sap_snapshots.append(snapshot)
                 except (KeyError, TypeError, ValueError) as error:
+                    failed_count += 1
                     errors.append(f"row {row_number}: {error}")
 
         return ImportResult(
@@ -72,10 +91,11 @@ class CSVHistoricalImporter(BaseImporter):
             importer_version=self.version,
             source=str(csv_path),
             imported_count=len(financial_snapshots) + len(sap_snapshots),
-            failed_count=len(errors),
+            failed_count=failed_count,
             financial_statement_snapshots=financial_snapshots,
             sap_score_snapshots=sap_snapshots,
             errors=errors,
+            warnings=warnings,
         )
 
     def import_financial_statements(self, source: str | Path) -> ImportResult:
@@ -159,3 +179,7 @@ def parse_optional_float(value: str | None) -> float | None:
     if value is None or value == "":
         return None
     return float(value)
+
+
+def format_validation_messages(row_number: int, messages: list[str]) -> list[str]:
+    return [f"row {row_number}: {message}" for message in messages]

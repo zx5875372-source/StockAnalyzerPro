@@ -107,6 +107,46 @@ class CSVHistoricalImporterTests(unittest.TestCase):
         self.assertFalse(snapshot.is_point_in_time)
         self.assertEqual(snapshot.sap_score, 90)
         self.assertEqual(snapshot.warning, "not_point_in_time")
+        self.assertEqual(result.errors, [])
+        self.assertEqual(result.warnings, [])
+
+    def test_csv_importer_rejects_missing_required_field_value(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            csv_path = Path(temp_dir) / "sap_missing_field.csv"
+            csv_path.write_text(sap_csv(symbol="", sap_score=""), encoding="utf-8")
+
+            result = CSVHistoricalImporter().import_snapshot(csv_path, snapshot_type="sap_score")
+
+        self.assertEqual(result.imported_count, 0)
+        self.assertEqual(result.failed_count, 1)
+        self.assertEqual(result.sap_score_snapshots, [])
+        self.assertTrue(any("Missing required field: symbol" in error for error in result.errors))
+        self.assertTrue(any("Missing required field: sap_score" in error for error in result.errors))
+
+    def test_csv_importer_rejects_invalid_score(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            csv_path = Path(temp_dir) / "sap_invalid_score.csv"
+            csv_path.write_text(sap_csv(sap_score="120"), encoding="utf-8")
+
+            result = CSVHistoricalImporter().import_snapshot(csv_path, snapshot_type="sap_score")
+
+        self.assertEqual(result.imported_count, 0)
+        self.assertEqual(result.failed_count, 1)
+        self.assertEqual(result.sap_score_snapshots, [])
+        self.assertTrue(any("sap_score must be between 0 and 100: 120.0" in error for error in result.errors))
+
+    def test_csv_importer_records_warning_and_still_imports(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            csv_path = Path(temp_dir) / "sap_duplicate.csv"
+            csv_path.write_text(sap_csv_with_duplicate(), encoding="utf-8")
+
+            result = CSVHistoricalImporter().import_snapshot(csv_path, snapshot_type="sap_score")
+
+        self.assertEqual(result.imported_count, 2)
+        self.assertEqual(result.failed_count, 0)
+        self.assertEqual(len(result.sap_score_snapshots), 2)
+        self.assertEqual(len(result.warnings), 1)
+        self.assertIn("Duplicate historical snapshot key", result.warnings[0])
 
     def test_csv_importer_infers_sap_score_snapshot_type(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -180,11 +220,22 @@ def financial_csv():
     )
 
 
-def sap_csv():
+def sap_csv(symbol="2330", sap_score="90"):
+    return "\n".join(
+        [
+            "symbol,fiscal_year,fiscal_quarter,statement_date,published_date,snapshot_date,source,source_version,is_point_in_time,created_at,sap_score,piotroski_score,data_quality_score,credibility_grade,warning",
+            f"{symbol},2025,4,2025-12-31,2026-03-31,2026-04-01,current_analysis_proxy,v0,false,2026-04-01T00:00:00+00:00,{sap_score},8,100,C,not_point_in_time",
+            "",
+        ]
+    )
+
+
+def sap_csv_with_duplicate():
     return "\n".join(
         [
             "symbol,fiscal_year,fiscal_quarter,statement_date,published_date,snapshot_date,source,source_version,is_point_in_time,created_at,sap_score,piotroski_score,data_quality_score,credibility_grade,warning",
             "2330,2025,4,2025-12-31,2026-03-31,2026-04-01,current_analysis_proxy,v0,false,2026-04-01T00:00:00+00:00,90,8,100,C,not_point_in_time",
+            "2330,2025,4,2025-12-31,2026-03-31,2026-04-01,current_analysis_proxy,v0,false,2026-04-01T00:00:00+00:00,91,8,100,C,not_point_in_time",
             "",
         ]
     )

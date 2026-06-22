@@ -16,6 +16,7 @@ class ImportResult:
     financial_statement_snapshots: list[FinancialStatementSnapshot] = field(default_factory=list)
     sap_score_snapshots: list[SAPScoreSnapshot] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def snapshot_count(self) -> int:
