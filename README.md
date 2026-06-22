@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.18 FinMind API Mapping
+Current version: v2.19 FinMind API Request Methods
 
 ## Current Features
 
@@ -33,7 +33,7 @@ Current version: v2.18 FinMind API Mapping
 - Provides reusable historical import sample CSV fixtures and format documentation.
 - Provides a Data Quality Profiling Framework for imports and historical repositories.
 - Provides a planned FinMind importer architecture skeleton without API calls.
-- Provides a FinMind API Client skeleton with config, session, response model, and exception hierarchy.
+- Provides a FinMind API Client with financial statement request methods, retry handling, and clear API exceptions.
 - Provides a consolidated architecture overview and dependency rules for all frameworks.
 - Provides FinMind API mapping helpers for converting raw rows into historical snapshot dataclasses.
 
@@ -211,7 +211,7 @@ Current and planned data-source roles:
 
 - Yahoo Finance: current runtime market and financial data source through `YahooFinanceProvider`.
 - CSV: current historical snapshot import source through `CSVHistoricalImporter`.
-- FinMind (Planned): historical Taiwan financial statement import source; architecture skeleton exists as `FinMindImporter`, but it does not call the API yet.
+- FinMind (Planned): historical Taiwan financial statement import source; `FinMindClient` can request supported datasets, but `FinMindImporter` still does not import or write data yet.
 - OpenBB (Planned): future multi-source research data option.
 - Polygon (Planned): future market data option.
 
@@ -223,7 +223,7 @@ docs/FINMIND_IMPORTER_ARCHITECTURE.md
 
 ## FinMind Client
 
-Milestone 5.7 Sprint 2 adds the FinMind client package under:
+Milestone 5.7 Sprint 4 adds request methods to the FinMind client package under:
 
 ```text
 importers/finmind/
@@ -232,15 +232,27 @@ importers/finmind/
 The package introduces:
 
 - `FinMindConfig`: base URL, token, timeout, and max retry settings.
-- `FinMindClient`: stores config, creates a session, manages optional token headers, and exposes future request method placeholders.
-- `FinMindSession`: lightweight session container used by the MVP client.
+- `FinMindClient`: stores config, creates a session, manages optional token headers, and exposes financial statement request methods.
+- `FinMindSession`: lightweight HTTP session wrapper used by the MVP client.
 - `FinMindResponse`: normalized API response model with `status`, `message`, and `data`.
 - `FinMindError`, `FinMindAPIError`, `FinMindRateLimitError`, and `FinMindAuthenticationError`.
 
+Request methods:
+
+- `get_financial_statement(stock_id, start_date=None, end_date=None)`
+- `get_balance_sheet(stock_id, start_date=None, end_date=None)`
+- `get_cash_flow(stock_id, start_date=None, end_date=None)`
+
+Client behavior:
+
+- Requests go through `_request(dataset, stock_id, start_date=None, end_date=None)`.
+- Query params include `dataset`, `data_id`, optional date range, and optional token.
+- Timeout and retry settings come from `FinMindConfig`.
+- HTTP errors, rate limits, and authentication errors are normalized into FinMind exceptions.
+
 Current boundary:
 
-- No FinMind API calls are implemented.
-- All request methods raise `NotImplementedError`.
+- Unit tests use mock sessions and do not call the real FinMind API.
 - `FinMindImporter` only owns a `FinMindClient`; its import flow remains architecture-only.
 - Historical Repository, Analyzer, Provider, Strategy, Backtest, and SAP Score behavior are unchanged.
 
@@ -269,7 +281,7 @@ Current boundary:
 
 - Mapping does not call the FinMind API.
 - Mapping does not write to `HistoricalSnapshotRepository`.
-- FinMind API Client and FinMindImporter request/import flows remain unimplemented.
+- FinMindImporter request/import flows remain unimplemented.
 
 ## Strategy Framework
 

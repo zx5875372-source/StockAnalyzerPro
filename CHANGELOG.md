@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.19 - FinMind API Request Methods
+
+- Added `FinMindClient.get_financial_statement()`.
+- Added `FinMindClient.get_balance_sheet()`.
+- Added `FinMindClient.get_cash_flow()`.
+- Routed FinMind dataset requests through `_request()`.
+- Added query param construction for dataset, stock ID, optional date range, and optional token.
+- Added timeout and retry handling through `FinMindConfig`.
+- Added normalized handling for HTTP errors, rate limits, and authentication errors.
+- Added mock-session unit tests for success, HTTP error, rate limit, auth error, retry success, and request validation.
+- No repository writes, FinMindImporter import flow, analyzer changes, provider changes, backtest changes, SAP Score changes, or mapper changes were added.
+
 ## v2.18 - FinMind API Mapping
 
 - Added `importers/finmind/mappers.py`.
