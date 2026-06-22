@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.13 - Historical Import Fixtures
+
+- Added reusable historical import sample CSV files under `tests/sample_data/historical/`.
+- Added valid and invalid SAP snapshot CSV fixtures.
+- Added valid and invalid financial statement snapshot CSV fixtures.
+- Added `docs/HISTORICAL_IMPORT_FORMAT.md` with SAP and financial CSV formats, required fields, common errors, and validation failure versus warning behavior.
+- Updated README with direct `historical_import.py` sample commands.
+- Added unit tests for valid sample imports, invalid sample failures, and summary report generation.
+- No analyzer, provider, backtest, strategy, SAP Score, or API acquisition behavior changed.
+
 ## v2.12 - Historical Import CLI
 
 - Added `historical_import.py`.

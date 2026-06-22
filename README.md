@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.12 Historical Import CLI
+Current version: v2.13 Historical Import Fixtures
 
 ## Current Features
 
@@ -30,6 +30,7 @@ Current version: v2.12 Historical Import CLI
 - Provides a Historical Import Framework for future CSV and external data imports.
 - Provides a Historical Validation Framework for validating snapshot metadata, dates, scores, and duplicate keys.
 - Provides a Historical Import CLI for validating CSV files and writing snapshots into the historical repository.
+- Provides reusable historical import sample CSV fixtures and format documentation.
 
 ## Installation
 
@@ -290,12 +291,14 @@ Import historical SAP Score snapshots:
 
 ```powershell
 .venv\Scripts\python.exe historical_import.py --type sap --file path\to\sap_scores.csv --db historical_snapshots.db
+.venv\Scripts\python.exe historical_import.py --type sap --file tests/sample_data/historical/sap_snapshots_valid.csv
 ```
 
 Import historical financial statement snapshots:
 
 ```powershell
 .venv\Scripts\python.exe historical_import.py --type financial --file path\to\financial.csv --db historical_snapshots.db
+.venv\Scripts\python.exe historical_import.py --type financial --file tests/sample_data/historical/financial_snapshots_valid.csv
 ```
 
 The CLI writes a summary report to:
@@ -305,6 +308,21 @@ reports/historical_import_summary.md
 ```
 
 The summary includes imported count, failed count, warning count, row-level errors, and row-level warnings.
+
+Reusable sample CSV files:
+
+```text
+tests/sample_data/historical/sap_snapshots_valid.csv
+tests/sample_data/historical/sap_snapshots_invalid.csv
+tests/sample_data/historical/financial_snapshots_valid.csv
+tests/sample_data/historical/financial_snapshots_invalid.csv
+```
+
+CSV format documentation:
+
+```text
+docs/HISTORICAL_IMPORT_FORMAT.md
+```
 
 Current import boundary:
 
