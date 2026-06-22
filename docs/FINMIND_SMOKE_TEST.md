@@ -92,6 +92,29 @@ is_point_in_time=false
 
 These rows are not formal point-in-time records and should not be treated as look-ahead-safe historical data.
 
+## Latest Smoke Test Result
+
+Real FinMind smoke test result:
+
+| Field | Value |
+| --- | --- |
+| Symbol | `2330` |
+| Start Date | `2024-01-01` |
+| End Date | `2024-12-31` |
+| Imported Count | `68` |
+| Failed Count | `0` |
+| Warning Count | `132` |
+| SQLite Row Count | `68` |
+| Main Warning | `missing_published_date` |
+| Point-in-Time Status | `is_point_in_time=false` |
+
+Interpretation:
+
+- FinMind financial statement data can currently be imported successfully into `HistoricalSnapshotRepository`.
+- The tested FinMind financial statement response did not provide a formal announcement date field.
+- StockAnalyzerPro therefore falls back to `statement_date` / `date` and marks imported rows as `is_point_in_time=false`.
+- These imported rows are usable for research and pipeline validation, but they are not formal point-in-time records and should not be treated as look-ahead-safe backtest data.
+
 ## Confirm Test Database Has Data
 
 Use Python with SQLite:

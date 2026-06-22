@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Document FinMind Smoke Test Result
+
+- Documented the real FinMind smoke test result for `2330` from `2024-01-01` to `2024-12-31`.
+- Recorded `imported_count=68`, `failed_count=0`, `warning_count=132`, and SQLite row count `68`.
+- Clarified that the main warning is `missing_published_date`.
+- Clarified that missing published-date fallback rows are stored with `is_point_in_time=false`.
+- Documented that FinMind financial statements can currently be imported successfully, but rows without announcement dates are not formal point-in-time data.
+- No program code was changed.
+
 ## Unreleased - Fix FinMind Missing Published Date Fallback
 
 - Fixed FinMind financial statement mapping when API rows do not include `published_date`, `release_date`, or `filing_date`.
