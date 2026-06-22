@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.20 FinMind Importer Integration
+Current version: v2.21 FinMind Import CLI
 
 ## Current Features
 
@@ -37,6 +37,7 @@ Current version: v2.20 FinMind Importer Integration
 - Provides a consolidated architecture overview and dependency rules for all frameworks.
 - Provides FinMind API mapping helpers for converting raw rows into historical snapshot dataclasses.
 - Provides FinMind financial statement import integration through mapper, validator, and historical repository writes.
+- Provides a FinMind import CLI for writing financial statement snapshots into the historical repository.
 
 ## Installation
 
@@ -283,6 +284,44 @@ Current boundary:
 - SAP score snapshot import from FinMind is not implemented yet.
 - Unit tests use a mock `FinMindClient` and do not call the real FinMind API.
 - Analyzer, Provider, Strategy, Backtest, and SAP Score behavior are unchanged.
+
+## FinMind Import CLI
+
+Milestone 5.7 Sprint 6 adds:
+
+```text
+finmind_import.py
+```
+
+Example:
+
+```powershell
+.venv\Scripts\python.exe finmind_import.py --symbol 2330 --start 2025-01-01 --end 2025-12-31 --db historical_snapshots.db
+```
+
+Token options:
+
+- `--token <token>` has first priority.
+- `FINMIND_TOKEN` is used when `--token` is not provided.
+- Token may be empty, but FinMind anonymous access can be rate-limited or unavailable depending on the dataset and FinMind API policy.
+
+CLI flow:
+
+```mermaid
+flowchart TD
+    CLI["finmind_import.py"] --> Importer["FinMindImporter.import_financial_statements()"]
+    Importer --> Repository["HistoricalSnapshotRepository"]
+    Importer --> Summary["reports/finmind_import_summary.md"]
+```
+
+The summary report includes symbol, start date, end date, imported count, failed count, warning count, errors, warnings, and repository database path.
+
+Current boundary:
+
+- The CLI imports FinMind financial statement snapshots only.
+- SAP score snapshot import from FinMind remains planned.
+- Unit tests use mock importers and do not call the real FinMind API.
+- Analyzer, Provider, Strategy, Backtest, SAP Score, and FinMindClient request logic are unchanged.
 
 ## FinMind API Mapping
 

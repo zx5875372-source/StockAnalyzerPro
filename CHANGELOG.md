@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.21 - FinMind Import CLI
+
+- Added `finmind_import.py`.
+- Added CLI arguments for `--symbol`, `--start`, `--end`, `--db`, and `--token`.
+- Added `FINMIND_TOKEN` fallback when `--token` is not provided.
+- Added `FinMindImporter.import_financial_statements()` CLI flow into `HistoricalSnapshotRepository`.
+- Added `reports/finmind_import_summary.md` output with symbol, date range, import counts, errors, warnings, and repository path.
+- Added unit tests for CLI argument parsing, token resolution from environment, missing symbol errors, and mock importer summary generation.
+- Documented token behavior and anonymous access limitations in README.
+- No analyzer changes, provider changes, backtest changes, strategy changes, SAP Score changes, or FinMindClient request logic changes were added.
+
 ## v2.20 - FinMind Importer Integration
 
 - Integrated `FinMindImporter.import_financial_statements()` with `FinMindClient.get_financial_statement()`.
