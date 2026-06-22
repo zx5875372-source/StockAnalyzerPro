@@ -3,12 +3,16 @@ from __future__ import annotations
 from pathlib import Path
 
 from importers.base_importer import BaseImporter
+from importers.finmind import FinMindClient
 from importers.import_result import ImportResult
 
 
 class FinMindImporter(BaseImporter):
     name = "finmind"
     version = "v0-architecture"
+
+    def __init__(self, client: FinMindClient | None = None):
+        self.client = client or FinMindClient()
 
     def supports(self, snapshot_type: str) -> bool:
         normalized = snapshot_type.strip().lower().replace("-", "_")

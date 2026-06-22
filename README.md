@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.15 FinMind Importer Architecture
+Current version: v2.16 FinMind API Client
 
 ## Current Features
 
@@ -33,6 +33,7 @@ Current version: v2.15 FinMind Importer Architecture
 - Provides reusable historical import sample CSV fixtures and format documentation.
 - Provides a Data Quality Profiling Framework for imports and historical repositories.
 - Provides a planned FinMind importer architecture skeleton without API calls.
+- Provides a FinMind API Client skeleton with config, session, response model, and exception hierarchy.
 
 ## Installation
 
@@ -207,6 +208,29 @@ FinMind architecture documentation:
 ```text
 docs/FINMIND_IMPORTER_ARCHITECTURE.md
 ```
+
+## FinMind Client
+
+Milestone 5.7 Sprint 2 adds the FinMind client package under:
+
+```text
+importers/finmind/
+```
+
+The package introduces:
+
+- `FinMindConfig`: base URL, token, timeout, and max retry settings.
+- `FinMindClient`: stores config, creates a session, manages optional token headers, and exposes future request method placeholders.
+- `FinMindSession`: lightweight session container used by the MVP client.
+- `FinMindResponse`: normalized API response model with `status`, `message`, and `data`.
+- `FinMindError`, `FinMindAPIError`, `FinMindRateLimitError`, and `FinMindAuthenticationError`.
+
+Current boundary:
+
+- No FinMind API calls are implemented.
+- All request methods raise `NotImplementedError`.
+- `FinMindImporter` only owns a `FinMindClient`; its import flow remains architecture-only.
+- Historical Repository, Analyzer, Provider, Strategy, Backtest, and SAP Score behavior are unchanged.
 
 ## Strategy Framework
 

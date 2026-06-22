@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.16 - FinMind API Client
+
+- Added `importers/finmind/`.
+- Added `FinMindConfig` with base URL, token, timeout, and max retry settings.
+- Added `FinMindClient` with config storage, session creation, optional token header management, and request method placeholders.
+- Added FinMind exception hierarchy.
+- Added `FinMindResponse` API response dataclass.
+- Updated `FinMindImporter` to own a `FinMindClient` while leaving import methods unimplemented.
+- Added unit tests for client initialization, config defaults, exception hierarchy, response model, and importer client wiring.
+- No API calls, repository changes, snapshot changes, analyzer changes, SAP Score changes, or FinMind import flow implementation was added.
+
 ## v2.15 - FinMind Importer Architecture
 
 - Added `importers/finmind_importer.py`.
