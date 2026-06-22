@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.23 - Historical SAP Generator MVP
+
+- Added `historical/sap_generator.py`.
+- Added `HistoricalSAPGenerator.generate_snapshot()` for converting one `FinancialStatementSnapshot` into one `SAPScoreSnapshot`.
+- Added `HistoricalSAPGenerator.generate_all()` for rebuilding SAP score snapshots from all repository financial statement snapshots.
+- Reused the existing analyzer/SAP scoring path instead of reimplementing SAP Score logic.
+- Updated `HistoricalSnapshotRepository.insert_sap_snapshot()` to update an existing `(symbol, fiscal_year, fiscal_quarter)` snapshot.
+- Added `HistoricalSnapshotRepository.list_financial_snapshots()`.
+- Added `reports/historical_generator_summary.md`.
+- Added unit tests for single snapshot generation, multiple snapshot generation, duplicate update, and repository integration.
+- No Backtest, Strategy, Analyzer, Provider, or SAP Score scoring logic changes were added.
+
 ## Unreleased - Document FinMind Smoke Test Result
 
 - Documented the real FinMind smoke test result for `2330` from `2024-01-01` to `2024-12-31`.

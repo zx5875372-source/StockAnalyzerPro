@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.22 FinMind Smoke Test Guide
+Current version: v2.23 Historical SAP Generator MVP
 
 ## Current Features
 
@@ -39,6 +39,7 @@ Current version: v2.22 FinMind Smoke Test Guide
 - Provides FinMind financial statement import integration through mapper, validator, and historical repository writes.
 - Provides a FinMind import CLI for writing financial statement snapshots into the historical repository.
 - Provides a FinMind smoke test guide and helper script for safe real-API testing with a test database.
+- Provides a Historical SAP Generator MVP for turning financial statement snapshots into repository SAP score snapshots.
 
 ## Installation
 
@@ -457,6 +458,32 @@ Current boundary:
 - No historical data fetching is implemented yet.
 - Analyzer, provider, and backtest behavior are unchanged.
 - Snapshot Generator MVP uses current analyzer output as a proxy and must not be treated as formal point-in-time data.
+
+## Historical SAP Generator
+
+Milestone 6 Sprint 2 adds:
+
+```text
+historical/sap_generator.py
+```
+
+The MVP generator introduces:
+
+- `HistoricalSAPGenerator.generate_snapshot(financial_snapshot)`: converts one `FinancialStatementSnapshot` into one `SAPScoreSnapshot`.
+- `HistoricalSAPGenerator.generate_all()`: reads all financial statement snapshots from `HistoricalSnapshotRepository` and writes generated SAP snapshots back into the repository.
+- `HistoricalSAPGenerationResult`: records generated, updated, failed, warnings, errors, and generated snapshots.
+- `reports/historical_generator_summary.md`: summary report for generator runs.
+
+The generator reuses the existing analyzer/SAP scoring path and does not reimplement SAP Score logic.
+
+Current boundary:
+
+- Backtest is not modified.
+- Strategy is not modified.
+- Analyzer is not modified.
+- Provider is not modified.
+- SAP Score scoring logic is not modified.
+- Generated snapshots are repository artifacts only until a later Backtest integration Sprint.
 
 ## Historical Import Framework
 

@@ -62,10 +62,46 @@ class HistoricalSnapshotRepository:
                 payload,
             )
 
-    def insert_sap_snapshot(self, snapshot: SAPScoreSnapshot) -> None:
+    def insert_sap_snapshot(self, snapshot: SAPScoreSnapshot) -> str:
         payload = asdict(snapshot)
         payload["is_point_in_time"] = int(snapshot.is_point_in_time)
         with self._connect() as connection:
+            existing = connection.execute(
+                """
+                SELECT id
+                FROM sap_score_snapshots
+                WHERE symbol = ?
+                  AND fiscal_year = ?
+                  AND fiscal_quarter = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (snapshot.symbol, snapshot.fiscal_year, snapshot.fiscal_quarter),
+            ).fetchone()
+            if existing is not None:
+                payload["id"] = existing["id"]
+                connection.execute(
+                    """
+                    UPDATE sap_score_snapshots
+                    SET
+                        statement_date = :statement_date,
+                        published_date = :published_date,
+                        snapshot_date = :snapshot_date,
+                        source = :source,
+                        source_version = :source_version,
+                        is_point_in_time = :is_point_in_time,
+                        created_at = :created_at,
+                        sap_score = :sap_score,
+                        piotroski_score = :piotroski_score,
+                        data_quality_score = :data_quality_score,
+                        credibility_grade = :credibility_grade,
+                        warning = :warning
+                    WHERE id = :id
+                    """,
+                    payload,
+                )
+                return "updated"
+
             connection.execute(
                 """
                 INSERT INTO sap_score_snapshots (
@@ -105,6 +141,7 @@ class HistoricalSnapshotRepository:
                 """,
                 payload,
             )
+            return "generated"
 
     def get_financial_snapshot(
         self,
@@ -182,6 +219,17 @@ class HistoricalSnapshotRepository:
                 """
             ).fetchall()
         return [row["symbol"] for row in rows]
+
+    def list_financial_snapshots(self) -> list[FinancialStatementSnapshot]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM financial_statement_snapshots
+                ORDER BY symbol, fiscal_year, fiscal_quarter, snapshot_date, id
+                """
+            ).fetchall()
+        return [financial_snapshot_from_row(row) for row in rows]
 
     @contextmanager
     def _connect(self):

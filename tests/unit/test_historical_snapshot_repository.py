@@ -47,7 +47,7 @@ class HistoricalSnapshotRepositoryTests(unittest.TestCase):
             repository = HistoricalSnapshotRepository(Path(temp_dir) / "historical_snapshots.db")
             snapshot = sap_snapshot()
 
-            repository.insert_sap_snapshot(snapshot)
+            result_status = repository.insert_sap_snapshot(snapshot)
             result = repository.get_sap_snapshot(
                 symbol="2330.TW",
                 fiscal_year=2025,
@@ -55,7 +55,25 @@ class HistoricalSnapshotRepositoryTests(unittest.TestCase):
                 snapshot_date="2025-06-30",
             )
 
+        self.assertEqual(result_status, "generated")
         self.assertEqual(result, snapshot)
+
+    def test_insert_sap_snapshot_updates_existing_period(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository = HistoricalSnapshotRepository(Path(temp_dir) / "historical_snapshots.db")
+            repository.insert_sap_snapshot(sap_snapshot(sap_score=70))
+
+            updated_snapshot = sap_snapshot(sap_score=95)
+            result_status = repository.insert_sap_snapshot(updated_snapshot)
+            result = repository.get_sap_snapshot(
+                symbol="2330.TW",
+                fiscal_year=2025,
+                fiscal_quarter=1,
+                snapshot_date="2025-06-30",
+            )
+
+        self.assertEqual(result_status, "updated")
+        self.assertEqual(result.sap_score, 95)
 
     def test_query_missing_snapshot_returns_none(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -90,6 +108,16 @@ class HistoricalSnapshotRepositoryTests(unittest.TestCase):
 
         self.assertEqual(symbols, ["2330.TW", "2454.TW"])
 
+    def test_list_financial_snapshots(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository = HistoricalSnapshotRepository(Path(temp_dir) / "historical_snapshots.db")
+            repository.insert_financial_snapshot(financial_snapshot(symbol="2454.TW"))
+            repository.insert_financial_snapshot(financial_snapshot(symbol="2330.TW"))
+
+            snapshots = repository.list_financial_snapshots()
+
+        self.assertEqual([snapshot.symbol for snapshot in snapshots], ["2330.TW", "2454.TW"])
+
 
 def financial_snapshot(symbol="2330.TW", snapshot_date="2025-06-30"):
     return FinancialStatementSnapshot(
@@ -109,7 +137,7 @@ def financial_snapshot(symbol="2330.TW", snapshot_date="2025-06-30"):
     )
 
 
-def sap_snapshot(symbol="2330.TW", snapshot_date="2025-06-30"):
+def sap_snapshot(symbol="2330.TW", snapshot_date="2025-06-30", sap_score=90):
     return SAPScoreSnapshot(
         symbol=symbol,
         fiscal_year=2025,
@@ -121,7 +149,7 @@ def sap_snapshot(symbol="2330.TW", snapshot_date="2025-06-30"):
         source_version="v1",
         is_point_in_time=True,
         created_at="2026-01-01T00:00:00+00:00",
-        sap_score=90,
+        sap_score=sap_score,
         piotroski_score=8,
         data_quality_score=100,
         credibility_grade="A",

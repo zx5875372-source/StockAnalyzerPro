@@ -8,12 +8,22 @@ from historical.generator import (
     SnapshotGenerationResult,
     SnapshotGenerator,
 )
+from historical.sap_generator import (
+    GENERATOR_SOURCE,
+    GENERATOR_VERSION,
+    HistoricalSAPGenerationResult,
+    HistoricalSAPGenerator,
+)
 
 __all__ = [
     "CURRENT_ANALYSIS_PROXY_SOURCE",
     "CURRENT_ANALYSIS_PROXY_VERSION",
     "FinancialStatementSnapshot",
+    "GENERATOR_SOURCE",
+    "GENERATOR_VERSION",
     "HISTORICAL_SNAPSHOT_SCHEMA",
+    "HistoricalSAPGenerationResult",
+    "HistoricalSAPGenerator",
     "HistoricalSnapshotRepository",
     "NOT_POINT_IN_TIME_WARNING",
     "SAPScoreSnapshot",
