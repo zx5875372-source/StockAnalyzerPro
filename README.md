@@ -2,6 +2,10 @@
 
 [![Python Tests](https://github.com/zx5875372-source/StockAnalyzerPro/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/zx5875372-source/StockAnalyzerPro/actions/workflows/python-tests.yml)
 
+## Project Status
+
+See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current version, phase, completed work, limitations, test status, and next milestone.
+
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
 Current version: v2.25 Historical Pipeline Smoke Test

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Add PROJECT_STATUS
+
+- Added `PROJECT_STATUS.md` at the project root.
+- Linked the project status document from the top of `README.md`.
+- Documented current version, phase, completed work, in-progress items, planned items, known limitations, test status, and next milestone.
+- No program code was changed.
+
 ## v2.25 - Historical Pipeline Smoke Test
 
 - Added `scripts/historical_pipeline_smoke_test.ps1`.
