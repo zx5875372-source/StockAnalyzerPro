@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.16 FinMind API Client
+Current version: v2.17 Architecture Consolidation
 
 ## Current Features
 
@@ -34,6 +34,7 @@ Current version: v2.16 FinMind API Client
 - Provides a Data Quality Profiling Framework for imports and historical repositories.
 - Provides a planned FinMind importer architecture skeleton without API calls.
 - Provides a FinMind API Client skeleton with config, session, response model, and exception hierarchy.
+- Provides a consolidated architecture overview and dependency rules for all frameworks.
 
 ## Installation
 
@@ -49,6 +50,16 @@ Install dependencies:
 ```powershell
 pip install -r requirements.txt
 ```
+
+## Architecture Overview
+
+The consolidated project architecture, dependency rules, framework responsibilities, and allowed import matrix are documented at:
+
+```text
+docs/ARCHITECTURE_OVERVIEW.md
+```
+
+Use this document as the review baseline before adding new data sources, importers, strategies, historical stores, or research reports.
 
 ## Run
 

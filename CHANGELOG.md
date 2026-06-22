@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.17 - Architecture Consolidation
+
+- Added `docs/ARCHITECTURE_OVERVIEW.md`.
+- Consolidated project layer diagram, dependency rules, module responsibilities, directory structure, extension points, and code review checklist.
+- Documented Provider, Strategy, Historical, Import, Validation, Cache, and Research framework responsibilities.
+- Added an allowed import matrix to protect dependency direction before future FinMind, OpenBB, and Polygon work.
+- Updated README with the Architecture Overview entry point.
+- No runtime features, analyzer, provider, importer, repository, backtest, SAP Score, historical module, or strategy behavior changed.
+
 ## v2.16 - FinMind API Client
 
 - Added `importers/finmind/`.
