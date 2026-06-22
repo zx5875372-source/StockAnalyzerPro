@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.18 - FinMind API Mapping
+
+- Added `importers/finmind/mappers.py`.
+- Added `map_financial_statement_row()` for converting FinMind-style dict rows to `FinancialStatementSnapshot`.
+- Added `map_sap_snapshot_row()` for converting FinMind-style dict rows to `SAPScoreSnapshot`.
+- Added `FinMindMappingError` for clear missing-field and invalid mapping errors.
+- Added Republic of China year conversion, fiscal quarter mapping, symbol normalization, and FinMind source metadata.
+- Added unit tests for valid financial rows, valid SAP rows, missing required fields, date conversion, and quarter mapping.
+- No FinMind API calls, repository changes, analyzer changes, provider changes, backtest changes, or SAP Score changes were added.
+
 ## v2.17 - Architecture Consolidation
 
 - Added `docs/ARCHITECTURE_OVERVIEW.md`.

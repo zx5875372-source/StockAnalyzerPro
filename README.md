@@ -4,7 +4,7 @@
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.17 Architecture Consolidation
+Current version: v2.18 FinMind API Mapping
 
 ## Current Features
 
@@ -35,6 +35,7 @@ Current version: v2.17 Architecture Consolidation
 - Provides a planned FinMind importer architecture skeleton without API calls.
 - Provides a FinMind API Client skeleton with config, session, response model, and exception hierarchy.
 - Provides a consolidated architecture overview and dependency rules for all frameworks.
+- Provides FinMind API mapping helpers for converting raw rows into historical snapshot dataclasses.
 
 ## Installation
 
@@ -242,6 +243,33 @@ Current boundary:
 - All request methods raise `NotImplementedError`.
 - `FinMindImporter` only owns a `FinMindClient`; its import flow remains architecture-only.
 - Historical Repository, Analyzer, Provider, Strategy, Backtest, and SAP Score behavior are unchanged.
+
+## FinMind API Mapping
+
+Milestone 5.7 Sprint 3 adds mapper helpers under:
+
+```text
+importers/finmind/mappers.py
+```
+
+The mapping layer introduces:
+
+- `map_financial_statement_row(row)`: converts a FinMind-style dict into `FinancialStatementSnapshot`.
+- `map_sap_snapshot_row(row)`: converts a FinMind-style dict into `SAPScoreSnapshot`.
+- `FinMindMappingError`: clear errors for missing or invalid required fields.
+
+Mapping behavior:
+
+- Accepts common aliases such as `stock_id`/`symbol`, `date`/`statement_date`, and `release_date`/`published_date`.
+- Converts Republic of China years to Gregorian years.
+- Maps fiscal quarter from explicit `quarter` or from `statement_date`.
+- Sets `source=finmind`, `source_version=v1`, and `is_point_in_time=true`.
+
+Current boundary:
+
+- Mapping does not call the FinMind API.
+- Mapping does not write to `HistoricalSnapshotRepository`.
+- FinMind API Client and FinMindImporter request/import flows remain unimplemented.
 
 ## Strategy Framework
 
