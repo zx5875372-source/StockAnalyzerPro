@@ -237,6 +237,7 @@ class BacktestEngine:
             "point_in_time_count": summary["point_in_time_count"],
             "missing_published_date_count": summary["missing_published_date_count"],
             "not_point_in_time_count": summary["not_point_in_time_count"],
+            "is_formal_point_in_time": summary["is_formal_point_in_time"],
             "diagnostics": self.diagnostics,
         }
 

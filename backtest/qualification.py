@@ -20,6 +20,7 @@ def csv_qualification_summary() -> dict:
         "point_in_time_count": 0,
         "missing_published_date_count": 0,
         "not_point_in_time_count": 0,
+        "is_formal_point_in_time": False,
         "qualification_notice": "",
     }
 
@@ -45,5 +46,6 @@ def qualification_to_summary(result: QualificationResult) -> dict:
         "point_in_time_count": result.point_in_time_count,
         "missing_published_date_count": result.missing_published_date_count,
         "not_point_in_time_count": result.not_point_in_time_count,
+        "is_formal_point_in_time": result.can_formal_backtest and result.research_only_count == 0,
         "qualification_notice": notice,
     }

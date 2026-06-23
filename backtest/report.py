@@ -1,9 +1,13 @@
 import csv
+from datetime import datetime, timezone
+import json
 from pathlib import Path
 
 
 SUMMARY_PATH = Path("reports/backtest_summary.md")
 EQUITY_CURVE_PATH = Path("reports/backtest_equity_curve.csv")
+QUALIFICATION_CSV_PATH = Path("reports/backtest_qualification.csv")
+QUALIFICATION_JSON_PATH = Path("reports/backtest_qualification.json")
 
 
 class BacktestReportWriter:
@@ -11,13 +15,19 @@ class BacktestReportWriter:
         self,
         summary_path: Path = SUMMARY_PATH,
         equity_curve_path: Path = EQUITY_CURVE_PATH,
+        qualification_csv_path: Path = QUALIFICATION_CSV_PATH,
+        qualification_json_path: Path = QUALIFICATION_JSON_PATH,
     ):
         self.summary_path = summary_path
         self.equity_curve_path = equity_curve_path
+        self.qualification_csv_path = qualification_csv_path
+        self.qualification_json_path = qualification_json_path
 
     def write(self, result: dict) -> None:
         self.write_markdown(result)
         self.write_equity_curve_csv(result)
+        self.write_qualification_csv(result)
+        self.write_qualification_json(result)
 
     def write_markdown(self, result: dict) -> None:
         self.summary_path.parent.mkdir(exist_ok=True)
@@ -168,6 +178,38 @@ not formal point-in-time financial statement snapshots.
             )
             writer.writeheader()
             writer.writerows(result["equity_curve"])
+
+    def write_qualification_csv(self, result: dict) -> None:
+        self.qualification_csv_path.parent.mkdir(exist_ok=True)
+        row = build_qualification_export_row(result)
+        with self.qualification_csv_path.open("w", newline="", encoding="utf-8-sig") as file:
+            writer = csv.DictWriter(file, fieldnames=list(row.keys()))
+            writer.writeheader()
+            writer.writerow(row)
+
+    def write_qualification_json(self, result: dict) -> None:
+        self.qualification_json_path.parent.mkdir(exist_ok=True)
+        row = build_qualification_export_row(result)
+        self.qualification_json_path.write_text(
+            json.dumps(row, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+
+def build_qualification_export_row(result: dict) -> dict:
+    config = result.get("config", {})
+    return {
+        "snapshot_source": config.get("snapshot_source", "csv"),
+        "snapshot_db": config.get("snapshot_db_path", ""),
+        "qualification_grade": result.get("qualification_grade", "N/A"),
+        "qualification_reason": result.get("qualification_reason", ""),
+        "research_only_count": result.get("research_only_count", 0),
+        "point_in_time_count": result.get("point_in_time_count", 0),
+        "missing_published_date_count": result.get("missing_published_date_count", 0),
+        "not_point_in_time_count": result.get("not_point_in_time_count", 0),
+        "is_formal_point_in_time": bool(result.get("is_formal_point_in_time", False)),
+        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+    }
 
 
 def format_percent(value) -> str:

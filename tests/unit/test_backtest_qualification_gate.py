@@ -1,3 +1,5 @@
+import csv
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -35,6 +37,7 @@ class BacktestQualificationGateTests(unittest.TestCase):
         self.assertEqual(summary["point_in_time_count"], 2)
         self.assertEqual(summary["missing_published_date_count"], 0)
         self.assertEqual(summary["not_point_in_time_count"], 0)
+        self.assertTrue(summary["is_formal_point_in_time"])
         self.assertEqual(summary["qualification_notice"], "")
 
     def test_missing_published_date_is_research_only(self):
@@ -56,6 +59,7 @@ class BacktestQualificationGateTests(unittest.TestCase):
         self.assertEqual(summary["research_only_count"], 1)
         self.assertEqual(summary["missing_published_date_count"], 1)
         self.assertEqual(summary["not_point_in_time_count"], 1)
+        self.assertFalse(summary["is_formal_point_in_time"])
         self.assertEqual(summary["qualification_notice"], RESEARCH_ONLY_NOTICE)
 
     def test_not_point_in_time_is_research_only(self):
@@ -72,6 +76,7 @@ class BacktestQualificationGateTests(unittest.TestCase):
         self.assertEqual(summary["research_only_count"], 1)
         self.assertEqual(summary["missing_published_date_count"], 0)
         self.assertEqual(summary["not_point_in_time_count"], 1)
+        self.assertFalse(summary["is_formal_point_in_time"])
 
     def test_csv_snapshot_source_keeps_legacy_credibility(self):
         engine = BacktestEngine(
@@ -99,6 +104,7 @@ class BacktestQualificationGateTests(unittest.TestCase):
 
         self.assertEqual(summary["qualification_grade"], "N/A")
         self.assertEqual(summary["qualification_reason"], "CSV snapshot source uses existing credibility logic.")
+        self.assertFalse(summary["is_formal_point_in_time"])
         self.assertEqual(summary["snapshot_warning_counts"], {"not_point_in_time": 1})
         self.assertEqual(summary["credibility_grade"], "D")
 
@@ -115,6 +121,102 @@ class BacktestQualificationGateTests(unittest.TestCase):
         self.assertIn("| Qualification Grade | C |", content)
         self.assertIn("| Research-only Count | 1 |", content)
         self.assertIn(RESEARCH_ONLY_NOTICE, content)
+
+    def test_csv_export_writes_qualification_row(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            csv_path = temp_path / "backtest_qualification.csv"
+            writer = BacktestReportWriter(
+                summary_path=temp_path / "backtest_summary.md",
+                equity_curve_path=temp_path / "backtest_equity_curve.csv",
+                qualification_csv_path=csv_path,
+                qualification_json_path=temp_path / "backtest_qualification.json",
+            )
+
+            writer.write_qualification_csv(sample_result())
+            with csv_path.open("r", encoding="utf-8-sig", newline="") as file:
+                rows = list(csv.DictReader(file))
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["snapshot_source"], "repository")
+        self.assertEqual(rows[0]["qualification_grade"], "C")
+        self.assertEqual(rows[0]["is_formal_point_in_time"], "False")
+        self.assertTrue(rows[0]["generated_at"])
+
+    def test_json_export_writes_qualification_row(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            json_path = temp_path / "backtest_qualification.json"
+            writer = BacktestReportWriter(
+                summary_path=temp_path / "backtest_summary.md",
+                equity_curve_path=temp_path / "backtest_equity_curve.csv",
+                qualification_csv_path=temp_path / "backtest_qualification.csv",
+                qualification_json_path=json_path,
+            )
+
+            writer.write_qualification_json(sample_result())
+            payload = json.loads(json_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(payload["snapshot_db"], "test.db")
+        self.assertEqual(payload["research_only_count"], 1)
+        self.assertFalse(payload["is_formal_point_in_time"])
+        self.assertTrue(payload["generated_at"])
+
+    def test_full_report_write_creates_qualification_exports(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            csv_path = temp_path / "backtest_qualification.csv"
+            json_path = temp_path / "backtest_qualification.json"
+            writer = BacktestReportWriter(
+                summary_path=temp_path / "backtest_summary.md",
+                equity_curve_path=temp_path / "backtest_equity_curve.csv",
+                qualification_csv_path=csv_path,
+                qualification_json_path=json_path,
+            )
+
+            writer.write(sample_result())
+
+            self.assertTrue(csv_path.exists())
+            self.assertTrue(json_path.exists())
+
+    def test_formal_repository_export_has_formal_flag_true(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            engine = build_repository_engine(Path(temp_dir), [sap_snapshot()])
+            engine.load_data()
+            result = engine_result_from_summary(engine.summary())
+
+            row = export_row(result)
+
+        self.assertEqual(row["qualification_grade"], "A")
+        self.assertTrue(row["is_formal_point_in_time"])
+
+    def test_research_only_export_has_formal_flag_false(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            engine = build_repository_engine(
+                Path(temp_dir),
+                [sap_snapshot(is_point_in_time=False, warning="missing_published_date")],
+            )
+            engine.load_data()
+            result = engine_result_from_summary(engine.summary())
+
+            row = export_row(result)
+
+        self.assertEqual(row["qualification_grade"], "C")
+        self.assertFalse(row["is_formal_point_in_time"])
+
+    def test_csv_source_export_has_na_grade(self):
+        result = sample_result()
+        result["config"]["snapshot_source"] = "csv"
+        result["config"]["snapshot_db_path"] = "historical_snapshots.db"
+        result["qualification_grade"] = "N/A"
+        result["qualification_reason"] = "CSV snapshot source uses existing credibility logic."
+        result["is_formal_point_in_time"] = False
+
+        row = export_row(result)
+
+        self.assertEqual(row["snapshot_source"], "csv")
+        self.assertEqual(row["qualification_grade"], "N/A")
+        self.assertFalse(row["is_formal_point_in_time"])
 
 
 class StaticPriceProvider:
@@ -198,6 +300,8 @@ def sample_result():
             "min_sap_score": 80,
             "min_piotroski_score": 7,
             "min_data_quality_score": 80,
+            "snapshot_source": "repository",
+            "snapshot_db_path": "test.db",
         },
         "strategy_name": "sap",
         "snapshot_source": "repository:test.db",
@@ -213,6 +317,7 @@ def sample_result():
         "point_in_time_count": 0,
         "missing_published_date_count": 1,
         "not_point_in_time_count": 1,
+        "is_formal_point_in_time": False,
         "selected_stock_count": 0,
         "skipped_stock_count": 0,
         "selected_symbols": [],
@@ -221,6 +326,28 @@ def sample_result():
         "diagnostics": [],
         "equity_curve": [],
     }
+
+
+def engine_result_from_summary(summary):
+    result = sample_result()
+    result["config"].update(summary)
+    for key in [
+        "qualification_grade",
+        "qualification_reason",
+        "research_only_count",
+        "point_in_time_count",
+        "missing_published_date_count",
+        "not_point_in_time_count",
+        "is_formal_point_in_time",
+    ]:
+        result[key] = summary[key]
+    return result
+
+
+def export_row(result):
+    from backtest.report import build_qualification_export_row
+
+    return build_qualification_export_row(result)
 
 
 if __name__ == "__main__":

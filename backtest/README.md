@@ -207,6 +207,29 @@ the report must show:
 CSV snapshot sources keep the existing credibility logic and show qualification
 as `N/A`.
 
+Qualification export files:
+
+```text
+reports/backtest_qualification.csv
+reports/backtest_qualification.json
+```
+
+Export fields:
+
+- `snapshot_source`
+- `snapshot_db`
+- `qualification_grade`
+- `qualification_reason`
+- `research_only_count`
+- `point_in_time_count`
+- `missing_published_date_count`
+- `not_point_in_time_count`
+- `is_formal_point_in_time`
+- `generated_at`
+
+For CSV snapshot sources, `qualification_grade=N/A` and
+`is_formal_point_in_time=false`.
+
 ## Sprint 7 Benchmark Comparison Design
 
 Sprint 7 adds benchmark comparison without changing the strategy.

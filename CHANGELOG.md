@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Historical Backtest Qualification Export
+
+- Added `reports/backtest_qualification.csv` and `reports/backtest_qualification.json` outputs after backtest runs.
+- Added qualification export fields for snapshot source, snapshot database, qualification status, research-only counts, point-in-time counts, formal point-in-time flag, and generation timestamp.
+- Preserved CSV snapshot qualification as `N/A` with `is_formal_point_in_time=false`.
+- Added unit tests for CSV export, JSON export, repository formal point-in-time export, research-only export, and CSV source export.
+- Updated README, Backtest README, project status, and CHANGELOG.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, or Backtest strategy logic changes were added.
+
 ## Unreleased - Historical Backtest Qualification Gate
 
 - Added Backtest qualification summary fields for repository snapshot sources.

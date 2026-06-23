@@ -54,6 +54,8 @@ def main(argv=None) -> None:
     print(f"Skipped：{result['skipped_stock_count']}")
     print("Summary：reports\\backtest_summary.md")
     print("Equity Curve：reports\\backtest_equity_curve.csv")
+    print("Qualification CSV：reports\\backtest_qualification.csv")
+    print("Qualification JSON：reports\\backtest_qualification.json")
 
 
 def format_cli_percent(value) -> str:

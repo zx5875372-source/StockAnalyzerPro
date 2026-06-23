@@ -782,6 +782,8 @@ Outputs:
 ```text
 reports/backtest_summary.md
 reports/backtest_equity_curve.csv
+reports/backtest_qualification.csv
+reports/backtest_qualification.json
 reports/strategy_comparison.md
 reports/strategy_comparison.csv
 reports/research_report.md
@@ -812,6 +814,20 @@ Backtest qualification gate:
 - Repository snapshots with `missing_published_date` or `not_point_in_time` are marked research-only.
 - When repository data is research-only, `reports/backtest_summary.md` states: `此回測僅供研究與系統驗證，不可視為正式 point-in-time 投資績效。`
 - CSV snapshot backtests keep the existing credibility flow and show qualification as `N/A`.
+- Backtest writes qualification exports to `reports/backtest_qualification.csv` and `reports/backtest_qualification.json`.
+
+Backtest qualification export fields:
+
+- `snapshot_source`
+- `snapshot_db`
+- `qualification_grade`
+- `qualification_reason`
+- `research_only_count`
+- `point_in_time_count`
+- `missing_published_date_count`
+- `not_point_in_time_count`
+- `is_formal_point_in_time`
+- `generated_at`
 
 Benchmark comparison:
 
