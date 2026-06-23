@@ -19,10 +19,13 @@ class HistoricalSAPGenerateSummary:
     summary_path: Path
     generated: int = 0
     updated: int = 0
+    skipped: int = 0
     failed: int = 0
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     filters: dict[str, str | int | None] = field(default_factory=dict)
+    incremental: bool = False
+    affected_periods: list[str] = field(default_factory=list)
 
 
 def run_generate(
@@ -30,6 +33,7 @@ def run_generate(
     symbol: str | None = None,
     year: int | None = None,
     quarter: int | None = None,
+    incremental: bool = False,
     summary_path: str | Path = DEFAULT_SUMMARY_PATH,
 ) -> HistoricalSAPGenerateSummary:
     database_path = Path(db_path)
@@ -43,7 +47,13 @@ def run_generate(
         quarter=quarter,
     )
 
-    if symbol is None and year is None and quarter is None:
+    if incremental:
+        result = generator.generate_incremental(
+            snapshots,
+            repository=repository,
+            write_report=False,
+        )
+    elif symbol is None and year is None and quarter is None:
         result = generator.generate_all(repository=repository)
     else:
         result = generator.generate_snapshots(
@@ -59,6 +69,7 @@ def run_generate(
         symbol=symbol,
         year=year,
         quarter=quarter,
+        incremental=incremental,
     )
     write_summary(summary)
     return summary
@@ -97,12 +108,14 @@ def build_summary(
     symbol: str | None,
     year: int | None,
     quarter: int | None,
+    incremental: bool = False,
 ) -> HistoricalSAPGenerateSummary:
     return HistoricalSAPGenerateSummary(
         db_path=db_path,
         summary_path=summary_path,
         generated=result.generated,
         updated=result.updated,
+        skipped=result.skipped,
         failed=result.failed,
         warnings=list(result.warnings),
         errors=list(result.errors),
@@ -111,6 +124,8 @@ def build_summary(
             "year": year,
             "quarter": quarter,
         },
+        incremental=incremental,
+        affected_periods=list(result.affected_periods),
     )
 
 
@@ -122,8 +137,10 @@ def write_summary(summary: HistoricalSAPGenerateSummary) -> None:
         "| Field | Value |",
         "| --- | --- |",
         f"| Database | {summary.db_path} |",
+        f"| Incremental | {str(summary.incremental).lower()} |",
         f"| Generated | {summary.generated} |",
         f"| Updated | {summary.updated} |",
+        f"| Skipped | {summary.skipped} |",
         f"| Failed | {summary.failed} |",
         f"| Warnings | {len(summary.warnings)} |",
         "",
@@ -135,9 +152,19 @@ def write_summary(summary: HistoricalSAPGenerateSummary) -> None:
         f"| Year | {summary.filters.get('year') or 'ALL'} |",
         f"| Quarter | {summary.filters.get('quarter') or 'ALL'} |",
         "",
-        "## Warning Details",
+        "## Affected Periods",
         "",
     ]
+    if summary.affected_periods:
+        lines.extend(f"- {period}" for period in summary.affected_periods)
+    else:
+        lines.append("- None")
+
+    lines.extend([
+        "",
+        "## Warning Details",
+        "",
+    ])
     if summary.warnings:
         lines.extend(f"- {warning}" for warning in summary.warnings)
     else:
@@ -160,6 +187,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--symbol", default=None, help="optional stock symbol filter, for example 2330")
     parser.add_argument("--year", type=int, default=None, help="optional fiscal year filter")
     parser.add_argument("--quarter", type=int, choices=[1, 2, 3, 4], default=None, help="optional fiscal quarter")
+    parser.add_argument("--incremental", action="store_true", help="generate only affected financial snapshot periods")
     return parser.parse_args(argv)
 
 
@@ -170,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
         symbol=args.symbol,
         year=args.year,
         quarter=args.quarter,
+        incremental=args.incremental,
         summary_path=DEFAULT_SUMMARY_PATH,
     )
 
@@ -179,6 +208,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"db={summary.db_path}")
     print(f"generated={summary.generated}")
     print(f"updated={summary.updated}")
+    print(f"skipped={summary.skipped}")
     print(f"failed={summary.failed}")
     print(f"warnings={len(summary.warnings)}")
     print(f"filters={summary.filters}")

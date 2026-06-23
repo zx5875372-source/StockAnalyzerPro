@@ -75,6 +75,17 @@ class HistoricalSnapshotRepositoryTests(unittest.TestCase):
         self.assertEqual(result_status, "updated")
         self.assertEqual(result.sap_score, 95)
 
+    def test_get_latest_sap_snapshot_for_period(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository = HistoricalSnapshotRepository(Path(temp_dir) / "historical_snapshots.db")
+            repository.insert_sap_snapshot(sap_snapshot(snapshot_date="2025-06-30", sap_score=70))
+            repository.insert_sap_snapshot(sap_snapshot(snapshot_date="2025-09-30", sap_score=95))
+
+            result = repository.get_latest_sap_snapshot_for_period("2330.TW", 2025, 1)
+
+        self.assertEqual(result.snapshot_date, "2025-09-30")
+        self.assertEqual(result.sap_score, 95)
+
     def test_query_missing_snapshot_returns_none(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repository = HistoricalSnapshotRepository(Path(temp_dir) / "historical_snapshots.db")

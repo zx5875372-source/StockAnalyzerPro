@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - Historical SAP Generator Incremental Update
+
+- Added `HistoricalSAPGenerator.generate_incremental()` for affected-period rebuilds.
+- Added incremental rebuild detection for missing SAP snapshots, generator version changes, and publication timeline changes.
+- Added `HistoricalSnapshotRepository.get_latest_sap_snapshot_for_period()`.
+- Added `--incremental` support to `historical_generate_sap.py`.
+- Updated generator summaries with skipped counts, affected periods, and incremental mode.
+- Added unit tests for incremental skip, old generator version rebuild, publication timeline warnings, CLI summary output, and latest SAP period lookup.
+- Updated README, project status, and CHANGELOG.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, or Backtest strategy logic changes were added.
+
 ## Unreleased - Historical Backtest Snapshot Source
 
 - Added a repository snapshot read path for Backtest using `SAPScoreSnapshot` rows from `historical_snapshots.db`.

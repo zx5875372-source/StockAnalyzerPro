@@ -196,6 +196,29 @@ class HistoricalSnapshotRepository:
             return None
         return sap_snapshot_from_row(row)
 
+    def get_latest_sap_snapshot_for_period(
+        self,
+        symbol: str,
+        fiscal_year: int,
+        fiscal_quarter: int,
+    ) -> SAPScoreSnapshot | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT *
+                FROM sap_score_snapshots
+                WHERE symbol = ?
+                  AND fiscal_year = ?
+                  AND fiscal_quarter = ?
+                ORDER BY snapshot_date DESC, id DESC
+                LIMIT 1
+                """,
+                (symbol, fiscal_year, fiscal_quarter),
+            ).fetchone()
+        if row is None:
+            return None
+        return sap_snapshot_from_row(row)
+
     def list_snapshot_dates(self) -> list[str]:
         with self._connect() as connection:
             rows = connection.execute(

@@ -83,14 +83,66 @@ class HistoricalSAPGeneratorTests(unittest.TestCase):
         self.assertIn("| Failed | 0 |", summary_content)
         self.assertIn("| Warnings | 0 |", summary_content)
 
+    def test_incremental_generation_skips_unchanged_period(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            repository = HistoricalSnapshotRepository(temp_path / "historical_snapshots.db")
+            repository.insert_financial_snapshot(financial_snapshot())
+            generator = HistoricalSAPGenerator(
+                repository=repository,
+                summary_path=temp_path / "historical_generator_summary.md",
+            )
+            generator.generate_all()
 
-def financial_snapshot(symbol="2330.TW"):
+            result = generator.generate_incremental()
+
+        self.assertEqual(result.generated, 0)
+        self.assertEqual(result.updated, 0)
+        self.assertEqual(result.skipped, 1)
+        self.assertEqual(result.affected_periods, [])
+
+    def test_incremental_generation_updates_old_generator_version(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            repository = HistoricalSnapshotRepository(temp_path / "historical_snapshots.db")
+            repository.insert_financial_snapshot(financial_snapshot())
+            repository.insert_sap_snapshot(existing_sap_snapshot(source_version="v0"))
+            generator = HistoricalSAPGenerator(
+                repository=repository,
+                summary_path=temp_path / "historical_generator_summary.md",
+            )
+
+            result = generator.generate_incremental()
+
+        self.assertEqual(result.generated, 0)
+        self.assertEqual(result.updated, 1)
+        self.assertEqual(result.skipped, 0)
+        self.assertIn("generator_version_changed", result.affected_periods[0])
+
+    def test_incremental_generation_warns_on_publication_timeline_change(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            repository = HistoricalSnapshotRepository(temp_path / "historical_snapshots.db")
+            repository.insert_financial_snapshot(financial_snapshot(published_date="2025-05-20"))
+            repository.insert_sap_snapshot(existing_sap_snapshot(published_date="2025-05-15"))
+            generator = HistoricalSAPGenerator(
+                repository=repository,
+                summary_path=temp_path / "historical_generator_summary.md",
+            )
+
+            result = generator.generate_incremental()
+
+        self.assertEqual(result.updated, 1)
+        self.assertTrue(any("publication_timeline_changed" in warning for warning in result.warnings))
+
+
+def financial_snapshot(symbol="2330.TW", published_date="2025-05-15"):
     return FinancialStatementSnapshot(
         symbol=symbol,
         fiscal_year=2025,
         fiscal_quarter=1,
         statement_date="2025-03-31",
-        published_date="2025-05-15",
+        published_date=published_date,
         snapshot_date="2025-06-30",
         source="fixture",
         source_version="v1",
@@ -102,16 +154,16 @@ def financial_snapshot(symbol="2330.TW"):
     )
 
 
-def existing_sap_snapshot():
+def existing_sap_snapshot(source_version="v1", published_date="2025-05-15"):
     return SAPScoreSnapshot(
         symbol="2330.TW",
         fiscal_year=2025,
         fiscal_quarter=1,
         statement_date="2025-03-31",
-        published_date="2025-05-15",
+        published_date=published_date,
         snapshot_date="2025-06-30",
         source="fixture",
-        source_version="v1",
+        source_version=source_version,
         is_point_in_time=True,
         created_at="2026-01-01T00:00:00+00:00",
         sap_score=70,

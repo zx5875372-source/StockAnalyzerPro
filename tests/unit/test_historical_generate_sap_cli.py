@@ -16,6 +16,7 @@ class HistoricalGenerateSAPCliTests(unittest.TestCase):
         self.assertIsNone(args.symbol)
         self.assertIsNone(args.year)
         self.assertIsNone(args.quarter)
+        self.assertFalse(args.incremental)
 
     def test_filter_symbol(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -71,10 +72,33 @@ class HistoricalGenerateSAPCliTests(unittest.TestCase):
         self.assertEqual(summary.generated, 1)
         self.assertIn("# Historical Generator Summary", content)
         self.assertIn("| Database |", content)
+        self.assertIn("| Incremental | false |", content)
         self.assertIn("| Generated | 1 |", content)
         self.assertIn("| Symbol | 2330.TW |", content)
         self.assertIn("| Year | 2025 |", content)
         self.assertIn("| Quarter | 1 |", content)
+
+    def test_incremental_summary_skips_unchanged_snapshots(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            repository = seed_repository(temp_path)
+            summary_path = temp_path / "historical_generator_summary.md"
+            run_generate(
+                db_path=repository.db_path,
+                summary_path=summary_path,
+            )
+
+            summary = run_generate(
+                db_path=repository.db_path,
+                incremental=True,
+                summary_path=summary_path,
+            )
+            content = summary_path.read_text(encoding="utf-8")
+
+        self.assertTrue(summary.incremental)
+        self.assertEqual(summary.skipped, 2)
+        self.assertIn("| Incremental | true |", content)
+        self.assertIn("| Skipped | 2 |", content)
 
     def test_repository_contains_generated_sap_snapshots(self):
         with tempfile.TemporaryDirectory() as temp_dir:

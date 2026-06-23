@@ -44,7 +44,7 @@ Current version: v2.25 Historical Pipeline Smoke Test
 - Provides a FinMind import CLI for writing financial statement snapshots into the historical repository.
 - Provides a FinMind smoke test guide and helper script for safe real-API testing with a test database.
 - Provides a Historical SAP Generator MVP for turning financial statement snapshots into repository SAP score snapshots.
-- Provides a Historical SAP Generator CLI for filtered repository generation runs.
+- Provides a Historical SAP Generator CLI for filtered and incremental repository generation runs.
 - Provides an end-to-end historical pipeline smoke test from financial CSV import to SAP snapshot generation.
 
 ## Installation
@@ -499,7 +499,8 @@ The MVP generator introduces:
 
 - `HistoricalSAPGenerator.generate_snapshot(financial_snapshot)`: converts one `FinancialStatementSnapshot` into one `SAPScoreSnapshot`.
 - `HistoricalSAPGenerator.generate_all()`: reads all financial statement snapshots from `HistoricalSnapshotRepository` and writes generated SAP snapshots back into the repository.
-- `HistoricalSAPGenerationResult`: records generated, updated, failed, warnings, errors, and generated snapshots.
+- `HistoricalSAPGenerator.generate_incremental()`: rebuilds only affected periods when a SAP snapshot is missing, the generator version changed, or the publication timeline changed.
+- `HistoricalSAPGenerationResult`: records generated, updated, skipped, failed, warnings, errors, affected periods, and generated snapshots.
 - `reports/historical_generator_summary.md`: summary report for generator runs.
 - `historical_generate_sap.py`: CLI for generating SAP snapshots from repository financial snapshots.
 
@@ -523,13 +524,19 @@ Generate only one fiscal period:
 .venv\Scripts\python.exe historical_generate_sap.py --db historical_snapshots.db --year 2025 --quarter 1
 ```
 
+Run incremental generation:
+
+```powershell
+.venv\Scripts\python.exe historical_generate_sap.py --db historical_snapshots.db --incremental
+```
+
 The CLI writes:
 
 ```text
 reports/historical_generator_summary.md
 ```
 
-The summary includes database path, generated count, updated count, failed count, warning count, and filters used.
+The summary includes database path, incremental mode, generated count, updated count, skipped count, failed count, warning count, affected periods, and filters used.
 
 End-to-end historical pipeline smoke test:
 
@@ -558,12 +565,12 @@ The pipeline report includes imported financial snapshot count, generated SAP sn
 
 Current boundary:
 
-- Backtest is not modified.
+- Backtest can read repository SAP snapshots through `--snapshot-source repository`, but full historical performance validation is still in progress.
 - Strategy is not modified.
 - Analyzer is not modified.
 - Provider is not modified.
 - SAP Score scoring logic is not modified.
-- Generated snapshots are repository artifacts only until a later Backtest integration Sprint.
+- Generated snapshots remain research artifacts until point-in-time publication dates and historical price coverage are fully qualified.
 
 ## Historical Import Framework
 
