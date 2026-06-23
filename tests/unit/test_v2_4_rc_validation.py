@@ -25,6 +25,8 @@ class V24RCValidationTests(unittest.TestCase):
         self.assertIn("strategy_compare.py", script)
         self.assertIn("research_report.py", script)
         self.assertIn("reports/v2_4_rc_validation.md", script)
+        self.assertIn("reports/v2_4_rc_validation.log", script)
+        self.assertIn("--log-path", script)
 
     def test_summary_report_can_be_generated(self):
         summary = RCValidationSummary(
@@ -55,6 +57,7 @@ class V24RCValidationTests(unittest.TestCase):
                 strategy_comparison_status="pass",
                 research_report_status="pass",
                 qualification=sample_qualification(is_formal_point_in_time=True),
+                log_path="reports/v2_4_rc_validation.log",
             )
 
             write_validation_report(summary, output_path)
@@ -62,6 +65,7 @@ class V24RCValidationTests(unittest.TestCase):
 
         self.assertIn("| Is Formal Point-in-Time | true |", content)
         self.assertIn("- RC validation status: formal", content)
+        self.assertIn("Full command output: `reports/v2_4_rc_validation.log`", content)
 
     def test_load_qualification_summary_reads_fields(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -19,6 +19,7 @@ class RCValidationSummary:
     research_report_status: str
     qualification: dict = field(default_factory=dict)
     known_limitations: list[str] = field(default_factory=list)
+    log_path: str = ""
 
 
 DEFAULT_KNOWN_LIMITATIONS = [
@@ -85,6 +86,12 @@ def build_validation_report(summary: RCValidationSummary) -> str:
     if not qualification.get("is_formal_point_in_time"):
         lines.append("- 此回測僅供研究與系統驗證，不可視為正式 point-in-time 投資績效。")
 
+    lines.extend(["", "## Execution Log", ""])
+    if summary.log_path:
+        lines.append(f"- Full command output: `{summary.log_path}`")
+    else:
+        lines.append("- No log path provided.")
+
     lines.extend(["", "## Known Limitations", ""])
     lines.extend(f"- {limitation}" for limitation in limitations)
     return "\n".join(lines) + "\n"
@@ -107,6 +114,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--strategy-comparison-status", required=True)
     parser.add_argument("--research-report-status", required=True)
     parser.add_argument("--qualification-json", default=str(DEFAULT_QUALIFICATION_JSON_PATH))
+    parser.add_argument("--log-path", default="")
     parser.add_argument("--output", default=str(DEFAULT_REPORT_PATH))
     return parser.parse_args(argv)
 
@@ -121,6 +129,7 @@ def main(argv: list[str] | None = None) -> int:
         research_report_status=args.research_report_status,
         qualification=load_qualification_summary(args.qualification_json),
         known_limitations=DEFAULT_KNOWN_LIMITATIONS,
+        log_path=args.log_path,
     )
     write_validation_report(summary, args.output)
     print(f"v2_4_rc_validation_report={args.output}")
