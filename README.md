@@ -21,7 +21,7 @@ Current version: v2.25 Historical Pipeline Smoke Test
 - Estimates simplified valuation, buy zones, and first target price.
 - Shows diagnostics when required financial fields are missing.
 - Provides a validation scan over a sample stock universe and exports CSV results.
-- Provides an interactive CLI menu for single-stock analysis, watchlist scan, and sample scan.
+- Provides an interactive v2.3 CLI console for stock analysis, historical data tools, research tools, and project status.
 - Provides a Backtest Engine MVP for historical price validation of SAP Score selections.
 - Provides an initial data provider framework for Yahoo Finance, CSV snapshots, and unit-test mocks.
 - Provides a formal strategy framework with registry-based SAP Score strategy wiring.
@@ -86,12 +86,34 @@ Or run directly with the project virtual environment:
 .venv\Scripts\python.exe app.py
 ```
 
-Main menu:
+Main console:
 
-- `[1]` Analyze a single stock, for example `2330`.
-- `[2]` Scan `data/watchlist.json`.
-- `[3]` Scan `tests/sample_data/sample_stocks.json`.
-- `[4]` Exit.
+```text
+StockAnalyzerPro v2.3
+Historical Pipeline MVP
+
+【股票分析】
+1. 分析單一股票
+2. 掃描自選股 watchlist
+3. 掃描 sample stocks
+
+【歷史資料】
+4. FinMind 匯入財報
+5. Historical SAP Generator
+
+【研究工具】
+6. Backtest
+7. Strategy Compare
+8. Research Report
+
+【系統】
+9. Project Status
+0. 離開
+```
+
+Options `1`, `2`, and `3` keep the existing single-stock analysis, watchlist scan, and sample scan flows.
+Options `4` through `8` launch the existing CLI tools: `finmind_import.py`, `historical_generate_sap.py`, `backtest.py`, `strategy_compare.py`, and `research_report.py`.
+Option `9` displays `PROJECT_STATUS.md`.
 
 Reports are generated in the `reports/` folder.
 

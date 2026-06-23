@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - App CLI v2.3
+
+- Updated `app.py` to display `StockAnalyzerPro v2.3` and `Historical Pipeline MVP`.
+- Reorganized the main console into stock analysis, historical data, research tools, and system sections.
+- Preserved existing menu options for single-stock analysis, watchlist scan, and sample scan.
+- Added console launchers for `finmind_import.py`, `historical_generate_sap.py`, `backtest.py`, `strategy_compare.py`, and `research_report.py`.
+- Added `PROJECT_STATUS.md` display from the console.
+- No Analyzer, Provider, Strategy, SAP Score, or Backtest core logic changes were added.
+
 ## Unreleased - Add PROJECT_STATUS
 
 - Added `PROJECT_STATUS.md` at the project root.
