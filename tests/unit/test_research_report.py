@@ -18,6 +18,8 @@ class ResearchReportTests(unittest.TestCase):
         self.assertEqual(rows[0]["strategy"], "SAP Score Strategy MVP")
         self.assertEqual(rows[0]["excess_return"], 0.4712)
         self.assertEqual(rows[1]["credibility_grade"], "C")
+        self.assertFalse(rows[0]["is_formal_point_in_time"])
+        self.assertEqual(rows[0]["research_only_count"], 1)
 
     def test_writes_markdown_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -31,10 +33,26 @@ class ResearchReportTests(unittest.TestCase):
 
         self.assertIn("## Executive Summary", content)
         self.assertIn("Best Strategy: SAP Score Strategy MVP", content)
+        self.assertIn("Formal Point-in-Time Strategies: 1", content)
+        self.assertIn("Research Only Strategies: 1", content)
+        self.assertIn("Research Only strategies are not formal point-in-time investment performance.", content)
         self.assertIn("## Strategy Ranking", content)
         self.assertIn("## Risk Comparison", content)
         self.assertIn("## Credibility Analysis", content)
+        self.assertIn("## Qualification Analysis", content)
         self.assertIn("目前結果僅供研究，不可視為正式投資績效。", content)
+
+    def test_old_strategy_comparison_csv_stays_compatible(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            csv_path = Path(temp_dir) / "strategy_comparison.csv"
+            write_old_sample_csv(csv_path)
+
+            rows = read_strategy_comparison(csv_path)
+            output = "\n".join([str(rows[0]["qualification_grade"]), str(rows[0]["is_formal_point_in_time"])])
+
+        self.assertIn("N/A", output)
+        self.assertFalse(rows[0]["is_formal_point_in_time"])
+        self.assertEqual(rows[0]["research_only_count"], 0)
 
     def test_empty_csv_has_clear_error(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -56,6 +74,10 @@ FIELDNAMES = [
     "benchmark_total_return",
     "excess_return",
     "credibility_grade",
+    "qualification_grade",
+    "is_formal_point_in_time",
+    "qualification_reason",
+    "research_only_count",
     "selected_stock_count",
     "skipped_stock_count",
     "strategy_vs_benchmark",
@@ -73,6 +95,10 @@ def write_sample_csv(path: Path) -> None:
             "benchmark_total_return": "1.5812",
             "excess_return": "0.4712",
             "credibility_grade": "D",
+            "qualification_grade": "C",
+            "is_formal_point_in_time": "false",
+            "qualification_reason": "Repository contains research-only snapshots.",
+            "research_only_count": "1",
             "selected_stock_count": "1",
             "skipped_stock_count": "29",
             "strategy_vs_benchmark": "outperform",
@@ -86,6 +112,10 @@ def write_sample_csv(path: Path) -> None:
             "benchmark_total_return": "1.5812",
             "excess_return": "-0.8684",
             "credibility_grade": "C",
+            "qualification_grade": "A",
+            "is_formal_point_in_time": "true",
+            "qualification_reason": "All repository SAP snapshots are point-in-time qualified.",
+            "research_only_count": "0",
             "selected_stock_count": "5",
             "skipped_stock_count": "25",
             "strategy_vs_benchmark": "underperform",
@@ -93,6 +123,43 @@ def write_sample_csv(path: Path) -> None:
     ]
     with path.open("w", encoding="utf-8", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_old_sample_csv(path: Path) -> None:
+    rows = [
+        {
+            "strategy": "SAP Score Strategy MVP",
+            "total_return": "0.1",
+            "cagr": "0.1",
+            "max_drawdown": "-0.05",
+            "win_rate": "0.5",
+            "benchmark_total_return": "0.08",
+            "excess_return": "0.02",
+            "credibility_grade": "B",
+            "selected_stock_count": "3",
+            "skipped_stock_count": "1",
+            "strategy_vs_benchmark": "outperform",
+        }
+    ]
+    with path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=[
+                "strategy",
+                "total_return",
+                "cagr",
+                "max_drawdown",
+                "win_rate",
+                "benchmark_total_return",
+                "excess_return",
+                "credibility_grade",
+                "selected_stock_count",
+                "skipped_stock_count",
+                "strategy_vs_benchmark",
+            ],
+        )
         writer.writeheader()
         writer.writerows(rows)
 

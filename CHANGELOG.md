@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - Strategy Compare Qualification Integration
+
+- Added Backtest qualification fields to `strategy_compare.py` CSV and Markdown outputs.
+- Added `--snapshot-source` and `--snapshot-db` support to strategy comparison runs.
+- Added Formal Point-in-Time, Research Only, and Qualification Grade display to `reports/strategy_comparison.md`.
+- Updated `research_report.py` Executive Summary with formal point-in-time and research-only strategy counts.
+- Added Research Only warnings to research recommendations without recalculating qualification outside Backtest output.
+- Added unit tests for strategy comparison qualification integration, repository snapshot source, CSV compatibility, and research report qualification summaries.
+- Updated README, project status, and CHANGELOG.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, or Backtest strategy logic changes were added.
+
 ## Unreleased - Historical Backtest Qualification Export
 
 - Added `reports/backtest_qualification.csv` and `reports/backtest_qualification.json` outputs after backtest runs.

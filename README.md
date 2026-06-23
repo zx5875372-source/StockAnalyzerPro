@@ -751,6 +751,7 @@ Compare strategies with the same backtest parameters:
 ```powershell
 .venv\Scripts\python.exe strategy_compare.py
 .venv\Scripts\python.exe strategy_compare.py --strategies sap piotroski
+.venv\Scripts\python.exe strategy_compare.py --snapshot-source repository --snapshot-db historical_snapshots.db
 ```
 
 Generate the research report from strategy comparison output:
@@ -828,6 +829,14 @@ Backtest qualification export fields:
 - `not_point_in_time_count`
 - `is_formal_point_in_time`
 - `generated_at`
+
+Strategy comparison qualification integration:
+
+- `strategy_compare.py` carries Backtest qualification fields into `reports/strategy_comparison.csv` and `reports/strategy_comparison.md`.
+- Comparison reports include `qualification_grade`, `is_formal_point_in_time`, `qualification_reason`, and `research_only_count`.
+- Markdown comparison output shows Formal Point-in-Time, Research Only, and Qualification Grade for each strategy.
+- `research_report.py` reads these comparison fields and reports how many strategies are formal point-in-time versus research-only.
+- Research-only strategies are explicitly marked as not formal investment performance evidence.
 
 Benchmark comparison:
 

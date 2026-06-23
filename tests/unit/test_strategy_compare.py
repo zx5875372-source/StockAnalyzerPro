@@ -18,6 +18,24 @@ class StrategyCompareTests(unittest.TestCase):
         self.assertEqual([row["strategy"] for row in rows], ["Piotroski Strategy", "SAP Score Strategy MVP"])
         self.assertEqual(rows[0]["credibility_grade"], "B")
         self.assertEqual(rows[1]["credibility_grade"], "C")
+        self.assertEqual(rows[0]["qualification_grade"], "A")
+        self.assertTrue(rows[0]["is_formal_point_in_time"])
+
+    def test_repository_snapshot_qualification_integration(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            db_path = Path(temp_dir) / "historical_snapshots.db"
+            db_path.write_text("", encoding="utf-8")
+            args = make_args(["sap"])
+            args.snapshot_source = "repository"
+            args.snapshot_db = str(db_path)
+
+            with patch("strategy_compare.BacktestEngine", FakeBacktestEngine):
+                rows = compare_strategies(args)
+
+        self.assertEqual(rows[0]["qualification_grade"], "C")
+        self.assertFalse(rows[0]["is_formal_point_in_time"])
+        self.assertEqual(rows[0]["qualification_reason"], "Repository contains research-only snapshots.")
+        self.assertEqual(rows[0]["research_only_count"], 1)
 
     def test_unknown_strategy_name_raises_clear_error(self):
         args = make_args(["missing"])
@@ -36,6 +54,10 @@ class StrategyCompareTests(unittest.TestCase):
                 "benchmark_total_return": 0.15,
                 "excess_return": 0.05,
                 "credibility_grade": "B",
+                "qualification_grade": "A",
+                "is_formal_point_in_time": True,
+                "qualification_reason": "All repository SAP snapshots are point-in-time qualified.",
+                "research_only_count": 0,
                 "selected_stock_count": 5,
                 "skipped_stock_count": 2,
                 "strategy_vs_benchmark": "outperform",
@@ -54,8 +76,11 @@ class StrategyCompareTests(unittest.TestCase):
 
         self.assertIn("# Strategy Comparison", markdown)
         self.assertIn("Piotroski Strategy", markdown)
+        self.assertIn("Formal Point-in-Time", markdown)
+        self.assertIn("Research Only", markdown)
         self.assertEqual(csv_rows[0]["strategy"], "Piotroski Strategy")
         self.assertEqual(csv_rows[0]["credibility_grade"], "B")
+        self.assertEqual(csv_rows[0]["qualification_grade"], "A")
 
 
 class FakeBacktestEngine:
@@ -81,6 +106,7 @@ class FakeBacktestEngine:
 
 
 def fake_result(strategy_name, credibility_grade, excess_return, selected_stock_count):
+    is_piotroski = strategy_name == "Piotroski Strategy"
     return {
         "strategy_name": strategy_name,
         "metrics": {
@@ -93,6 +119,14 @@ def fake_result(strategy_name, credibility_grade, excess_return, selected_stock_
             "strategy_vs_benchmark": "outperform" if excess_return > 0 else "underperform",
         },
         "credibility_grade": credibility_grade,
+        "qualification_grade": "A" if is_piotroski else "C",
+        "is_formal_point_in_time": is_piotroski,
+        "qualification_reason": (
+            "All repository SAP snapshots are point-in-time qualified."
+            if is_piotroski
+            else "Repository contains research-only snapshots."
+        ),
+        "research_only_count": 0 if is_piotroski else 1,
         "selected_stock_count": selected_stock_count,
         "skipped_stock_count": 2,
     }
@@ -105,6 +139,8 @@ def make_args(strategies):
         capital=1_000_000,
         benchmark="0050.TW",
         snapshot="data/snapshots/generated_sap_scores.csv",
+        snapshot_source="csv",
+        snapshot_db="historical_snapshots.db",
         universe="tests/sample_data/sample_stocks.json",
         strategies=strategies,
     )

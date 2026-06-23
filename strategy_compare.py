@@ -7,6 +7,7 @@ from backtest.cli import (
     DEFAULT_CAPITAL,
     DEFAULT_END,
     DEFAULT_SNAPSHOT,
+    DEFAULT_SNAPSHOT_DB,
     DEFAULT_START,
     DEFAULT_UNIVERSE,
     build_config_from_args,
@@ -28,6 +29,10 @@ FIELDNAMES = [
     "benchmark_total_return",
     "excess_return",
     "credibility_grade",
+    "qualification_grade",
+    "is_formal_point_in_time",
+    "qualification_reason",
+    "research_only_count",
     "selected_stock_count",
     "skipped_stock_count",
     "strategy_vs_benchmark",
@@ -47,6 +52,13 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--capital", type=float, default=DEFAULT_CAPITAL, help="initial capital")
     parser.add_argument("--benchmark", default=DEFAULT_BENCHMARK, help="benchmark symbol")
     parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT, help="snapshot CSV path")
+    parser.add_argument(
+        "--snapshot-source",
+        default="csv",
+        choices=["csv", "repository"],
+        help="snapshot source: csv or repository",
+    )
+    parser.add_argument("--snapshot-db", default=DEFAULT_SNAPSHOT_DB, help="historical snapshot SQLite db path")
     parser.add_argument("--universe", default=DEFAULT_UNIVERSE, help="universe JSON path")
     parser.add_argument(
         "--strategies",
@@ -101,6 +113,10 @@ def result_to_row(result: dict) -> dict:
         "benchmark_total_return": metrics["benchmark_total_return"],
         "excess_return": metrics["excess_return"],
         "credibility_grade": result["credibility_grade"],
+        "qualification_grade": result.get("qualification_grade", "N/A"),
+        "is_formal_point_in_time": result.get("is_formal_point_in_time", False),
+        "qualification_reason": result.get("qualification_reason", ""),
+        "research_only_count": result.get("research_only_count", 0),
         "selected_stock_count": result["selected_stock_count"],
         "skipped_stock_count": result["skipped_stock_count"],
         "strategy_vs_benchmark": metrics["strategy_vs_benchmark"],
@@ -141,15 +157,17 @@ def write_markdown(rows: list[dict], output_path: Path) -> None:
             f"| {row['strategy']} | {format_percent(row['total_return'])} | {format_percent(row['cagr'])} | "
             f"{format_percent(row['max_drawdown'])} | {format_percent(row['win_rate'])} | "
             f"{format_percent(row['benchmark_total_return'])} | {format_percent(row['excess_return'])} | "
-            f"{row['credibility_grade']} | {row['selected_stock_count']} | {row['skipped_stock_count']} | "
+            f"{row['credibility_grade']} | {row['qualification_grade']} | "
+            f"{format_bool(row['is_formal_point_in_time'])} | {format_research_only(row)} | "
+            f"{row['selected_stock_count']} | {row['skipped_stock_count']} | "
             f"{row['strategy_vs_benchmark']} |"
             for row in rows
         ]
     )
     content = f"""# Strategy Comparison
 
-| Strategy | Total Return | CAGR | Max Drawdown | Win Rate | Benchmark Total Return | Excess Return | Credibility | Selected | Skipped | Strategy vs Benchmark |
-|---|---:|---:|---:|---:|---:|---:|---|---:|---:|---|
+| Strategy | Total Return | CAGR | Max Drawdown | Win Rate | Benchmark Total Return | Excess Return | Credibility | Qualification Grade | Formal Point-in-Time | Research Only | Selected | Skipped | Strategy vs Benchmark |
+|---|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|---|
 {table_rows}
 """
     output_path.write_text(content, encoding="utf-8")
@@ -159,6 +177,20 @@ def format_percent(value) -> str:
     if value is None:
         return "benchmark unavailable"
     return f"{value * 100:.2f}%"
+
+
+def format_bool(value) -> str:
+    return "Yes" if parse_bool(value) else "No"
+
+
+def format_research_only(row: dict) -> str:
+    return "Yes" if int(row.get("research_only_count") or 0) > 0 else "No"
+
+
+def parse_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"true", "1", "yes"}
 
 
 def main(argv=None) -> None:

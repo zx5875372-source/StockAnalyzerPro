@@ -70,7 +70,11 @@ def normalize_row(row: dict) -> dict:
         normalized[field] = parse_optional_float(row.get(field))
     for field in ["selected_stock_count", "skipped_stock_count"]:
         normalized[field] = parse_int(row.get(field))
+    normalized["research_only_count"] = parse_int(row.get("research_only_count"))
     normalized["credibility_grade"] = (row.get("credibility_grade") or "").strip().upper()
+    normalized["qualification_grade"] = (row.get("qualification_grade") or "N/A").strip().upper()
+    normalized["qualification_reason"] = row.get("qualification_reason") or ""
+    normalized["is_formal_point_in_time"] = parse_bool(row.get("is_formal_point_in_time"))
     return normalized
 
 
@@ -82,6 +86,7 @@ def generate_research_report(rows: list[dict]) -> str:
     best = ranked_rows[0]
     benchmark_beaten = best["strategy_vs_benchmark"] == "outperform"
     low_credibility = any(row["credibility_grade"] in {"C", "D"} for row in rows)
+    qualification = qualification_summary(rows)
 
     return f"""# Research Report
 
@@ -91,6 +96,9 @@ def generate_research_report(rows: list[dict]) -> str:
 - Benchmark Beaten: {'Yes' if benchmark_beaten else 'No'}
 - Credibility Rating: {best['credibility_grade']}
 - Best Excess Return: {format_percent(best['excess_return'])}
+- Formal Point-in-Time Strategies: {qualification['formal_count']}
+- Research Only Strategies: {qualification['research_only_count']}
+- Research Only Notice: {qualification['notice']}
 
 ## Strategy Ranking
 
@@ -104,9 +112,13 @@ def generate_research_report(rows: list[dict]) -> str:
 
 {credibility_analysis(rows)}
 
+## Qualification Analysis
+
+{qualification_analysis(rows)}
+
 ## Recommendation
 
-{recommendation(rows, low_credibility)}
+{recommendation(rows, low_credibility, qualification['research_only_count'] > 0)}
 """
 
 
@@ -169,12 +181,48 @@ def credibility_analysis(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def recommendation(rows: list[dict], low_credibility: bool) -> str:
+def qualification_summary(rows: list[dict]) -> dict:
+    formal_count = sum(1 for row in rows if row.get("is_formal_point_in_time"))
+    research_only_count = sum(1 for row in rows if is_research_only_strategy(row))
+    if research_only_count > 0:
+        notice = "Research Only strategies are not formal point-in-time investment performance."
+    else:
+        notice = "No Research Only strategy is marked in the comparison output."
+    return {
+        "formal_count": formal_count,
+        "research_only_count": research_only_count,
+        "notice": notice,
+    }
+
+
+def qualification_analysis(rows: list[dict]) -> str:
+    lines = []
+    for row in rows:
+        formal = "Yes" if row.get("is_formal_point_in_time") else "No"
+        research_only = "Yes" if is_research_only_strategy(row) else "No"
+        lines.append(
+            f"- {row['strategy']}: Qualification Grade {row.get('qualification_grade', 'N/A')}. "
+            f"Formal Point-in-Time: {formal}. Research Only: {research_only}. "
+            f"{row.get('qualification_reason') or 'No qualification reason provided.'}"
+        )
+    return "\n".join(lines)
+
+
+def is_research_only_strategy(row: dict) -> bool:
+    if row.get("is_formal_point_in_time"):
+        return False
+    qualification_grade = row.get("qualification_grade", "N/A")
+    if qualification_grade == "N/A":
+        return False
+    return row.get("research_only_count", 0) > 0 or qualification_grade in {"C", "D"}
+
+
+def recommendation(rows: list[dict], low_credibility: bool, has_research_only: bool = False) -> str:
     best = rank_by_excess_return(rows)[0]
-    if low_credibility:
+    if low_credibility or has_research_only:
         return (
             f"{best['strategy']} has the highest excess return in this comparison, "
-            "but at least one result has C/D credibility. "
+            "but at least one result has C/D credibility or Research Only qualification. "
             "目前結果僅供研究，不可視為正式投資績效。"
         )
     return (
@@ -198,6 +246,12 @@ def parse_int(value) -> int:
     if value in {None, ""}:
         return 0
     return int(float(value))
+
+
+def parse_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"true", "1", "yes"}
 
 
 def format_percent(value) -> str:
