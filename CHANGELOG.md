@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - v2.4 RC Validation
+
+- Added `scripts/v2_4_rc_validation.ps1` for reproducible Historical Backtesting release-candidate validation.
+- Added `v2_4_rc_validation.py` to generate `reports/v2_4_rc_validation.md` from step statuses and Backtest qualification export.
+- RC validation flow imports financial snapshots, generates SAP snapshots, runs repository-sourced backtest, runs strategy comparison, and generates research report.
+- RC validation report includes import status, generator status, backtest status, strategy comparison status, research report status, qualification summary, formal PIT / research-only status, and known limitations.
+- Added unit tests for RC validation script flow, summary report generation, and qualification field handling.
+- Updated README, project status, and CHANGELOG.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, Backtest strategy logic, new strategy, new data source, GUI, or AI changes were added.
+
 ## Unreleased - Strategy Compare Qualification Integration
 
 - Added Backtest qualification fields to `strategy_compare.py` CSV and Markdown outputs.

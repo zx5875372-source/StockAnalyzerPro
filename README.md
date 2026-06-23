@@ -565,6 +565,26 @@ historical_pipeline_test.db
 
 The pipeline report includes imported financial snapshot count, generated SAP snapshot count, failed count, warnings, database path, and point-in-time status.
 
+v2.4 Historical Backtesting RC validation:
+
+```powershell
+.\scripts\v2_4_rc_validation.ps1
+```
+
+The RC validation flow runs:
+
+```text
+delete v2_4_rc_test.db
+-> historical_import.py
+-> historical_generate_sap.py
+-> backtest.py --snapshot-source repository --snapshot-db v2_4_rc_test.db
+-> strategy_compare.py --snapshot-source repository --snapshot-db v2_4_rc_test.db
+-> research_report.py
+-> reports/v2_4_rc_validation.md
+```
+
+The RC validation report includes import, generator, backtest, strategy comparison, and research report status, plus qualification summary, formal PIT / research-only status, and known limitations.
+
 Current boundary:
 
 - Backtest can read repository SAP snapshots through `--snapshot-source repository`, but full historical performance validation is still in progress.
@@ -862,7 +882,7 @@ Backtest CLI options:
 Run local checks:
 
 ```powershell
-.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py snapshot_repository_builder.py historical_import.py historical_generate_sap.py historical_qualify.py
+.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py snapshot_repository_builder.py historical_import.py historical_generate_sap.py historical_qualify.py v2_4_rc_validation.py
 .venv\Scripts\python.exe -m unittest discover -s tests/unit
 ```
 

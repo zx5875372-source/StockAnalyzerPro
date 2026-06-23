@@ -26,6 +26,7 @@ Historical Pipeline MVP
 - Historical Backtest Qualification Gate
 - Historical Backtest Qualification Export
 - Strategy Compare Qualification Integration
+- v2.4 Historical Backtesting RC Validation
 - GitHub Actions
 - GitHub Releases
 
@@ -50,7 +51,7 @@ Historical Pipeline MVP
 
 ## Test Status
 
-- Unit Tests: 203 passing
+- Unit Tests: 208 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
