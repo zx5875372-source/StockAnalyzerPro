@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Historical Qualification
+
+- Added `historical/qualification/` with `HistoricalQualifier` and `QualificationResult`.
+- Added `historical_qualify.py` CLI for repository qualification reporting.
+- Added `reports/historical_qualification_report.md` output support.
+- Classified `missing_published_date` and `not_point_in_time` rows as research-only.
+- Added unit tests for formal point-in-time qualification, research-only fallback rows, empty repositories, CLI defaults, and report generation.
+- Updated README, project status, and CHANGELOG.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, or Backtest strategy logic changes were added.
+
 ## Unreleased - Historical SAP Generator Incremental Update
 
 - Added `HistoricalSAPGenerator.generate_incremental()` for affected-period rebuilds.

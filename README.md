@@ -45,6 +45,7 @@ Current version: v2.25 Historical Pipeline Smoke Test
 - Provides a FinMind smoke test guide and helper script for safe real-API testing with a test database.
 - Provides a Historical SAP Generator MVP for turning financial statement snapshots into repository SAP score snapshots.
 - Provides a Historical SAP Generator CLI for filtered and incremental repository generation runs.
+- Provides Historical Qualification reporting for separating point-in-time-safe snapshots from research-only fallback data.
 - Provides an end-to-end historical pipeline smoke test from financial CSV import to SAP snapshot generation.
 
 ## Installation
@@ -572,6 +573,26 @@ Current boundary:
 - SAP Score scoring logic is not modified.
 - Generated snapshots remain research artifacts until point-in-time publication dates and historical price coverage are fully qualified.
 
+## Historical Qualification
+
+Historical qualification separates formal point-in-time snapshots from research-only fallback rows before using repository data for performance validation.
+
+Run qualification:
+
+```powershell
+.venv\Scripts\python.exe historical_qualify.py --db historical_snapshots.db
+```
+
+Write to a custom report path:
+
+```powershell
+.venv\Scripts\python.exe historical_qualify.py --db historical_snapshots.db --output reports/historical_qualification_report.md
+```
+
+The report includes total snapshots, financial snapshot count, SAP snapshot count, point-in-time count, research-only count, missing published-date count, not-point-in-time count, qualified SAP snapshot count, and whether the repository can be used for formal backtest validation.
+
+Rows with `missing_published_date` or `not_point_in_time` are classified as research-only.
+
 ## Historical Import Framework
 
 Milestone 5.5 Sprint 1 adds the initial import framework under:
@@ -808,7 +829,7 @@ Backtest CLI options:
 Run local checks:
 
 ```powershell
-.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py snapshot_repository_builder.py historical_import.py
+.venv\Scripts\python.exe -m py_compile app.py scan.py backtest.py snapshot_builder.py snapshot_repository_builder.py historical_import.py historical_generate_sap.py historical_qualify.py
 .venv\Scripts\python.exe -m unittest discover -s tests/unit
 ```
 
