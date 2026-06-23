@@ -714,6 +714,7 @@ Run the Sprint 3 Backtest Engine MVP:
 .venv\Scripts\python.exe backtest.py --capital 500000
 .venv\Scripts\python.exe backtest.py --strategy sap
 .venv\Scripts\python.exe backtest.py --strategy piotroski
+.venv\Scripts\python.exe backtest.py --snapshot-source repository --snapshot-db historical_snapshots.db
 ```
 
 Compare strategies with the same backtest parameters:
@@ -740,6 +741,7 @@ The MVP uses:
 - `tests/sample_data/sample_stocks.json` as the universe.
 - Historical SAP Score snapshots from `data/snapshots/generated_sap_scores.csv` when available.
 - Falls back to `data/snapshots/sample_sap_scores.csv` when generated snapshots do not exist.
+- Can read generated SAP score snapshots directly from `historical_snapshots.db` with `--snapshot-source repository`.
 - Default benchmark `0050.TW`.
 - yfinance historical price data from `2023-01-01` to `2025-12-31`.
 - Monthly rebalance.
@@ -789,6 +791,8 @@ Backtest CLI options:
 - `--capital`: initial capital, default `1000000`.
 - `--benchmark`: benchmark symbol, default `0050.TW`.
 - `--snapshot`: snapshot CSV path, default `data/snapshots/generated_sap_scores.csv`.
+- `--snapshot-source`: snapshot source, `csv` or `repository`, default `csv`.
+- `--snapshot-db`: historical snapshot SQLite database path, default `historical_snapshots.db`.
 - `--universe`: universe JSON path, default `tests/sample_data/sample_stocks.json`.
 - `--strategy`: strategy name, `sap` or `piotroski`, default `sap`.
 

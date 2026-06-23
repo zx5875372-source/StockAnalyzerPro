@@ -30,7 +30,7 @@ def main(argv=None) -> None:
     print(f"初始資金：{config.initial_cash}")
     print(f"Benchmark：{config.benchmark_symbol}")
     print(f"Strategy：{strategy.name}")
-    print(f"Snapshot：{config.resolved_snapshot_path()}")
+    print(f"Snapshot：{config.resolved_snapshot_label()}")
     print(f"Universe：{config.universe_path}")
     print("------------------------------------")
 

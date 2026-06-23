@@ -8,6 +8,7 @@ from backtest.integrity import calculate_credibility
 from backtest.performance import PerformanceReport
 from backtest.portfolio import Portfolio
 from backtest.snapshot import SnapshotScoreStore
+from historical.repository import HistoricalSnapshotRepository
 from strategy.base_strategy import BaseStrategy
 from modules.downloader import normalize_symbol
 from scan import load_sample_stocks
@@ -15,6 +16,7 @@ from scan import load_sample_stocks
 
 GENERATED_SNAPSHOT_PATH = Path("data/snapshots/generated_sap_scores.csv")
 SAMPLE_SNAPSHOT_PATH = Path("data/snapshots/sample_sap_scores.csv")
+DEFAULT_SNAPSHOT_DB_PATH = Path("historical_snapshots.db")
 
 
 @dataclass
@@ -25,6 +27,8 @@ class BacktestConfig:
     benchmark_symbol: str = "0050.TW"
     universe_path: Path = Path("tests/sample_data/sample_stocks.json")
     snapshot_path: Path | None = None
+    snapshot_source: str = "csv"
+    snapshot_db_path: Path = DEFAULT_SNAPSHOT_DB_PATH
     min_sap_score: int = 80
     min_piotroski_score: int = 7
     min_data_quality_score: int = 80
@@ -36,6 +40,11 @@ class BacktestConfig:
         if GENERATED_SNAPSHOT_PATH.exists():
             return GENERATED_SNAPSHOT_PATH
         return SAMPLE_SNAPSHOT_PATH
+
+    def resolved_snapshot_label(self) -> str:
+        if self.snapshot_source == "repository":
+            return f"repository:{self.snapshot_db_path}"
+        return str(self.resolved_snapshot_path())
 
 
 class YFinancePriceProvider:
@@ -128,8 +137,12 @@ class BacktestEngine:
         ]
 
         print("載入 historical SAP Score snapshot...")
-        self.snapshot_source = self.config.resolved_snapshot_path()
-        self.snapshots = SnapshotScoreStore.from_csv(self.snapshot_source)
+        self.snapshot_source = self.config.resolved_snapshot_label()
+        if self.config.snapshot_source == "repository":
+            repository = HistoricalSnapshotRepository(self.config.snapshot_db_path)
+            self.snapshots = SnapshotScoreStore.from_repository(repository)
+        else:
+            self.snapshots = SnapshotScoreStore.from_csv(self.config.resolved_snapshot_path())
         self.diagnostics.extend(self.snapshots.diagnostics)
         self.look_ahead_safe = self.snapshots.available()
 
@@ -235,7 +248,9 @@ class BacktestEngine:
             "benchmark_symbol": normalize_symbol(self.config.benchmark_symbol),
             "strategy_name": self.config.strategy_name,
             "universe_path": str(self.config.universe_path),
-            "snapshot_path": str(self.config.resolved_snapshot_path()),
+            "snapshot_path": self.config.resolved_snapshot_label(),
+            "snapshot_source": self.config.snapshot_source,
+            "snapshot_db_path": str(self.config.snapshot_db_path),
             "min_sap_score": self.config.min_sap_score,
             "min_piotroski_score": self.config.min_piotroski_score,
             "min_data_quality_score": self.config.min_data_quality_score,

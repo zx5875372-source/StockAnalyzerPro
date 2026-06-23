@@ -1,5 +1,6 @@
 import contextlib
 import io
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,8 @@ class BacktestCLITests(unittest.TestCase):
         self.assertEqual(config.initial_cash, 1_000_000)
         self.assertEqual(config.benchmark_symbol, "0050.TW")
         self.assertEqual(Path(config.snapshot_path).as_posix(), "data/snapshots/generated_sap_scores.csv")
+        self.assertEqual(config.snapshot_source, "csv")
+        self.assertEqual(Path(config.snapshot_db_path).as_posix(), "historical_snapshots.db")
         self.assertEqual(Path(config.universe_path).as_posix(), "tests/sample_data/sample_stocks.json")
         self.assertEqual(config.strategy_name, "sap")
 
@@ -35,6 +38,23 @@ class BacktestCLITests(unittest.TestCase):
         with contextlib.redirect_stderr(io.StringIO()):
             with self.assertRaises(SystemExit):
                 parse_args(["--strategy", "missing"])
+
+    def test_repository_snapshot_source_argument(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            db_path = Path(temp_dir) / "historical_snapshots.db"
+            db_path.write_text("", encoding="utf-8")
+            args = parse_args(["--snapshot-source", "repository", "--snapshot-db", str(db_path)])
+
+            config = build_config_from_args(args)
+
+        self.assertEqual(config.snapshot_source, "repository")
+        self.assertEqual(config.snapshot_db_path, db_path)
+
+    def test_missing_repository_snapshot_db_has_clear_error(self):
+        args = parse_args(["--snapshot-source", "repository", "--snapshot-db", "missing.db"])
+
+        with self.assertRaisesRegex(ValueError, "snapshot repository db"):
+            build_config_from_args(args)
 
     def test_capital_must_be_positive(self):
         args = parse_args(["--capital", "0"])

@@ -118,6 +118,16 @@ class HistoricalSnapshotRepositoryTests(unittest.TestCase):
 
         self.assertEqual([snapshot.symbol for snapshot in snapshots], ["2330.TW", "2454.TW"])
 
+    def test_list_sap_snapshots(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository = HistoricalSnapshotRepository(Path(temp_dir) / "historical_snapshots.db")
+            repository.insert_sap_snapshot(sap_snapshot(symbol="2454.TW", snapshot_date="2025-09-30"))
+            repository.insert_sap_snapshot(sap_snapshot(symbol="2330.TW", snapshot_date="2025-06-30"))
+
+            snapshots = repository.list_sap_snapshots()
+
+        self.assertEqual([snapshot.symbol for snapshot in snapshots], ["2330.TW", "2454.TW"])
+
 
 def financial_snapshot(symbol="2330.TW", snapshot_date="2025-06-30"):
     return FinancialStatementSnapshot(

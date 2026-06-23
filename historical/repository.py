@@ -231,6 +231,17 @@ class HistoricalSnapshotRepository:
             ).fetchall()
         return [financial_snapshot_from_row(row) for row in rows]
 
+    def list_sap_snapshots(self) -> list[SAPScoreSnapshot]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM sap_score_snapshots
+                ORDER BY symbol, snapshot_date, fiscal_year, fiscal_quarter, id
+                """
+            ).fetchall()
+        return [sap_snapshot_from_row(row) for row in rows]
+
     @contextmanager
     def _connect(self):
         connection = sqlite3.connect(self.db_path)

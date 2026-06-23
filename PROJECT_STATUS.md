@@ -20,6 +20,7 @@ Historical Pipeline MVP
 - FinMind Importer
 - Historical SAP Generator
 - Historical Pipeline
+- Historical Backtest Repository Snapshot Source
 - GitHub Actions
 - GitHub Releases
 
@@ -44,7 +45,7 @@ Historical Pipeline MVP
 
 ## Test Status
 
-- Unit Tests: 175 passing
+- Unit Tests: 180 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 

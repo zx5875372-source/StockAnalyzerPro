@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from historical.models import SAPScoreSnapshot
+from historical.repository import HistoricalSnapshotRepository
 from modules.downloader import normalize_symbol
 
 
@@ -16,7 +18,7 @@ REQUIRED_COLUMNS = {
 
 
 class SnapshotScoreStore:
-    def __init__(self, rows: list[dict] | None = None, source: Path | None = None, diagnostics: list[str] | None = None):
+    def __init__(self, rows: list[dict] | None = None, source: Path | str | None = None, diagnostics: list[str] | None = None):
         self.rows = sorted(rows or [], key=lambda row: row["date"])
         self.source = source
         self.diagnostics = diagnostics or []
@@ -49,6 +51,17 @@ class SnapshotScoreStore:
 
         return cls(rows=rows, source=path, diagnostics=diagnostics)
 
+    @classmethod
+    def from_repository(cls, repository: HistoricalSnapshotRepository):
+        source = f"repository:{repository.db_path}"
+        snapshots = repository.list_sap_snapshots()
+        if not snapshots:
+            return cls(source=source, diagnostics=[f"snapshot repository empty: {repository.db_path}"])
+        return cls(
+            rows=[snapshot_to_score_row(snapshot) for snapshot in snapshots],
+            source=source,
+        )
+
     def latest_before(self, symbol: str, date) -> dict | None:
         normalized_symbol = normalize_symbol(symbol)
         target_date = pd.Timestamp(date)
@@ -70,7 +83,8 @@ class SnapshotScoreStore:
             warning = row.get("warning") or ""
             if not warning:
                 continue
-            counts[warning] = counts.get(warning, 0) + 1
+            for warning_item in split_warnings(warning):
+                counts[warning_item] = counts.get(warning_item, 0) + 1
         return counts
 
     def has_warnings(self) -> bool:
@@ -103,6 +117,21 @@ def normalize_snapshot_row(row: dict) -> dict | None:
     }
 
 
+def snapshot_to_score_row(snapshot: SAPScoreSnapshot) -> dict:
+    warning = snapshot.warning or ""
+    if not snapshot.is_point_in_time:
+        warning = join_warnings(warning, "not_point_in_time")
+    return {
+        "date": pd.Timestamp(snapshot.snapshot_date),
+        "symbol": normalize_symbol(snapshot.symbol),
+        "sap_score": snapshot.sap_score,
+        "piotroski_score": snapshot.piotroski_score,
+        "data_quality_score": snapshot.data_quality_score,
+        "source": snapshot.source,
+        "warning": warning,
+    }
+
+
 def parse_number(value):
     try:
         parsed = float(value)
@@ -111,3 +140,19 @@ def parse_number(value):
     if parsed.is_integer():
         return int(parsed)
     return parsed
+
+
+def split_warnings(value: str) -> list[str]:
+    warnings = []
+    for chunk in str(value).replace(",", ";").split(";"):
+        warning = chunk.strip()
+        if warning:
+            warnings.append(warning)
+    return warnings
+
+
+def join_warnings(existing: str, warning: str) -> str:
+    warnings = split_warnings(existing)
+    if warning not in warnings:
+        warnings.append(warning)
+    return ";".join(warnings)

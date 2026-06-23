@@ -231,6 +231,7 @@ Examples:
 .venv\Scripts\python.exe backtest.py --start 2024-01-01 --end 2025-12-31
 .venv\Scripts\python.exe backtest.py --benchmark 006208.TW
 .venv\Scripts\python.exe backtest.py --capital 500000
+.venv\Scripts\python.exe backtest.py --snapshot-source repository --snapshot-db historical_snapshots.db
 ```
 
 Supported arguments:
@@ -240,14 +241,24 @@ Supported arguments:
 - `--capital`, default `1000000`.
 - `--benchmark`, default `0050.TW`.
 - `--snapshot`, default `data/snapshots/generated_sap_scores.csv`.
+- `--snapshot-source`, `csv` or `repository`, default `csv`.
+- `--snapshot-db`, default `historical_snapshots.db`.
 - `--universe`, default `tests/sample_data/sample_stocks.json`.
 
 Validation rules:
 
 - `start` must not be later than `end`.
 - `capital` must be greater than 0.
-- `snapshot` must exist.
+- `snapshot` must exist when `--snapshot-source csv`.
+- `snapshot-db` must exist when `--snapshot-source repository`.
 - `universe` must exist.
+
+Repository snapshot source:
+
+- `--snapshot-source repository` reads `SAPScoreSnapshot` rows from `historical_snapshots.db`.
+- The repository read path preserves CSV compatibility; CSV remains the default.
+- Repository rows use `snapshot_date` as the backtest availability date.
+- Rows marked `is_point_in_time=false` are counted with a `not_point_in_time` warning for credibility reporting.
 
 ## 1. Data Source
 

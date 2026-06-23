@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Historical Backtest Snapshot Source
+
+- Added a repository snapshot read path for Backtest using `SAPScoreSnapshot` rows from `historical_snapshots.db`.
+- Added `--snapshot-source csv|repository` and `--snapshot-db` CLI options while preserving CSV as the default source.
+- Added `HistoricalSnapshotRepository.list_sap_snapshots()`.
+- Updated `SnapshotScoreStore` to load repository snapshots and count semicolon/comma-separated warnings individually.
+- Added tests for repository snapshot loading, BacktestEngine repository source loading, CLI validation, and repository SAP snapshot listing.
+- Updated README, Backtest README, and project status documentation.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, or Backtest strategy logic changes were added.
+
 ## Unreleased - App CLI v2.3
 
 - Updated `app.py` to display `StockAnalyzerPro v2.3` and `Historical Pipeline MVP`.
