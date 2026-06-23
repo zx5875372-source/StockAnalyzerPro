@@ -1,10 +1,10 @@
 # StockAnalyzerPro Project Status
 
 Current Version
-v2.3 Historical Pipeline MVP
+v2.4 UI 中文化
 
 Current Phase
-Historical Pipeline MVP
+v2.4 UI 中文化
 
 ## Completed
 
@@ -27,6 +27,7 @@ Historical Pipeline MVP
 - Historical Backtest Qualification Export
 - Strategy Compare Qualification Integration
 - v2.4 Historical Backtesting RC Validation
+- Chinese UI Localization
 - GitHub Actions
 - GitHub Releases
 

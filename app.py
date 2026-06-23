@@ -15,7 +15,7 @@ def analyze_single_stock():
     print("------------------------------------")
 
     while True:
-        symbol = input("股票代號：").strip()
+        symbol = input("請輸入股票代號：").strip()
 
         if symbol.lower() == "q":
             print("")
@@ -25,14 +25,17 @@ def analyze_single_stock():
             continue
 
         try:
+            print("正在下載資料...")
             data = get_stock_data(symbol)
+            print("正在分析...")
             result = analyze_stock(data)
+            print("正在產生報告...")
             report_path = generate_markdown_report(result)
 
             print(f"\n分析完成：{result['symbol']}")
             print(f"SAP Score：{result['sap_score']} / 100")
             print(f"投資等級：{result['grade']}")
-            print(f"報告位置：{report_path}\n")
+            print(f"報告已產生：{report_path}\n")
 
         except Exception as e:
             print(f"分析失敗：{e}\n")
@@ -43,9 +46,13 @@ def run_cli(script_name: str, args: list[str] | None = None) -> None:
     if args:
         command.extend(args)
     print("")
-    print(f"執行：{' '.join(command)}")
+    print(f"正在執行：{' '.join(command)}")
     print("------------------------------------")
-    subprocess.run(command, check=False)
+    result = subprocess.run(command, check=False)
+    if result.returncode == 0:
+        print("完成")
+    else:
+        print(f"失敗（代碼：{result.returncode}）")
     print("")
 
 
@@ -58,10 +65,10 @@ def prompt_optional(label: str, default: str | None = None) -> str | None:
 
 
 def run_finmind_import():
-    print("\n[4] FinMind 匯入財報")
+    print("\n[4] 匯入 FinMind 財報")
     print("輸入 q 返回主選單")
     print("------------------------------------")
-    symbol = input("股票代號：").strip()
+    symbol = input("請輸入股票代號：").strip()
     if symbol.lower() == "q":
         print("")
         return
@@ -71,8 +78,8 @@ def run_finmind_import():
 
     start_date = prompt_optional("開始日期 YYYY-MM-DD")
     end_date = prompt_optional("結束日期 YYYY-MM-DD")
-    db_path = prompt_optional("Repository DB", "historical_snapshots.db")
-    token = prompt_optional("FinMind token")
+    db_path = prompt_optional("資料庫路徑", "historical_snapshots.db")
+    token = prompt_optional("FinMind 權杖")
 
     args = ["--symbol", symbol]
     if start_date:
@@ -88,13 +95,13 @@ def run_finmind_import():
 
 
 def run_historical_sap_generator():
-    print("\n[5] Historical SAP Generator")
-    print("可空白代表產生全部 financial snapshots")
+    print("\n[5] 建立歷史 SAP 評分")
+    print("可留空代表處理全部財報快照")
     print("------------------------------------")
-    db_path = prompt_optional("Repository DB", "historical_snapshots.db")
+    db_path = prompt_optional("資料庫路徑", "historical_snapshots.db")
     symbol = prompt_optional("股票代號")
-    year = prompt_optional("Fiscal year")
-    quarter = prompt_optional("Fiscal quarter 1-4")
+    year = prompt_optional("會計年度")
+    quarter = prompt_optional("會計季度 1-4")
 
     args = []
     if db_path:
@@ -111,7 +118,7 @@ def run_historical_sap_generator():
 
 def show_project_status():
     status_path = Path("PROJECT_STATUS.md")
-    print("\n[9] Project Status")
+    print("\n[9] 查看專案狀態")
     print("------------------------------------")
     if not status_path.exists():
         print("找不到 PROJECT_STATUS.md\n")
@@ -121,26 +128,27 @@ def show_project_status():
 
 
 def show_menu():
-    print("====================================")
-    print(" StockAnalyzerPro v2.3")
-    print(" Historical Pipeline MVP")
-    print("====================================")
+    print("=========================================")
+    print("      StockAnalyzerPro v2.4")
+    print("          股票分析系統")
+    print("=========================================")
+    print("")
     print("【股票分析】")
     print("1. 分析單一股票")
-    print("2. 掃描自選股 watchlist")
-    print("3. 掃描 sample stocks")
+    print("2. 分析自選股")
+    print("3. 分析範例股票")
     print("")
     print("【歷史資料】")
-    print("4. FinMind 匯入財報")
-    print("5. Historical SAP Generator")
+    print("4. 匯入 FinMind 財報")
+    print("5. 建立歷史 SAP 評分")
     print("")
-    print("【研究工具】")
-    print("6. Backtest")
-    print("7. Strategy Compare")
-    print("8. Research Report")
+    print("【策略研究】")
+    print("6. 執行策略回測")
+    print("7. 比較策略績效")
+    print("8. 產生研究報告")
     print("")
     print("【系統】")
-    print("9. Project Status")
+    print("9. 查看專案狀態")
     print("0. 離開")
     print("------------------------------------")
 

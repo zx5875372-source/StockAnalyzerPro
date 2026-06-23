@@ -24,44 +24,54 @@ def main(argv=None) -> None:
     engine = BacktestEngine(strategy=strategy, portfolio=portfolio, config=config)
 
     print("====================================")
-    print(" StockAnalyzerPro Backtest MVP")
+    print(" StockAnalyzerPro 策略回測")
     print("====================================")
     print(f"期間：{config.start_date} 到 {config.end_date}")
     print(f"初始資金：{config.initial_cash}")
-    print(f"Benchmark：{config.benchmark_symbol}")
-    print(f"Strategy：{strategy.name}")
-    print(f"Snapshot：{config.resolved_snapshot_label()}")
-    print(f"Universe：{config.universe_path}")
+    print(f"基準指數：{config.benchmark_symbol}")
+    print(f"策略：{strategy.name}")
+    print(f"快照來源：{config.resolved_snapshot_label()}")
+    print(f"股票範圍：{config.universe_path}")
     print("------------------------------------")
 
+    print("正在執行回測...")
     result = engine.run()
+    print("正在產生報告...")
     BacktestReportWriter().write(result)
 
     metrics = result["metrics"]
     print("------------------------------------")
     print("回測完成")
-    print(f"Total Return：{metrics['total_return'] * 100:.2f}%")
-    print(f"CAGR：{metrics['cagr'] * 100:.2f}%")
-    print(f"Max Drawdown：{metrics['max_drawdown'] * 100:.2f}%")
-    print(f"Win Rate：{metrics['win_rate'] * 100:.2f}%")
-    print(f"Benchmark：{config.benchmark_symbol}")
-    print(f"Benchmark Total Return：{format_cli_percent(metrics['benchmark_total_return'])}")
-    print(f"Excess Return：{format_cli_percent(metrics['excess_return'])}")
-    print(f"Strategy vs Benchmark：{metrics['strategy_vs_benchmark']}")
-    print(f"Look-ahead-safe：{str(result['look_ahead_safe']).lower()}")
-    print(f"Credibility：{result['credibility_grade']} - {result['credibility_reason']}")
-    print(f"Selected：{result['selected_stock_count']}")
-    print(f"Skipped：{result['skipped_stock_count']}")
-    print("Summary：reports\\backtest_summary.md")
-    print("Equity Curve：reports\\backtest_equity_curve.csv")
-    print("Qualification CSV：reports\\backtest_qualification.csv")
-    print("Qualification JSON：reports\\backtest_qualification.json")
+    print(f"總報酬率：{metrics['total_return'] * 100:.2f}%")
+    print(f"年化報酬率：{metrics['cagr'] * 100:.2f}%")
+    print(f"最大回撤：{metrics['max_drawdown'] * 100:.2f}%")
+    print(f"勝率：{metrics['win_rate'] * 100:.2f}%")
+    print(f"基準指數：{config.benchmark_symbol}")
+    print(f"基準總報酬率：{format_cli_percent(metrics['benchmark_total_return'])}")
+    print(f"超額報酬率：{format_cli_percent(metrics['excess_return'])}")
+    print(f"是否勝過基準：{format_cli_benchmark_result(metrics['strategy_vs_benchmark'])}")
+    print(f"無未來函數：{str(result['look_ahead_safe']).lower()}")
+    print(f"可信度：{result['credibility_grade']} - {result['credibility_reason']}")
+    print(f"入選股票：{result['selected_stock_count']}")
+    print(f"略過股票：{result['skipped_stock_count']}")
+    print("摘要報告：reports\\backtest_summary.md")
+    print("權益曲線：reports\\backtest_equity_curve.csv")
+    print("回測資格 CSV：reports\\backtest_qualification.csv")
+    print("回測資格 JSON：reports\\backtest_qualification.json")
 
 
 def format_cli_percent(value) -> str:
     if value is None:
-        return "benchmark unavailable"
+        return "基準資料不足"
     return f"{value * 100:.2f}%"
+
+
+def format_cli_benchmark_result(value: str) -> str:
+    if value == "outperform":
+        return "是"
+    if value == "underperform":
+        return "否"
+    return "基準資料不足"
 
 
 if __name__ == "__main__":

@@ -53,119 +53,119 @@ class BacktestReportWriter:
             else "| 無 | 0 |"
         )
 
-        content = f"""# Backtest Summary
+        content = f"""# 回測摘要
 
-Version: Sprint 8 Backtest CLI Options
+版本：Sprint 8 Backtest CLI Options
 
-## Config
+## 回測設定
 
-| Item | Value |
+| 項目 | 數值 |
 |---|---:|
-| Start Date | {config['start_date']} |
-| End Date | {config['end_date']} |
-| Initial Cash | {config['initial_cash']} |
-| Rebalance | Monthly |
-| Benchmark | {config['benchmark_symbol']} |
-| Strategy | {result['strategy_name']} |
-| Universe | {config['universe_path']} |
-| Snapshot Source | {result['snapshot_source']} |
-| Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
-| Snapshot Point-in-time | {str(result['snapshot_point_in_time']).lower()} |
+| 開始日期 | {config['start_date']} |
+| 結束日期 | {config['end_date']} |
+| 初始資金 | {config['initial_cash']} |
+| 再平衡 | 每月 |
+| 基準指數 | {config['benchmark_symbol']} |
+| 策略 | {result['strategy_name']} |
+| 股票範圍 | {config['universe_path']} |
+| 快照來源 | {result['snapshot_source']} |
+| 無未來函數 | {str(result['look_ahead_safe']).lower()} |
+| 快照 Point-in-Time | {str(result['snapshot_point_in_time']).lower()} |
 
-## Credibility
+## 可信度
 
-| Item | Value |
+| 項目 | 數值 |
 |---|---|
-| Credibility Grade | {result['credibility_grade']} |
-| Credibility Reason | {result['credibility_reason']} |
+| 可信度評級 | {result['credibility_grade']} |
+| 可信度原因 | {result['credibility_reason']} |
 
 {credibility_notice}
 
-## Historical Qualification
+## 回測資格
 
-| Item | Value |
+| 項目 | 數值 |
 |---|---:|
-| Qualification Grade | {result['qualification_grade']} |
-| Qualification Reason | {result['qualification_reason']} |
-| Research-only Count | {result['research_only_count']} |
-| Point-in-Time Count | {result['point_in_time_count']} |
-| Missing Published Date Count | {result['missing_published_date_count']} |
-| Not Point-in-Time Count | {result['not_point_in_time_count']} |
+| 回測資格評級 | {result['qualification_grade']} |
+| 回測資格原因 | {result['qualification_reason']} |
+| 僅供研究筆數 | {result['research_only_count']} |
+| Point-in-Time 筆數 | {result['point_in_time_count']} |
+| 缺少公告日筆數 | {result['missing_published_date_count']} |
+| 非 Point-in-Time 筆數 | {result['not_point_in_time_count']} |
 
 {qualification_notice}
 
-## Strategy
+## 策略條件
 
-| Item | Value |
+| 項目 | 數值 |
 |---|---:|
-| Strategy | {result['strategy_name']} |
+| 策略 | {result['strategy_name']} |
 | SAP Score >= | {config['min_sap_score']} |
 | Piotroski >= | {config['min_piotroski_score']} |
-| Data Quality >= | {config['min_data_quality_score']} |
+| 資料品質 >= | {config['min_data_quality_score']} |
 
-## Performance
+## 績效表現
 
-| Metric | Value |
+| 指標 | 數值 |
 |---|---:|
-| Total Return | {format_percent(metrics['total_return'])} |
-| CAGR | {format_percent(metrics['cagr'])} |
-| Max Drawdown | {format_percent(metrics['max_drawdown'])} |
-| Win Rate | {format_percent(metrics['win_rate'])} |
+| 總報酬率 | {format_percent(metrics['total_return'])} |
+| 年化報酬率 | {format_percent(metrics['cagr'])} |
+| 最大回撤 | {format_percent(metrics['max_drawdown'])} |
+| 勝率 | {format_percent(metrics['win_rate'])} |
 | Sharpe | TODO |
 | Sortino | TODO |
 
-## Benchmark Comparison
+## 基準比較
 
-| Metric | Value |
+| 指標 | 數值 |
 |---|---:|
-| Strategy Total Return | {format_percent(metrics['total_return'])} |
-| Strategy CAGR | {format_percent(metrics['cagr'])} |
-| Benchmark | {config['benchmark_symbol']} |
-| Benchmark Total Return | {format_percent(metrics['benchmark_total_return'])} |
-| Benchmark CAGR | {format_percent(metrics['benchmark_cagr'])} |
-| Excess Return | {format_percent(metrics['excess_return'])} |
-| Excess CAGR | {format_percent(metrics['excess_cagr'])} |
-| Strategy vs Benchmark | {format_benchmark_result(metrics['strategy_vs_benchmark'])} |
+| 策略總報酬率 | {format_percent(metrics['total_return'])} |
+| 策略年化報酬率 | {format_percent(metrics['cagr'])} |
+| 基準指數 | {config['benchmark_symbol']} |
+| 基準總報酬率 | {format_percent(metrics['benchmark_total_return'])} |
+| 基準年化報酬率 | {format_percent(metrics['benchmark_cagr'])} |
+| 超額報酬率 | {format_percent(metrics['excess_return'])} |
+| 超額年化報酬率 | {format_percent(metrics['excess_cagr'])} |
+| 是否勝過基準 | {format_benchmark_result(metrics['strategy_vs_benchmark'])} |
 
-## Data Integrity
+## 資料完整性
 
-| Item | Value |
+| 項目 | 數值 |
 |---|---:|
-| Snapshot Source | {result['snapshot_source']} |
-| Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
-| Snapshot Point-in-time | {str(result['snapshot_point_in_time']).lower()} |
-| Qualification Grade | {result['qualification_grade']} |
-| Research-only Count | {result['research_only_count']} |
-| Point-in-Time Count | {result['point_in_time_count']} |
-| Missing Published Date Count | {result['missing_published_date_count']} |
-| Not Point-in-Time Count | {result['not_point_in_time_count']} |
-| Selected Stock Count | {result['selected_stock_count']} |
-| Skipped Stock Count | {result['skipped_stock_count']} |
+| 快照來源 | {result['snapshot_source']} |
+| 無未來函數 | {str(result['look_ahead_safe']).lower()} |
+| 快照 Point-in-Time | {str(result['snapshot_point_in_time']).lower()} |
+| 回測資格評級 | {result['qualification_grade']} |
+| 僅供研究筆數 | {result['research_only_count']} |
+| Point-in-Time 筆數 | {result['point_in_time_count']} |
+| 缺少公告日筆數 | {result['missing_published_date_count']} |
+| 非 Point-in-Time 筆數 | {result['not_point_in_time_count']} |
+| 入選股票數 | {result['selected_stock_count']} |
+| 略過股票數 | {result['skipped_stock_count']} |
 
-## Snapshot Warnings
+## 快照警告
 
-| Warning | Count |
+| 警告 | 筆數 |
 |---|---:|
 {warning_rows}
 
-## Selected Symbols
+## 入選股票
 
 {selected_rows}
 
-## Skipped Reasons
+## 略過原因
 
 {skipped_rows}
 
-## Diagnostics
+## 診斷訊息
 
 {diagnostics_rows}
 
-## Notes
+## 備註
 
-This MVP uses historical SAP Score snapshots from the configured snapshot source.
-It does not fallback to current scores during backtest selection. Generated
-snapshots marked `current_analysis_proxy` and `not_point_in_time` are proxy data,
-not formal point-in-time financial statement snapshots.
+此回測使用設定來源中的歷史 SAP Score 快照。
+回測選股期間不會 fallback 到目前分數。標示為 `current_analysis_proxy`
+與 `not_point_in_time` 的快照屬於 proxy 資料，
+不可視為正式 point-in-time 財報快照。
 """
         self.summary_path.write_text(content, encoding="utf-8")
 
@@ -214,7 +214,7 @@ def build_qualification_export_row(result: dict) -> dict:
 
 def format_percent(value) -> str:
     if value is None:
-        return "benchmark unavailable"
+        return "基準資料不足"
     return f"{value * 100:.2f}%"
 
 
@@ -223,4 +223,4 @@ def format_benchmark_result(value: str) -> str:
         return "是"
     if value == "underperform":
         return "否"
-    return "benchmark unavailable"
+    return "基準資料不足"

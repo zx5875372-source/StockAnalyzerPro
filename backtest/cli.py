@@ -17,25 +17,25 @@ DEFAULT_STRATEGY = "sap"
 
 
 def create_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="StockAnalyzerPro Backtest MVP")
-    parser.add_argument("--start", default=DEFAULT_START, help="backtest start date, YYYY-MM-DD")
-    parser.add_argument("--end", default=DEFAULT_END, help="backtest end date, YYYY-MM-DD")
-    parser.add_argument("--capital", type=float, default=DEFAULT_CAPITAL, help="initial capital")
-    parser.add_argument("--benchmark", default=DEFAULT_BENCHMARK, help="benchmark symbol")
-    parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT, help="snapshot CSV path")
+    parser = argparse.ArgumentParser(description="StockAnalyzerPro 策略回測")
+    parser.add_argument("--start", default=DEFAULT_START, help="回測開始日期，格式 YYYY-MM-DD")
+    parser.add_argument("--end", default=DEFAULT_END, help="回測結束日期，格式 YYYY-MM-DD")
+    parser.add_argument("--capital", type=float, default=DEFAULT_CAPITAL, help="初始資金")
+    parser.add_argument("--benchmark", default=DEFAULT_BENCHMARK, help="基準指數代號")
+    parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT, help="snapshot CSV 路徑")
     parser.add_argument(
         "--snapshot-source",
         default="csv",
         choices=["csv", "repository"],
-        help="snapshot source: csv or repository",
+        help="snapshot 來源：csv 或 repository",
     )
-    parser.add_argument("--snapshot-db", default=DEFAULT_SNAPSHOT_DB, help="historical snapshot SQLite db path")
-    parser.add_argument("--universe", default=DEFAULT_UNIVERSE, help="universe JSON path")
+    parser.add_argument("--snapshot-db", default=DEFAULT_SNAPSHOT_DB, help="historical snapshot SQLite 資料庫路徑")
+    parser.add_argument("--universe", default=DEFAULT_UNIVERSE, help="股票範圍 JSON 路徑")
     parser.add_argument(
         "--strategy",
         default=DEFAULT_STRATEGY,
         choices=["sap", "piotroski"],
-        help="strategy name: sap or piotroski",
+        help="策略名稱：sap 或 piotroski",
     )
     return parser
 

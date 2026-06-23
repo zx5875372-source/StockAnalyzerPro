@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Chinese UI Localization
+
+- Updated `app.py` to present StockAnalyzerPro v2.4 with a fully Chinese main menu and Chinese interactive prompts.
+- Localized Backtest, Strategy Compare, and Research Report console output and Markdown report headings.
+- Added Chinese error/help text for user-facing CLI parser descriptions where applicable.
+- Added a Chinese quick-start section to README.
+- Updated unit tests for localized report presentation.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, Backtest strategy logic, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - v2.4 RC Validation
 
 - Added `scripts/v2_4_rc_validation.ps1` for reproducible Historical Backtesting release-candidate validation.

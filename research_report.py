@@ -19,10 +19,10 @@ REQUIRED_COLUMNS = {
     "strategy_vs_benchmark",
 }
 CREDIBILITY_MEANING = {
-    "A": "High credibility. Results are suitable for deeper strategy review.",
-    "B": "Moderate credibility. Results are useful, with known limitations.",
-    "C": "Proxy-level credibility. Results are for research only.",
-    "D": "Low credibility. Results are for system testing and research only.",
+    "A": "可信度高，適合進一步策略審查。",
+    "B": "可信度中等，結果可供研究，但仍有已知限制。",
+    "C": "屬於 proxy 等級可信度，結果僅供研究。",
+    "D": "可信度低，結果僅供系統測試與研究。",
 }
 
 
@@ -31,15 +31,15 @@ class ResearchReportError(ValueError):
 
 
 def create_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate StockAnalyzerPro research report")
-    parser.add_argument("--input", default=str(DEFAULT_INPUT_PATH), help="strategy comparison CSV path")
-    parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH), help="research report Markdown path")
+    parser = argparse.ArgumentParser(description="產生 StockAnalyzerPro 研究報告")
+    parser.add_argument("--input", default=str(DEFAULT_INPUT_PATH), help="策略比較 CSV 路徑")
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH), help="研究報告 Markdown 路徑")
     return parser
 
 
 def read_strategy_comparison(path: Path = DEFAULT_INPUT_PATH) -> list[dict]:
     if not path.exists():
-        raise ResearchReportError(f"strategy comparison CSV not found: {path}")
+        raise ResearchReportError(f"找不到策略比較 CSV：{path}")
 
     with path.open("r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
@@ -47,12 +47,12 @@ def read_strategy_comparison(path: Path = DEFAULT_INPUT_PATH) -> list[dict]:
         missing_columns = sorted(REQUIRED_COLUMNS - fieldnames)
         if missing_columns:
             raise ResearchReportError(
-                "strategy comparison CSV missing columns: " + ", ".join(missing_columns)
+                "策略比較 CSV 缺少欄位：" + ", ".join(missing_columns)
             )
         rows = [normalize_row(row) for row in reader]
 
     if not rows:
-        raise ResearchReportError(f"strategy comparison CSV is empty: {path}")
+        raise ResearchReportError(f"策略比較 CSV 是空的：{path}")
 
     return rows
 
@@ -80,7 +80,7 @@ def normalize_row(row: dict) -> dict:
 
 def generate_research_report(rows: list[dict]) -> str:
     if not rows:
-        raise ResearchReportError("strategy comparison rows are empty")
+        raise ResearchReportError("策略比較資料列是空的")
 
     ranked_rows = rank_by_excess_return(rows)
     best = ranked_rows[0]
@@ -88,35 +88,35 @@ def generate_research_report(rows: list[dict]) -> str:
     low_credibility = any(row["credibility_grade"] in {"C", "D"} for row in rows)
     qualification = qualification_summary(rows)
 
-    return f"""# Research Report
+    return f"""# 研究報告
 
-## Executive Summary
+## 執行摘要
 
-- Best Strategy: {best['strategy']}
-- Benchmark Beaten: {'Yes' if benchmark_beaten else 'No'}
-- Credibility Rating: {best['credibility_grade']}
-- Best Excess Return: {format_percent(best['excess_return'])}
-- Formal Point-in-Time Strategies: {qualification['formal_count']}
-- Research Only Strategies: {qualification['research_only_count']}
-- Research Only Notice: {qualification['notice']}
+- 最佳策略：{best['strategy']}
+- 是否勝過基準：{'是' if benchmark_beaten else '否'}
+- 可信度評級：{best['credibility_grade']}
+- 最佳超額報酬率：{format_percent(best['excess_return'])}
+- 正式 Point-in-Time 策略數：{qualification['formal_count']}
+- 僅供研究策略數：{qualification['research_only_count']}
+- 僅供研究提醒：{qualification['notice']}
 
-## Strategy Ranking
+## 策略排名
 
 {strategy_ranking_table(ranked_rows)}
 
-## Risk Comparison
+## 風險比較
 
 {risk_comparison_table(rows)}
 
-## Credibility Analysis
+## 可信度分析
 
 {credibility_analysis(rows)}
 
-## Qualification Analysis
+## 回測資格分析
 
 {qualification_analysis(rows)}
 
-## Recommendation
+## 建議
 
 {recommendation(rows, low_credibility, qualification['research_only_count'] > 0)}
 """
@@ -135,11 +135,11 @@ def strategy_ranking_table(rows: list[dict]) -> str:
         [
             f"| {index} | {row['strategy']} | {format_percent(row['excess_return'])} | "
             f"{format_percent(row['total_return'])} | {format_percent(row['cagr'])} | "
-            f"{row['credibility_grade']} | {row['strategy_vs_benchmark']} |"
+            f"{row['credibility_grade']} | {format_strategy_vs_benchmark(row['strategy_vs_benchmark'])} |"
             for index, row in enumerate(rows, start=1)
         ]
     )
-    return f"""| Rank | Strategy | Excess Return | Total Return | CAGR | Credibility | Strategy vs Benchmark |
+    return f"""| 排名 | 策略 | 超額報酬率 | 總報酬率 | 年化報酬率 | 可信度 | 是否勝過基準 |
 |---:|---|---:|---:|---:|---|---|
 {table_rows}"""
 
@@ -153,7 +153,7 @@ def risk_comparison_table(rows: list[dict]) -> str:
             for row in rows
         ]
     )
-    return f"""| Strategy | Max Drawdown | Win Rate | Selected | Skipped |
+    return f"""| 策略 | 最大回撤 | 勝率 | 入選 | 略過 |
 |---|---:|---:|---:|---:|
 {table_rows}"""
 
@@ -162,21 +162,21 @@ def credibility_analysis(rows: list[dict]) -> str:
     lines = []
     for row in rows:
         grade = row["credibility_grade"]
-        meaning = CREDIBILITY_MEANING.get(grade, "Unknown credibility grade.")
-        lines.append(f"- {row['strategy']}: Grade {grade}. {meaning}")
+        meaning = CREDIBILITY_MEANING.get(grade, "未知可信度評級。")
+        lines.append(f"- {row['strategy']}：評級 {grade}。{meaning}")
 
     lines.append("")
-    lines.append("A/B/C/D interpretation:")
-    lines.append("- A: highest confidence, suitable for formal review.")
-    lines.append("- B: usable research result with visible limitations.")
-    lines.append("- C: proxy data or snapshot warning risk is present.")
-    lines.append("- D: insufficient or low-confidence result.")
+    lines.append("A/B/C/D 解讀：")
+    lines.append("- A：可信度最高，適合正式審查。")
+    lines.append("- B：可用的研究結果，但有明確限制。")
+    lines.append("- C：存在 proxy 資料或 snapshot warning 風險。")
+    lines.append("- D：資料不足或可信度偏低。")
     lines.append("")
-    lines.append("Snapshot warning / look-ahead-safe analysis:")
+    lines.append("Snapshot warning / look-ahead-safe 分析：")
     lines.append(
-        "- This report is generated from strategy comparison output only. "
-        "If a strategy is graded C or D, treat that as evidence of snapshot warnings, "
-        "look-ahead risk, insufficient selection count, or other credibility limits."
+        "- 本報告僅根據策略比較輸出產生。"
+        "若策略評級為 C 或 D，代表可能存在 snapshot warning、"
+        "look-ahead 風險、入選樣本不足或其他可信度限制。"
     )
     return "\n".join(lines)
 
@@ -185,9 +185,9 @@ def qualification_summary(rows: list[dict]) -> dict:
     formal_count = sum(1 for row in rows if row.get("is_formal_point_in_time"))
     research_only_count = sum(1 for row in rows if is_research_only_strategy(row))
     if research_only_count > 0:
-        notice = "Research Only strategies are not formal point-in-time investment performance."
+        notice = "僅供研究策略不可視為正式 Point-in-Time 投資績效。"
     else:
-        notice = "No Research Only strategy is marked in the comparison output."
+        notice = "本次策略比較未標示僅供研究策略。"
     return {
         "formal_count": formal_count,
         "research_only_count": research_only_count,
@@ -198,12 +198,12 @@ def qualification_summary(rows: list[dict]) -> dict:
 def qualification_analysis(rows: list[dict]) -> str:
     lines = []
     for row in rows:
-        formal = "Yes" if row.get("is_formal_point_in_time") else "No"
-        research_only = "Yes" if is_research_only_strategy(row) else "No"
+        formal = "是" if row.get("is_formal_point_in_time") else "否"
+        research_only = "是" if is_research_only_strategy(row) else "否"
         lines.append(
-            f"- {row['strategy']}: Qualification Grade {row.get('qualification_grade', 'N/A')}. "
-            f"Formal Point-in-Time: {formal}. Research Only: {research_only}. "
-            f"{row.get('qualification_reason') or 'No qualification reason provided.'}"
+            f"- {row['strategy']}：回測資格評級 {row.get('qualification_grade', 'N/A')}。"
+            f"正式 Point-in-Time：{formal}。僅供研究：{research_only}。"
+            f"{row.get('qualification_reason') or '未提供回測資格原因。'}"
         )
     return "\n".join(lines)
 
@@ -221,13 +221,13 @@ def recommendation(rows: list[dict], low_credibility: bool, has_research_only: b
     best = rank_by_excess_return(rows)[0]
     if low_credibility or has_research_only:
         return (
-            f"{best['strategy']} has the highest excess return in this comparison, "
-            "but at least one result has C/D credibility or Research Only qualification. "
+            f"{best['strategy']} 在本次比較中有最高超額報酬率，"
+            "但至少一項結果屬於 C/D 可信度或僅供研究資格。"
             "目前結果僅供研究，不可視為正式投資績效。"
         )
     return (
-        f"{best['strategy']} is the preferred candidate from this comparison. "
-        "Proceed with deeper validation before using it in production decisions."
+        f"{best['strategy']} 是本次比較中的優先候選策略。"
+        "正式使用於投資決策前，仍需進一步驗證。"
     )
 
 
@@ -256,8 +256,16 @@ def parse_bool(value) -> bool:
 
 def format_percent(value) -> str:
     if value is None:
-        return "benchmark unavailable"
+        return "基準資料不足"
     return f"{value * 100:.2f}%"
+
+
+def format_strategy_vs_benchmark(value: str) -> str:
+    if value == "outperform":
+        return "是"
+    if value == "underperform":
+        return "否"
+    return "基準資料不足"
 
 
 def main(argv=None) -> None:
@@ -270,10 +278,10 @@ def main(argv=None) -> None:
         parser.error(str(error))
 
     print("====================================")
-    print(" StockAnalyzerPro Research Report")
+    print(" StockAnalyzerPro 研究報告")
     print("====================================")
-    print(f"Input：{args.input}")
-    print(f"Output：{args.output}")
+    print(f"輸入檔案：{args.input}")
+    print(f"輸出報告：{args.output}")
 
 
 if __name__ == "__main__":

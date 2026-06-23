@@ -46,25 +46,25 @@ CREDIBILITY_ORDER = {
 
 
 def create_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Compare StockAnalyzerPro strategies")
-    parser.add_argument("--start", default=DEFAULT_START, help="backtest start date, YYYY-MM-DD")
-    parser.add_argument("--end", default=DEFAULT_END, help="backtest end date, YYYY-MM-DD")
-    parser.add_argument("--capital", type=float, default=DEFAULT_CAPITAL, help="initial capital")
-    parser.add_argument("--benchmark", default=DEFAULT_BENCHMARK, help="benchmark symbol")
-    parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT, help="snapshot CSV path")
+    parser = argparse.ArgumentParser(description="比較 StockAnalyzerPro 策略績效")
+    parser.add_argument("--start", default=DEFAULT_START, help="回測開始日期，格式 YYYY-MM-DD")
+    parser.add_argument("--end", default=DEFAULT_END, help="回測結束日期，格式 YYYY-MM-DD")
+    parser.add_argument("--capital", type=float, default=DEFAULT_CAPITAL, help="初始資金")
+    parser.add_argument("--benchmark", default=DEFAULT_BENCHMARK, help="基準指數代號")
+    parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT, help="snapshot CSV 路徑")
     parser.add_argument(
         "--snapshot-source",
         default="csv",
         choices=["csv", "repository"],
-        help="snapshot source: csv or repository",
+        help="snapshot 來源：csv 或 repository",
     )
-    parser.add_argument("--snapshot-db", default=DEFAULT_SNAPSHOT_DB, help="historical snapshot SQLite db path")
-    parser.add_argument("--universe", default=DEFAULT_UNIVERSE, help="universe JSON path")
+    parser.add_argument("--snapshot-db", default=DEFAULT_SNAPSHOT_DB, help="historical snapshot SQLite 資料庫路徑")
+    parser.add_argument("--universe", default=DEFAULT_UNIVERSE, help="股票範圍 JSON 路徑")
     parser.add_argument(
         "--strategies",
         nargs="+",
         default=DEFAULT_STRATEGIES,
-        help="strategy names to compare, for example: sap piotroski",
+        help="要比較的策略名稱，例如：sap piotroski",
     )
     return parser
 
@@ -160,13 +160,13 @@ def write_markdown(rows: list[dict], output_path: Path) -> None:
             f"{row['credibility_grade']} | {row['qualification_grade']} | "
             f"{format_bool(row['is_formal_point_in_time'])} | {format_research_only(row)} | "
             f"{row['selected_stock_count']} | {row['skipped_stock_count']} | "
-            f"{row['strategy_vs_benchmark']} |"
+            f"{format_strategy_vs_benchmark(row['strategy_vs_benchmark'])} |"
             for row in rows
         ]
     )
-    content = f"""# Strategy Comparison
+    content = f"""# 策略比較
 
-| Strategy | Total Return | CAGR | Max Drawdown | Win Rate | Benchmark Total Return | Excess Return | Credibility | Qualification Grade | Formal Point-in-Time | Research Only | Selected | Skipped | Strategy vs Benchmark |
+| 策略 | 總報酬率 | 年化報酬率 | 最大回撤 | 勝率 | 基準總報酬率 | 超額報酬率 | 可信度 | 回測資格 | 正式 Point-in-Time | 僅供研究 | 入選 | 略過 | 是否勝過基準 |
 |---|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|---|
 {table_rows}
 """
@@ -175,16 +175,24 @@ def write_markdown(rows: list[dict], output_path: Path) -> None:
 
 def format_percent(value) -> str:
     if value is None:
-        return "benchmark unavailable"
+        return "基準資料不足"
     return f"{value * 100:.2f}%"
 
 
 def format_bool(value) -> str:
-    return "Yes" if parse_bool(value) else "No"
+    return "是" if parse_bool(value) else "否"
 
 
 def format_research_only(row: dict) -> str:
-    return "Yes" if int(row.get("research_only_count") or 0) > 0 else "No"
+    return "是" if int(row.get("research_only_count") or 0) > 0 else "否"
+
+
+def format_strategy_vs_benchmark(value: str) -> str:
+    if value == "outperform":
+        return "是"
+    if value == "underperform":
+        return "否"
+    return "基準資料不足"
 
 
 def parse_bool(value) -> bool:
@@ -204,11 +212,11 @@ def main(argv=None) -> None:
     write_reports(rows)
 
     print("====================================")
-    print(" StockAnalyzerPro Strategy Compare")
+    print(" StockAnalyzerPro 策略比較")
     print("====================================")
-    print(f"Strategies：{', '.join(args.strategies)}")
-    print(f"Markdown：{COMPARISON_MD_PATH}")
-    print(f"CSV：{COMPARISON_CSV_PATH}")
+    print(f"策略：{', '.join(args.strategies)}")
+    print(f"Markdown 報告：{COMPARISON_MD_PATH}")
+    print(f"CSV 報告：{COMPARISON_CSV_PATH}")
 
 
 if __name__ == "__main__":

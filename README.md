@@ -8,7 +8,50 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current version, phase, completed
 
 StockAnalyzerPro is a Python CLI stock analysis project for personal investment research. It focuses on producing a repeatable Markdown report from a fixed investment logic, rather than only fetching market data.
 
-Current version: v2.25 Historical Pipeline Smoke Test
+Current version: v2.4 UI 中文化
+
+## 快速開始（中文）
+
+啟動主控台：
+
+```powershell
+.venv\Scripts\python.exe app.py
+```
+
+主選單：
+
+```text
+=========================================
+      StockAnalyzerPro v2.4
+          股票分析系統
+=========================================
+
+【股票分析】
+1. 分析單一股票
+2. 分析自選股
+3. 分析範例股票
+
+【歷史資料】
+4. 匯入 FinMind 財報
+5. 建立歷史 SAP 評分
+
+【策略研究】
+6. 執行策略回測
+7. 比較策略績效
+8. 產生研究報告
+
+【系統】
+9. 查看專案狀態
+0. 離開
+```
+
+常用流程：
+
+- 輸入 `1` 後輸入股票代號，例如 `2330`，系統會下載資料、分析並產生 Markdown 報告。
+- 輸入 `2` 可分析自選股，輸入 `3` 可分析範例股票。
+- 輸入 `6` 可執行策略回測，輸入 `7` 可比較策略績效，輸入 `8` 可產生研究報告。
+- 子功能中看到 `輸入 q 返回主選單` 時，可輸入 `q` 回到主選單。
+- 報告預設輸出到 `reports/` 資料夾。
 
 ## Current Features
 
@@ -21,7 +64,7 @@ Current version: v2.25 Historical Pipeline Smoke Test
 - Estimates simplified valuation, buy zones, and first target price.
 - Shows diagnostics when required financial fields are missing.
 - Provides a validation scan over a sample stock universe and exports CSV results.
-- Provides an interactive v2.3 CLI console for stock analysis, historical data tools, research tools, and project status.
+- Provides an interactive v2.4 Chinese CLI console for stock analysis, historical data tools, research tools, and project status.
 - Provides a Backtest Engine MVP for historical price validation of SAP Score selections.
 - Provides an initial data provider framework for Yahoo Finance, CSV snapshots, and unit-test mocks.
 - Provides a formal strategy framework with registry-based SAP Score strategy wiring.
@@ -91,25 +134,27 @@ Or run directly with the project virtual environment:
 Main console:
 
 ```text
-StockAnalyzerPro v2.3
-Historical Pipeline MVP
+=========================================
+      StockAnalyzerPro v2.4
+          股票分析系統
+=========================================
 
 【股票分析】
 1. 分析單一股票
-2. 掃描自選股 watchlist
-3. 掃描 sample stocks
+2. 分析自選股
+3. 分析範例股票
 
 【歷史資料】
-4. FinMind 匯入財報
-5. Historical SAP Generator
+4. 匯入 FinMind 財報
+5. 建立歷史 SAP 評分
 
-【研究工具】
-6. Backtest
-7. Strategy Compare
-8. Research Report
+【策略研究】
+6. 執行策略回測
+7. 比較策略績效
+8. 產生研究報告
 
 【系統】
-9. Project Status
+9. 查看專案狀態
 0. 離開
 ```
 

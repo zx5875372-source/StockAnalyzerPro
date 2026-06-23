@@ -31,15 +31,15 @@ class ResearchReportTests(unittest.TestCase):
             write_research_report(rows, output_path)
             content = output_path.read_text(encoding="utf-8")
 
-        self.assertIn("## Executive Summary", content)
-        self.assertIn("Best Strategy: SAP Score Strategy MVP", content)
-        self.assertIn("Formal Point-in-Time Strategies: 1", content)
-        self.assertIn("Research Only Strategies: 1", content)
-        self.assertIn("Research Only strategies are not formal point-in-time investment performance.", content)
-        self.assertIn("## Strategy Ranking", content)
-        self.assertIn("## Risk Comparison", content)
-        self.assertIn("## Credibility Analysis", content)
-        self.assertIn("## Qualification Analysis", content)
+        self.assertIn("## 執行摘要", content)
+        self.assertIn("最佳策略：SAP Score Strategy MVP", content)
+        self.assertIn("正式 Point-in-Time 策略數：1", content)
+        self.assertIn("僅供研究策略數：1", content)
+        self.assertIn("僅供研究策略不可視為正式 Point-in-Time 投資績效。", content)
+        self.assertIn("## 策略排名", content)
+        self.assertIn("## 風險比較", content)
+        self.assertIn("## 可信度分析", content)
+        self.assertIn("## 回測資格分析", content)
         self.assertIn("目前結果僅供研究，不可視為正式投資績效。", content)
 
     def test_old_strategy_comparison_csv_stays_compatible(self):
@@ -61,7 +61,7 @@ class ResearchReportTests(unittest.TestCase):
                 writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
                 writer.writeheader()
 
-            with self.assertRaisesRegex(ResearchReportError, "empty"):
+            with self.assertRaisesRegex(ResearchReportError, "空的"):
                 read_strategy_comparison(csv_path)
 
 

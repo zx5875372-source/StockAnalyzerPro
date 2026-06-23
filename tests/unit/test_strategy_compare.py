@@ -74,10 +74,10 @@ class StrategyCompareTests(unittest.TestCase):
             with csv_path.open("r", encoding="utf-8-sig", newline="") as file:
                 csv_rows = list(csv.DictReader(file))
 
-        self.assertIn("# Strategy Comparison", markdown)
+        self.assertIn("# 策略比較", markdown)
         self.assertIn("Piotroski Strategy", markdown)
-        self.assertIn("Formal Point-in-Time", markdown)
-        self.assertIn("Research Only", markdown)
+        self.assertIn("正式 Point-in-Time", markdown)
+        self.assertIn("僅供研究", markdown)
         self.assertEqual(csv_rows[0]["strategy"], "Piotroski Strategy")
         self.assertEqual(csv_rows[0]["credibility_grade"], "B")
         self.assertEqual(csv_rows[0]["qualification_grade"], "A")

@@ -117,9 +117,9 @@ class BacktestQualificationGateTests(unittest.TestCase):
             writer.write_markdown(sample_result())
             content = summary_path.read_text(encoding="utf-8")
 
-        self.assertIn("## Historical Qualification", content)
-        self.assertIn("| Qualification Grade | C |", content)
-        self.assertIn("| Research-only Count | 1 |", content)
+        self.assertIn("## 回測資格", content)
+        self.assertIn("| 回測資格評級 | C |", content)
+        self.assertIn("| 僅供研究筆數 | 1 |", content)
         self.assertIn(RESEARCH_ONLY_NOTICE, content)
 
     def test_csv_export_writes_qualification_row(self):
