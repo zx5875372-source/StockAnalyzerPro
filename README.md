@@ -46,6 +46,7 @@ Current version: v2.25 Historical Pipeline Smoke Test
 - Provides a Historical SAP Generator MVP for turning financial statement snapshots into repository SAP score snapshots.
 - Provides a Historical SAP Generator CLI for filtered and incremental repository generation runs.
 - Provides Historical Qualification reporting for separating point-in-time-safe snapshots from research-only fallback data.
+- Provides a Backtest Qualification Gate for marking repository backtests as formal point-in-time or research-only.
 - Provides an end-to-end historical pipeline smoke test from financial CSV import to SAP snapshot generation.
 
 ## Installation
@@ -804,6 +805,13 @@ Backtest credibility grades:
 - `D`: data is insufficient, or selected stock count is too low.
 
 When the grade is `C` or `D`, the report states that the result is only for system testing and must not be used as investment strategy performance evidence.
+
+Backtest qualification gate:
+
+- Repository snapshot backtests include `qualification_grade`, `qualification_reason`, `research_only_count`, `point_in_time_count`, `missing_published_date_count`, and `not_point_in_time_count`.
+- Repository snapshots with `missing_published_date` or `not_point_in_time` are marked research-only.
+- When repository data is research-only, `reports/backtest_summary.md` states: `此回測僅供研究與系統驗證，不可視為正式 point-in-time 投資績效。`
+- CSV snapshot backtests keep the existing credibility flow and show qualification as `N/A`.
 
 Benchmark comparison:
 

@@ -7,6 +7,7 @@ import yfinance as yf
 from backtest.integrity import calculate_credibility
 from backtest.performance import PerformanceReport
 from backtest.portfolio import Portfolio
+from backtest.qualification import csv_qualification_summary, qualify_repository_for_backtest
 from backtest.snapshot import SnapshotScoreStore
 from historical.repository import HistoricalSnapshotRepository
 from strategy.base_strategy import BaseStrategy
@@ -125,6 +126,7 @@ class BacktestEngine:
         self.skipped_reasons = {}
         self.look_ahead_safe = False
         self.snapshot_source = self.config.resolved_snapshot_path()
+        self.qualification = csv_qualification_summary()
 
     def load_data(self) -> None:
         raw_universe = load_sample_stocks(self.config.universe_path)
@@ -141,8 +143,10 @@ class BacktestEngine:
         if self.config.snapshot_source == "repository":
             repository = HistoricalSnapshotRepository(self.config.snapshot_db_path)
             self.snapshots = SnapshotScoreStore.from_repository(repository)
+            self.qualification = qualify_repository_for_backtest(repository)
         else:
             self.snapshots = SnapshotScoreStore.from_csv(self.config.resolved_snapshot_path())
+            self.qualification = csv_qualification_summary()
         self.diagnostics.extend(self.snapshots.diagnostics)
         self.look_ahead_safe = self.snapshots.available()
 
@@ -226,6 +230,13 @@ class BacktestEngine:
             "credibility_grade": summary["credibility_grade"],
             "credibility_reason": summary["credibility_reason"],
             "credibility_notice": summary["credibility_notice"],
+            "qualification_grade": summary["qualification_grade"],
+            "qualification_reason": summary["qualification_reason"],
+            "qualification_notice": summary["qualification_notice"],
+            "research_only_count": summary["research_only_count"],
+            "point_in_time_count": summary["point_in_time_count"],
+            "missing_published_date_count": summary["missing_published_date_count"],
+            "not_point_in_time_count": summary["not_point_in_time_count"],
             "diagnostics": self.diagnostics,
         }
 
@@ -262,6 +273,7 @@ class BacktestEngine:
             "selected_stock_count": selected_stock_count,
             "skipped_stock_count": skipped_stock_count,
             "credibility_notice": credibility["credibility_notice"],
+            **self.qualification,
         }
 
     def _rebalance_dates(self) -> list[pd.Timestamp]:

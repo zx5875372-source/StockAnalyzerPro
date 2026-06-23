@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Historical Backtest Qualification Gate
+
+- Added Backtest qualification summary fields for repository snapshot sources.
+- Added `qualification_grade`, `qualification_reason`, `research_only_count`, `point_in_time_count`, `missing_published_date_count`, and `not_point_in_time_count` to backtest results and Markdown reports.
+- Added research-only report notice: `此回測僅供研究與系統驗證，不可視為正式 point-in-time 投資績效。`
+- Added a Backtest qualification adapter that uses `HistoricalQualifier` for repository snapshots and preserves legacy CSV credibility behavior.
+- Added unit tests for formal repository snapshots, `missing_published_date`, `not_point_in_time`, CSV compatibility, and Markdown warning output.
+- Updated README, Backtest README, project status, and CHANGELOG.
+- No Analyzer, Provider, Strategy, SAP Score scoring logic, or Backtest strategy logic changes were added.
+
 ## Unreleased - Historical Qualification
 
 - Added `historical/qualification/` with `HistoricalQualifier` and `QualificationResult`.

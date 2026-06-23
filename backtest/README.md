@@ -181,6 +181,32 @@ When the grade is C or D, the report must show:
 Current Sprint 5 generated snapshots are expected to receive a low credibility
 grade because they are marked `warning=not_point_in_time`.
 
+## Historical Qualification Gate
+
+Repository snapshot backtests include historical qualification fields in
+`reports/backtest_summary.md`:
+
+- `qualification_grade`
+- `qualification_reason`
+- `research_only_count`
+- `point_in_time_count`
+- `missing_published_date_count`
+- `not_point_in_time_count`
+
+When `--snapshot-source repository` is used, `BacktestEngine` qualifies the
+repository snapshots before building the summary. `BacktestReportWriter` only
+presents the already calculated fields.
+
+If repository snapshots contain `missing_published_date` or `not_point_in_time`,
+the report must show:
+
+```text
+此回測僅供研究與系統驗證，不可視為正式 point-in-time 投資績效。
+```
+
+CSV snapshot sources keep the existing credibility logic and show qualification
+as `N/A`.
+
 ## Sprint 7 Benchmark Comparison Design
 
 Sprint 7 adds benchmark comparison without changing the strategy.

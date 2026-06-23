@@ -28,6 +28,7 @@ class BacktestReportWriter:
         skipped_reasons = result.get("skipped_reasons", {})
         warning_counts = result.get("snapshot_warning_counts", {})
         credibility_notice = result.get("credibility_notice", "")
+        qualification_notice = result.get("qualification_notice", "")
 
         diagnostics_rows = "\n".join(f"- {item}" for item in diagnostics) if diagnostics else "- 無"
         selected_rows = "\n".join(f"- {symbol}" for symbol in selected) if selected else "- 無"
@@ -70,6 +71,19 @@ Version: Sprint 8 Backtest CLI Options
 
 {credibility_notice}
 
+## Historical Qualification
+
+| Item | Value |
+|---|---:|
+| Qualification Grade | {result['qualification_grade']} |
+| Qualification Reason | {result['qualification_reason']} |
+| Research-only Count | {result['research_only_count']} |
+| Point-in-Time Count | {result['point_in_time_count']} |
+| Missing Published Date Count | {result['missing_published_date_count']} |
+| Not Point-in-Time Count | {result['not_point_in_time_count']} |
+
+{qualification_notice}
+
 ## Strategy
 
 | Item | Value |
@@ -110,6 +124,11 @@ Version: Sprint 8 Backtest CLI Options
 | Snapshot Source | {result['snapshot_source']} |
 | Look-ahead-safe | {str(result['look_ahead_safe']).lower()} |
 | Snapshot Point-in-time | {str(result['snapshot_point_in_time']).lower()} |
+| Qualification Grade | {result['qualification_grade']} |
+| Research-only Count | {result['research_only_count']} |
+| Point-in-Time Count | {result['point_in_time_count']} |
+| Missing Published Date Count | {result['missing_published_date_count']} |
+| Not Point-in-Time Count | {result['not_point_in_time_count']} |
 | Selected Stock Count | {result['selected_stock_count']} |
 | Skipped Stock Count | {result['skipped_stock_count']} |
 

@@ -23,6 +23,7 @@ Historical Pipeline MVP
 - Historical Pipeline
 - Historical Backtest Repository Snapshot Source
 - Historical Qualification
+- Historical Backtest Qualification Gate
 - GitHub Actions
 - GitHub Releases
 
@@ -47,7 +48,7 @@ Historical Pipeline MVP
 
 ## Test Status
 
-- Unit Tests: 190 passing
+- Unit Tests: 195 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
