@@ -4,6 +4,7 @@ from pathlib import Path
 
 from models.financial_data import FinancialData
 from scan import (
+    display_stock_name,
     recommendation_for_grade,
     resolve_stock_name,
     write_summary,
@@ -20,9 +21,10 @@ class ScanReportTests(unittest.TestCase):
             content = output_path.read_text(encoding="utf-8")
 
         self.assert_markdown_tables_consistent(content)
-        self.assertIn("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 資料品質 | 合理買點 | 第一目標價 | 建議 |", content)
-        self.assertIn("| 1 | 2330.TW | 台積電 | 95 | A | 9/9 | 100 | 512.35 | 620.99 | 優先研究 |", content)
-        self.assertIn("| 2 | 2454.TW | 聯發科 | 70 | B | 7/9 | 90 | - | - | 可觀察 |", content)
+        self.assertIn("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 |", content)
+        self.assertEqual(markdown_column_count("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 |"), 9)
+        self.assertIn("| 1 | 2330.TW | 台積電 | 95 | A | 9/9 | 512.35 | 620.99 | 優先研究 |", content)
+        self.assertIn("| 2 | 2454.TW | 聯發科 | 70 | B | 7/9 | - | - | 可觀察 |", content)
 
     def test_watchlist_report_table_columns_are_consistent(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -32,6 +34,8 @@ class ScanReportTests(unittest.TestCase):
 
         self.assert_markdown_tables_consistent(content)
         self.assertIn("StockAnalyzerPro v3.0", content)
+        self.assertNotIn("Taiwan Semiconductor Manufacturing Company Limited", content)
+        self.assertNotIn("Longwell Company", content)
         self.assertNotIn("v1.4 CLI UX Improvement", content)
 
     def test_scan_summary_tables_are_consistent_and_version_is_updated(self):
@@ -45,12 +49,12 @@ class ScanReportTests(unittest.TestCase):
         self.assertIn("| 1 | 2454.TW | 聯發科 | 2 | 90 | current.revenue, previous.net_income |", content)
         self.assertNotIn("v1.4 CLI UX Improvement", content)
 
-    def test_stock_name_uses_yfinance_name_before_fallback(self):
+    def test_stock_name_prefers_chinese_fallback_before_yfinance_name(self):
         data = FinancialData(symbol="2330.TW", company_name="Taiwan Semiconductor Manufacturing Company Limited")
 
         name = resolve_stock_name({"symbol": "2330", "name": "台積電"}, data)
 
-        self.assertEqual(name, "Taiwan Semiconductor Manufacturing Company Limited")
+        self.assertEqual(name, "台積電")
 
     def test_stock_name_fallback_map_handles_common_taiwan_symbols(self):
         data = FinancialData(symbol="6290.TWO", company_name="未知公司")
@@ -58,6 +62,19 @@ class ScanReportTests(unittest.TestCase):
         name = resolve_stock_name({"symbol": "6290.TWO", "name": ""}, data)
 
         self.assertEqual(name, "良維")
+
+    def test_display_stock_name_prefers_chinese_fallback_over_english_row_name(self):
+        self.assertEqual(
+            display_stock_name({"symbol": "6290.TWO", "name": "Longwell Company"}),
+            "良維",
+        )
+
+    def test_long_english_name_is_truncated_when_no_fallback_exists(self):
+        data = FinancialData(symbol="9999.TW", company_name="Very Long English Corporation Name")
+
+        name = resolve_stock_name({"symbol": "9999.TW", "name": ""}, data)
+
+        self.assertEqual(name, "Very Long Englis...")
 
     def test_recommendation_by_grade(self):
         self.assertEqual(recommendation_for_grade("S級"), "優先研究")
@@ -112,6 +129,10 @@ def sample_rows():
             "data_quality_score": 90,
         },
     ]
+
+
+def markdown_column_count(line: str) -> int:
+    return len(line.strip().strip("|").split("|"))
 
 
 if __name__ == "__main__":

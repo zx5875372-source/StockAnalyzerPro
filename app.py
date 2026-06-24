@@ -7,7 +7,15 @@ import sys
 from modules.downloader import get_stock_data
 from modules.analyzer import analyze_stock
 from modules.report import generate_markdown_report
-from scan import OUTPUT_PATH, SUMMARY_PATH, TOP10_PATH, WATCHLIST_PATH, WATCHLIST_REPORT_PATH, run_scan
+from scan import (
+    OUTPUT_PATH,
+    SUMMARY_PATH,
+    TOP10_PATH,
+    WATCHLIST_PATH,
+    WATCHLIST_REPORT_PATH,
+    display_stock_name,
+    run_scan,
+)
 
 
 COMMON_STOCKS = [
@@ -278,7 +286,10 @@ def show_scan_result(title: str, rows: list[dict], mode: str) -> None:
         print("")
         for index, row in enumerate(success_rows[:3]):
             rank_label = RANK_LABELS[index]
-            print(f"{rank_label} {row['symbol']}　SAP {row['sap_score']} 分")
+            symbol = str(row.get("symbol", "")).split(".", 1)[0]
+            name = display_stock_name(row)
+            grade = row.get("grade") or ""
+            print(f"{rank_label}：{symbol} {name} SAP {row['sap_score']} 分 {grade}".rstrip())
         if not success_rows:
             print("無成功分析資料")
         print("")

@@ -59,20 +59,23 @@ class AppCLIv3Tests(unittest.TestCase):
 
     def test_scan_result_menu_opens_report_ranking_and_csv(self):
         rows = [
-            {"symbol": "2330", "status": "success", "sap_score": 95},
-            {"symbol": "2454", "status": "success", "sap_score": 91},
-            {"symbol": "6290", "status": "success", "sap_score": 88},
+            {"symbol": "2330.TW", "name": "Taiwan Semiconductor Manufacturing Company Limited", "status": "success", "sap_score": 95, "grade": "S級"},
+            {"symbol": "2454.TW", "name": "MediaTek Inc.", "status": "success", "sap_score": 91, "grade": "A級"},
+            {"symbol": "6290.TWO", "name": "Longwell Company", "status": "success", "sap_score": 88, "grade": "A級"},
         ]
 
         with (
             patch("builtins.input", side_effect=["1", "2", "3", "0"]),
             patch("app.open_file") as open_file,
-            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stdout", new_callable=io.StringIO) as output,
         ):
             app.show_scan_result("自選股分析", rows, "watchlist")
 
         opened_paths = [call.args[0] for call in open_file.call_args_list]
         self.assertEqual(opened_paths, [app.WATCHLIST_REPORT_PATH, app.TOP10_PATH, app.OUTPUT_PATH])
+        content = output.getvalue()
+        self.assertIn("第1名：2330 台積電 SAP 95 分 S級", content)
+        self.assertIn("第3名：6290 良維 SAP 88 分 A級", content)
 
     def test_run_cli_waits_before_returning_to_main_menu(self):
         completed = Mock(returncode=0)

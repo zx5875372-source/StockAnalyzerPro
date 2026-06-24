@@ -121,25 +121,41 @@ def clean_stock_name(value) -> str:
 
 
 def resolve_stock_name(stock: dict, data) -> str:
-    company_name = clean_stock_name(getattr(data, "company_name", None))
-    if company_name:
-        return company_name
-
     fallback_name = STOCK_NAME_FALLBACKS.get(normalize_symbol(stock["symbol"]))
     if fallback_name:
         return fallback_name
 
-    return clean_stock_name(stock.get("name")) or "-"
+    company_name = clean_stock_name(getattr(data, "company_name", None))
+    if company_name:
+        return truncate_stock_name(company_name)
+
+    return truncate_stock_name(clean_stock_name(stock.get("name"))) or "-"
 
 
 def display_stock_name(row: dict) -> str:
+    symbol = row.get("symbol")
+    if symbol:
+        fallback_name = STOCK_NAME_FALLBACKS.get(normalize_symbol(str(symbol)))
+        if fallback_name:
+            return fallback_name
+
     name = clean_stock_name(row.get("name"))
     if name:
+        return truncate_stock_name(name)
+    return "-"
+
+
+def truncate_stock_name(name: str) -> str:
+    if not name:
+        return ""
+    limit = 8 if contains_cjk(name) else 16
+    if len(name) <= limit:
         return name
-    symbol = row.get("symbol")
-    if not symbol:
-        return "-"
-    return STOCK_NAME_FALLBACKS.get(normalize_symbol(str(symbol)), "-")
+    return name[:limit] + "..."
+
+
+def contains_cjk(value: str) -> bool:
+    return any("\u4e00" <= char <= "\u9fff" for char in value)
 
 
 def sort_rows(rows: list[dict]) -> list[dict]:
@@ -325,14 +341,14 @@ def recommendation_for_grade(grade: str) -> str:
 
 
 def ranking_table_header() -> str:
-    return """| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 資料品質 | 合理買點 | 第一目標價 | 建議 |
-| -: | ---- | ---- | ----: | -- | --------: | ---: | ---: | ----: | -- |"""
+    return """| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 |
+| -: | ---- | ---- | ----: | -- | --------: | ---: | ----: | -- |"""
 
 
 def ranking_table(rows: list[dict], limit: int | None = None) -> str:
     selected_rows = rows[:limit] if limit is not None else rows
     if not selected_rows:
-        return "| - | - | - | - | - | - | - | - | - | - |"
+        return "| - | - | - | - | - | - | - | - | - |"
 
     table_rows = []
     for rank, row in enumerate(selected_rows, start=1):
@@ -346,7 +362,6 @@ def ranking_table(rows: list[dict], limit: int | None = None) -> str:
                     format_integer(row.get("sap_score")),
                     markdown_value(row.get("grade")),
                     format_piotroski(row),
-                    format_integer(row.get("data_quality_score")),
                     format_decimal(row.get("reasonable_buy")),
                     format_decimal(row.get("first_target_price")),
                     recommendation_for_grade(row.get("grade")),
@@ -377,14 +392,10 @@ def write_summary(rows: list[dict], output_path: Path = SUMMARY_PATH) -> None:
     failed_rows = [row for row in rows if row["status"] != "success"]
     rows_by_missing = sorted(
         success_rows,
-        key=lambda row: row["missing_count"] if isinstance(row["missing_count"], int) else -1,
+        key=lambda row: numeric_sort_value(row.get("missing_count")),
         reverse=True,
     )
-    top_score_rows = sorted(
-        success_rows,
-        key=lambda row: row["sap_score"] if isinstance(row["sap_score"], (int, float)) else -1,
-        reverse=True,
-    )
+    top_score_rows = sort_rows(success_rows)
 
     avg_sap_score = average([row["sap_score"] for row in success_rows])
     avg_quality_score = average([row["data_quality_score"] for row in success_rows])
