@@ -1,4 +1,6 @@
 import io
+import json
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -17,6 +19,8 @@ class AppCLIv3Tests(unittest.TestCase):
         self.assertIn("2. 分析自選股", menu)
         self.assertIn("4. 更新 FinMind 財報", menu)
         self.assertIn("8. 產生研究報告", menu)
+        self.assertIn("9. 管理自選股", menu)
+        self.assertIn("10. 查看專案狀態", menu)
 
     def test_select_common_stock_returns_stock_by_number(self):
         with patch("builtins.input", return_value="1"), patch("sys.stdout", new_callable=io.StringIO):
@@ -37,6 +41,20 @@ class AppCLIv3Tests(unittest.TestCase):
             action = app.show_single_stock_result(result, report_path, "2330", "台積電")
 
         open_file.assert_called_once_with(report_path)
+        self.assertEqual(action, "menu")
+
+    def test_single_stock_result_can_add_watchlist(self):
+        result = {"sap_score": 70, "grade": "B"}
+        report_path = Path("reports/2344.md")
+
+        with (
+            patch("builtins.input", side_effect=["2", "0"]),
+            patch("app.add_symbol_to_watchlist_flow") as add_symbol,
+            patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            action = app.show_single_stock_result(result, report_path, "2344", "")
+
+        add_symbol.assert_called_once_with("2344")
         self.assertEqual(action, "menu")
 
     def test_scan_result_menu_opens_report_ranking_and_csv(self):
@@ -66,6 +84,67 @@ class AppCLIv3Tests(unittest.TestCase):
             app.run_cli("research_report.py", report_to_open=Path("reports/research_report.md"))
 
         run.assert_called_once()
+
+    def test_add_watchlist_symbol_appends_tw_for_numeric_symbol(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            watchlist_path = Path(temp_dir) / "watchlist.json"
+            watchlist_path.write_text(json.dumps(["2330"], ensure_ascii=False), encoding="utf-8")
+
+            added, count, symbol = app.add_watchlist_symbol("2344", watchlist_path)
+            payload = json.loads(watchlist_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(added)
+        self.assertEqual(count, 2)
+        self.assertEqual(symbol, "2344.TW")
+        self.assertEqual(payload, ["2330", "2344.TW"])
+
+    def test_duplicate_watchlist_symbol_is_not_added(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            watchlist_path = Path(temp_dir) / "watchlist.json"
+            watchlist_path.write_text(json.dumps(["2330"], ensure_ascii=False), encoding="utf-8")
+
+            added, count, symbol = app.add_watchlist_symbol("2330.TW", watchlist_path)
+            payload = json.loads(watchlist_path.read_text(encoding="utf-8"))
+
+        self.assertFalse(added)
+        self.assertEqual(count, 1)
+        self.assertEqual(symbol, "2330.TW")
+        self.assertEqual(payload, ["2330"])
+
+    def test_remove_watchlist_symbol_by_number(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            watchlist_path = Path(temp_dir) / "watchlist.json"
+            watchlist_path.write_text(json.dumps(["2330", "2454", "2327"], ensure_ascii=False), encoding="utf-8")
+
+            removed = app.remove_watchlist_index(2, watchlist_path)
+            payload = json.loads(watchlist_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(removed, "2454")
+        self.assertEqual(payload, ["2330", "2327"])
+
+    def test_show_watchlist_lists_symbols(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            watchlist_path = Path(temp_dir) / "watchlist.json"
+            watchlist_path.write_text(json.dumps(["2330", "2454"], ensure_ascii=False), encoding="utf-8")
+
+            with patch("sys.stdout", new_callable=io.StringIO) as output:
+                symbols = app.show_watchlist(watchlist_path)
+
+        self.assertEqual(symbols, ["2330", "2454"])
+        content = output.getvalue()
+        self.assertIn("目前共有 2 檔", content)
+        self.assertIn("1. 2330", content)
+        self.assertIn("2. 2454", content)
+
+    def test_watchlist_manager_dispatches_scan(self):
+        with (
+            patch("builtins.input", side_effect=["4", "0"]),
+            patch("app.run_stock_scan") as run_stock_scan,
+            patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            app.manage_watchlist()
+
+        run_stock_scan.assert_called_once_with("watchlist", "自選股分析")
 
 
 if __name__ == "__main__":

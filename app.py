@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -6,7 +7,7 @@ import sys
 from modules.downloader import get_stock_data
 from modules.analyzer import analyze_stock
 from modules.report import generate_markdown_report
-from scan import OUTPUT_PATH, SUMMARY_PATH, TOP10_PATH, WATCHLIST_REPORT_PATH, run_scan
+from scan import OUTPUT_PATH, SUMMARY_PATH, TOP10_PATH, WATCHLIST_PATH, WATCHLIST_REPORT_PATH, run_scan
 
 
 COMMON_STOCKS = [
@@ -24,6 +25,18 @@ def wait_for_main_menu() -> None:
     input("按 Enter 返回主選單...")
 
 
+def success_message(text: str) -> str:
+    message = f"✅ {text}"
+    encoding = getattr(sys.stdout, "encoding", None)
+    if not encoding:
+        return message
+    try:
+        message.encode(encoding)
+    except UnicodeEncodeError:
+        return text
+    return message
+
+
 def open_file(path: str | Path) -> bool:
     file_path = Path(path)
     if not file_path.exists():
@@ -37,6 +50,72 @@ def open_file(path: str | Path) -> bool:
         subprocess.run(["cmd", "/c", "start", "", resolved], check=False)
     print(f"已開啟：{file_path}")
     return True
+
+
+def load_watchlist_items(path: Path = WATCHLIST_PATH) -> list:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8") as file:
+        payload = json.load(file)
+    if not isinstance(payload, list):
+        raise ValueError("watchlist.json 格式錯誤，必須是陣列。")
+    return payload
+
+
+def save_watchlist_items(items: list, path: Path = WATCHLIST_PATH) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(items, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def item_to_symbol(item) -> str:
+    if isinstance(item, str):
+        return item
+    if isinstance(item, dict):
+        return str(item.get("symbol", ""))
+    return ""
+
+
+def normalize_watchlist_symbol(symbol: str) -> str:
+    value = symbol.strip().upper()
+    if value.isdigit():
+        return f"{value}.TW"
+    return value
+
+
+def watchlist_compare_key(symbol: str) -> str:
+    value = symbol.strip().upper()
+    if "." in value:
+        return value.split(".", 1)[0]
+    return value
+
+
+def add_watchlist_symbol(symbol: str, path: Path = WATCHLIST_PATH) -> tuple[bool, int, str]:
+    normalized_symbol = normalize_watchlist_symbol(symbol)
+    if not normalized_symbol:
+        raise ValueError("股票代號不可空白。")
+
+    items = load_watchlist_items(path)
+    new_key = watchlist_compare_key(normalized_symbol)
+    existing_keys = {watchlist_compare_key(item_to_symbol(item)) for item in items}
+    if new_key in existing_keys:
+        return False, len(items), normalized_symbol
+
+    items.append(normalized_symbol)
+    save_watchlist_items(items, path)
+    return True, len(items), normalized_symbol
+
+
+def remove_watchlist_index(index: int, path: Path = WATCHLIST_PATH) -> str:
+    items = load_watchlist_items(path)
+    if index < 1 or index > len(items):
+        raise IndexError("選項超出範圍。")
+    removed = items.pop(index - 1)
+    save_watchlist_items(items, path)
+    return item_to_symbol(removed)
+
+
+def watchlist_symbols(path: Path = WATCHLIST_PATH) -> list[str]:
+    return [item_to_symbol(item) for item in load_watchlist_items(path)]
 
 
 def print_section(title: str) -> None:
@@ -143,7 +222,8 @@ def show_single_stock_result(result: dict, report_path: Path, requested_symbol: 
         print("")
         print("==========================")
         print("1. 開啟分析報告")
-        print("2. 分析另一檔股票")
+        print("2. 加入自選股")
+        print("3. 分析另一檔股票")
         print("0. 返回主選單")
         print("==========================")
         choice = input("請選擇功能：").strip()
@@ -151,11 +231,29 @@ def show_single_stock_result(result: dict, report_path: Path, requested_symbol: 
         if choice == "1":
             open_file(report_path)
         elif choice == "2":
+            add_symbol_to_watchlist_flow(requested_symbol)
+        elif choice == "3":
             return "another"
         elif choice == "0":
             return "menu"
         else:
-            print("請輸入 0-2。\n")
+            print("請輸入 0-3。\n")
+
+
+def add_symbol_to_watchlist_flow(symbol: str) -> None:
+    try:
+        added, count, _ = add_watchlist_symbol(symbol)
+    except ValueError as error:
+        print(str(error))
+        return
+
+    if added:
+        print("")
+        print(success_message("已加入自選股"))
+        print("")
+        print(f"目前共有 {count} 檔股票")
+    else:
+        print("此股票已存在於自選股。")
 
 
 def run_stock_scan(mode: str, title: str) -> None:
@@ -320,9 +418,92 @@ def run_historical_sap_generator() -> None:
     run_cli("historical_generate_sap.py", args, report_to_open=Path("reports/historical_generator_summary.md"))
 
 
+def manage_watchlist() -> None:
+    while True:
+        print("=========================")
+        print("自選股管理")
+        print("")
+        print("1. 查看自選股")
+        print("2. 新增股票")
+        print("3. 刪除股票")
+        print("4. 分析全部自選股")
+        print("")
+        print("0. 返回")
+        print("=========================")
+        choice = input("請選擇功能：").strip()
+
+        if choice == "1":
+            show_watchlist()
+        elif choice == "2":
+            prompt_add_watchlist_symbol()
+        elif choice == "3":
+            prompt_remove_watchlist_symbol()
+        elif choice == "4":
+            run_stock_scan("watchlist", "自選股分析")
+        elif choice == "0":
+            return
+        else:
+            print("請輸入 0-4。\n")
+
+
+def show_watchlist(path: Path = WATCHLIST_PATH) -> list[str]:
+    symbols = watchlist_symbols(path)
+    print("")
+    print(f"目前共有 {len(symbols)} 檔：")
+    print("")
+    if not symbols:
+        print("尚未加入任何股票。")
+        print("")
+        return symbols
+
+    for index, symbol in enumerate(symbols, start=1):
+        print(f"{index}. {symbol}")
+    print("")
+    return symbols
+
+
+def prompt_add_watchlist_symbol() -> None:
+    symbol = input("請輸入股票代號（輸入 0 返回）：").strip()
+    if symbol == "0":
+        return
+    try:
+        added, count, normalized_symbol = add_watchlist_symbol(symbol)
+    except ValueError as error:
+        print(str(error))
+        return
+
+    if added:
+        print(f"已新增：{normalized_symbol}")
+        print(f"目前共有 {count} 檔股票")
+    else:
+        print("已存在於自選股。")
+
+
+def prompt_remove_watchlist_symbol() -> None:
+    symbols = show_watchlist()
+    if not symbols:
+        return
+
+    choice = input("請選擇要刪除：").strip()
+    if choice == "0":
+        return
+    if not choice.isdigit():
+        print("請輸入列表中的數字。")
+        return
+
+    try:
+        removed = remove_watchlist_index(int(choice))
+    except IndexError as error:
+        print(str(error))
+        return
+
+    print("已移除：")
+    print(removed)
+
+
 def show_project_status() -> None:
     status_path = Path("PROJECT_STATUS.md")
-    print("\n[9] 查看專案狀態")
+    print("\n[10] 查看專案狀態")
     print("------------------------------------")
     if not status_path.exists():
         print("找不到 PROJECT_STATUS.md\n")
@@ -352,8 +533,11 @@ def show_menu() -> None:
     print("7. 比較策略績效")
     print("8. 產生研究報告")
     print("")
+    print("【自選股管理】")
+    print("9. 管理自選股")
+    print("")
     print("【系統】")
-    print("9. 查看專案狀態")
+    print("10. 查看專案狀態")
     print("0. 離開")
     print("")
     print("=========================================")
@@ -381,12 +565,14 @@ def main() -> None:
         elif choice == "8":
             run_cli("research_report.py", report_to_open=Path("reports/research_report.md"))
         elif choice == "9":
+            manage_watchlist()
+        elif choice == "10":
             show_project_status()
         elif choice == "0":
             print("已離開。")
             break
         else:
-            print("請輸入 0-9。\n")
+            print("請輸入 0-10。\n")
 
 
 if __name__ == "__main__":
