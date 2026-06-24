@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 from modules.analyzer import analyze_stock
-from modules.downloader import get_stock_data
+from modules.downloader import get_stock_data, normalize_symbol
 
 
 SAMPLE_STOCKS_PATH = Path("tests/sample_data/sample_stocks.json")
@@ -14,6 +14,21 @@ OUTPUT_PATH = Path("reports/scan_results.csv")
 SUMMARY_PATH = Path("reports/scan_summary.md")
 TOP10_PATH = Path("reports/top10.md")
 WATCHLIST_REPORT_PATH = Path("reports/watchlist_report.md")
+STOCK_NAME_FALLBACKS = {
+    "2330.TW": "台積電",
+    "2454.TW": "聯發科",
+    "2327.TW": "國巨",
+    "6271.TW": "同欣電",
+    "3189.TW": "景碩",
+    "3265.TWO": "台星科",
+    "1605.TW": "華新",
+    "6290.TWO": "良維",
+    "2344.TW": "華邦電",
+    "2408.TW": "南亞科",
+    "6187.TW": "萬潤",
+    "1735.TW": "日勝化",
+    "9945.TW": "潤泰新",
+}
 
 
 def load_sample_stocks(path: Path = SAMPLE_STOCKS_PATH) -> list[dict]:
@@ -96,13 +111,53 @@ def below_reasonable_buy(price, reasonable_buy) -> str:
     return "是" if price <= reasonable_buy else "否"
 
 
+def clean_stock_name(value) -> str:
+    if value is None:
+        return ""
+    name = str(value).strip()
+    if not name or name in {"-", "未知公司", "None", "nan"}:
+        return ""
+    return name
+
+
+def resolve_stock_name(stock: dict, data) -> str:
+    company_name = clean_stock_name(getattr(data, "company_name", None))
+    if company_name:
+        return company_name
+
+    fallback_name = STOCK_NAME_FALLBACKS.get(normalize_symbol(stock["symbol"]))
+    if fallback_name:
+        return fallback_name
+
+    return clean_stock_name(stock.get("name")) or "-"
+
+
+def display_stock_name(row: dict) -> str:
+    name = clean_stock_name(row.get("name"))
+    if name:
+        return name
+    symbol = row.get("symbol")
+    if not symbol:
+        return "-"
+    return STOCK_NAME_FALLBACKS.get(normalize_symbol(str(symbol)), "-")
+
+
 def sort_rows(rows: list[dict]) -> list[dict]:
     def sort_key(row: dict):
-        sap_score = row["sap_score"] if isinstance(row["sap_score"], (int, float)) else -1
-        quality_score = row["data_quality_score"] if isinstance(row["data_quality_score"], int) else -1
+        sap_score = numeric_sort_value(row.get("sap_score"))
+        quality_score = numeric_sort_value(row.get("data_quality_score"))
         return sap_score, quality_score
 
     return sorted(rows, key=sort_key, reverse=True)
+
+
+def numeric_sort_value(value) -> float:
+    if value in {None, ""}:
+        return -1
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return -1
 
 
 def scan_stock(stock: dict) -> dict:
@@ -121,7 +176,7 @@ def scan_stock(stock: dict) -> dict:
 
         return {
             "symbol": result["symbol"],
-            "name": stock.get("name", ""),
+            "name": resolve_stock_name(stock, data),
             "category": stock.get("category", ""),
             "status": "success",
             "sap_score": result["sap_score"],
@@ -208,9 +263,105 @@ def write_results(rows: list[dict], output_path: Path = OUTPUT_PATH) -> None:
 
 
 def average(values: list[float]) -> float:
-    if not values:
+    numeric_values = []
+    for value in values:
+        if value in {None, ""}:
+            continue
+        try:
+            numeric_values.append(float(value))
+        except (TypeError, ValueError):
+            continue
+    if not numeric_values:
         return 0
-    return round(sum(values) / len(values), 2)
+    return round(sum(numeric_values) / len(numeric_values), 2)
+
+
+def markdown_value(value) -> str:
+    if value in {None, ""}:
+        return "-"
+    return str(value).replace("|", "/")
+
+
+def format_decimal(value) -> str:
+    if value in {None, ""}:
+        return "-"
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def format_integer(value) -> str:
+    if value in {None, ""}:
+        return "-"
+    try:
+        return str(int(round(float(value))))
+    except (TypeError, ValueError):
+        return "-"
+
+
+def format_piotroski(row: dict) -> str:
+    score = row.get("piotroski_score")
+    total = row.get("piotroski_total")
+    if score in {None, ""} or total in {None, ""}:
+        return "-"
+    try:
+        return f"{int(score)}/{int(total)}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def recommendation_for_grade(grade: str) -> str:
+    normalized = str(grade or "").strip().upper().replace("級", "")
+    if normalized in {"S", "A"}:
+        return "優先研究"
+    if normalized == "B":
+        return "可觀察"
+    if normalized == "C":
+        return "保守觀察"
+    if normalized == "D":
+        return "暫不建議"
+    return "-"
+
+
+def ranking_table_header() -> str:
+    return """| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 資料品質 | 合理買點 | 第一目標價 | 建議 |
+| -: | ---- | ---- | ----: | -- | --------: | ---: | ---: | ----: | -- |"""
+
+
+def ranking_table(rows: list[dict], limit: int | None = None) -> str:
+    selected_rows = rows[:limit] if limit is not None else rows
+    if not selected_rows:
+        return "| - | - | - | - | - | - | - | - | - | - |"
+
+    table_rows = []
+    for rank, row in enumerate(selected_rows, start=1):
+        table_rows.append(
+            "| "
+            + " | ".join(
+                [
+                    str(rank),
+                    markdown_value(row.get("symbol")),
+                    markdown_value(display_stock_name(row)),
+                    format_integer(row.get("sap_score")),
+                    markdown_value(row.get("grade")),
+                    format_piotroski(row),
+                    format_integer(row.get("data_quality_score")),
+                    format_decimal(row.get("reasonable_buy")),
+                    format_decimal(row.get("first_target_price")),
+                    recommendation_for_grade(row.get("grade")),
+                ]
+            )
+            + " |"
+        )
+    return "\n".join(table_rows)
+
+
+def report_header(title: str) -> str:
+    return f"""# {title}
+
+StockAnalyzerPro v3.0
+股票分析系統"""
 
 
 def markdown_missing_fields(value: str) -> str:
@@ -240,22 +391,16 @@ def write_summary(rows: list[dict], output_path: Path = SUMMARY_PATH) -> None:
 
     missing_rows = "\n".join(
         [
-            f"| {row['symbol']} | {row['name']} | {row['category']} | {row['missing_count']} | {row['data_quality_score']} | {markdown_missing_fields(row['missing_fields'])} |"
-            for row in rows_by_missing[:10]
+            f"| {index} | {markdown_value(row['symbol'])} | {markdown_value(display_stock_name(row))} | {format_integer(row['missing_count'])} | {format_integer(row['data_quality_score'])} | {markdown_missing_fields(row['missing_fields'])} |"
+            for index, row in enumerate(rows_by_missing[:10], start=1)
         ]
     )
-    top_score_table_rows = "\n".join(
-        [
-            f"| {row['symbol']} | {row['name']} | {row['category']} | {row['sap_score']} | {row['grade']} | {row['data_quality_score']} |"
-            for row in top_score_rows[:10]
-        ]
-    )
+    if not missing_rows:
+        missing_rows = "| - | - | - | - | - | - |"
 
-    content = f"""# Scan Summary
+    content = f"""{report_header("掃描摘要")}
 
-Version: v1.4 CLI UX Improvement
-
-| Metric | Value |
+| 指標 | 數值 |
 |---|---:|
 | 總樣本數 | {len(rows)} |
 | 成功數 | {len(success_rows)} |
@@ -265,15 +410,14 @@ Version: v1.4 CLI UX Improvement
 
 ## 缺資料最多的前 10 檔
 
-| 股票代號 | 名稱 | 類別 | Missing Count | Data Quality Score | Missing Fields |
-|---|---|---|---:|---:|---|
+| 排名 | 股票代號 | 股票名稱 | 缺值數 | 資料品質 | 缺值欄位 |
+| -: | ---- | ---- | ---: | ---: | ---- |
 {missing_rows}
 
 ## SAP Score 前 10 檔
 
-| 股票代號 | 名稱 | 類別 | SAP Score | 等級 | Data Quality Score |
-|---|---|---|---:|---|---:|
-{top_score_table_rows}
+{ranking_table_header()}
+{ranking_table(top_score_rows, limit=10)}
 """
 
     output_path.write_text(content, encoding="utf-8")
@@ -282,26 +426,12 @@ Version: v1.4 CLI UX Improvement
 def write_top10(rows: list[dict], output_path: Path = TOP10_PATH) -> None:
     output_path.parent.mkdir(exist_ok=True)
     success_rows = [row for row in rows if row["status"] == "success"]
-    top_rows = sorted(
-        success_rows,
-        key=lambda row: row["sap_score"] if isinstance(row["sap_score"], (int, float)) else -1,
-        reverse=True,
-    )[:10]
+    top_rows = sort_rows(success_rows)[:10]
 
-    table_rows = "\n".join(
-        [
-            f"| {row['symbol']} | {row['name'] or '-'} | {row['category']} | {row['sap_score']} | {row['grade']} | {row['data_quality_score']} | {row['piotroski_score']} / {row['piotroski_total']} | {row['reasonable_buy'] or '資料不足'} | {row['first_target_price'] or '資料不足'} |"
-            for row in top_rows
-        ]
-    )
+    content = f"""{report_header("Top 10 排行榜")}
 
-    content = f"""# Top 10 Ranking
-
-Version: v1.4 CLI UX Improvement
-
-| 股票代號 | 名稱 | 類別 | SAP Score | 等級 | 資料品質 | Piotroski | 合理買點 | 第一目標價 |
-|---|---|---|---:|---|---:|---:|---:|---:|
-{table_rows}
+{ranking_table_header()}
+{ranking_table(top_rows)}
 """
 
     output_path.write_text(content, encoding="utf-8")
@@ -310,21 +440,12 @@ Version: v1.4 CLI UX Improvement
 def write_watchlist_report(rows: list[dict], output_path: Path = WATCHLIST_REPORT_PATH) -> None:
     output_path.parent.mkdir(exist_ok=True)
     success_rows = [row for row in rows if row["status"] == "success"]
+    sorted_rows = sort_rows(success_rows)
 
-    table_rows = "\n".join(
-        [
-            f"| {row['symbol']} | {row['sap_score']} | {row['grade']} | {row['below_reasonable_buy']} | {row['first_target_price'] or '資料不足'} | {row['data_quality_score']} |"
-            for row in success_rows
-        ]
-    )
+    content = f"""{report_header("自選股分析報告")}
 
-    content = f"""# Watchlist Report
-
-Version: v1.4 CLI UX Improvement
-
-| 股票代號 | SAP Score | 等級 | 低於合理買點 | 第一目標價 | 資料品質 |
-|---|---:|---|---|---:|---:|
-{table_rows}
+{ranking_table_header()}
+{ranking_table(sorted_rows)}
 """
 
     output_path.write_text(content, encoding="utf-8")
@@ -335,7 +456,7 @@ def run_scan(mode: str = "watchlist") -> list[dict]:
     rows = []
 
     print("====================================")
-    print(" StockAnalyzerPro Scan v1.4")
+    print(" StockAnalyzerPro v3.0 掃描")
     print("====================================")
     print(f"來源：{source_name}")
     print(f"樣本數：{len(stocks)}")
