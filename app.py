@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -5,43 +6,205 @@ import sys
 from modules.downloader import get_stock_data
 from modules.analyzer import analyze_stock
 from modules.report import generate_markdown_report
-from scan import run_scan
+from scan import OUTPUT_PATH, SUMMARY_PATH, TOP10_PATH, WATCHLIST_REPORT_PATH, run_scan
 
 
-def analyze_single_stock():
-    print("\n[1] 分析單一股票")
-    print("請輸入股票代號，例如 2330")
-    print("輸入 q 返回主選單")
-    print("------------------------------------")
+COMMON_STOCKS = [
+    ("台積電", "2330"),
+    ("聯發科", "2454"),
+    ("國巨", "2327"),
+    ("南亞科", "2408"),
+    ("同欣電", "6290"),
+    ("萬潤", "6187"),
+]
+RANK_LABELS = ["第1名", "第2名", "第3名"]
 
+
+def wait_for_main_menu() -> None:
+    input("按 Enter 返回主選單...")
+
+
+def open_file(path: str | Path) -> bool:
+    file_path = Path(path)
+    if not file_path.exists():
+        print(f"找不到檔案：{file_path}")
+        return False
+
+    resolved = str(file_path.resolve())
+    if hasattr(os, "startfile"):
+        os.startfile(resolved)  # type: ignore[attr-defined]
+    else:
+        subprocess.run(["cmd", "/c", "start", "", resolved], check=False)
+    print(f"已開啟：{file_path}")
+    return True
+
+
+def print_section(title: str) -> None:
+    print("==============================")
+    print(title)
+    print("")
+
+
+def analyze_single_stock() -> None:
     while True:
-        symbol = input("請輸入股票代號：").strip()
+        print_section("分析單一股票")
+        print("1. 常用股票")
+        print("2. 輸入其他股票")
+        print("0. 返回")
+        print("==============================")
+        choice = input("請選擇功能：").strip()
 
-        if symbol.lower() == "q":
-            print("")
+        if choice == "1":
+            stock = select_common_stock()
+        elif choice == "2":
+            stock = prompt_custom_stock()
+        elif choice == "0":
             return
-
-        if not symbol:
+        else:
+            print("請輸入 0-2。\n")
             continue
 
-        try:
-            print("正在下載資料...")
-            data = get_stock_data(symbol)
-            print("正在分析...")
-            result = analyze_stock(data)
-            print("正在產生報告...")
-            report_path = generate_markdown_report(result)
+        if stock is None:
+            continue
 
-            print(f"\n分析完成：{result['symbol']}")
-            print(f"SAP Score：{result['sap_score']} / 100")
-            print(f"投資等級：{result['grade']}")
-            print(f"報告已產生：{report_path}\n")
+        symbol, name = stock
+        result = analyze_symbol(symbol, name)
+        if result is None:
+            wait_for_main_menu()
+            return
 
-        except Exception as e:
-            print(f"分析失敗：{e}\n")
+        action = show_single_stock_result(*result)
+        if action == "another":
+            continue
+        return
 
 
-def run_cli(script_name: str, args: list[str] | None = None) -> None:
+def select_common_stock() -> tuple[str, str] | None:
+    while True:
+        print("")
+        print("常用股票")
+        print("==============================")
+        for index, (name, symbol) in enumerate(COMMON_STOCKS, start=1):
+            print(f"{index}. {name}（{symbol}）")
+        print("7. 其他股票")
+        print("")
+        print("0. 返回")
+        print("==============================")
+        choice = input("請選擇股票：").strip()
+
+        if choice == "0":
+            return None
+        if choice == "7":
+            return prompt_custom_stock()
+        if choice.isdigit():
+            index = int(choice)
+            if 1 <= index <= len(COMMON_STOCKS):
+                name, symbol = COMMON_STOCKS[index - 1]
+                return symbol, name
+        print("請輸入 0-7。\n")
+
+
+def prompt_custom_stock() -> tuple[str, str] | None:
+    symbol = input("請輸入股票代號（輸入 0 返回）：").strip()
+    if symbol == "0":
+        return None
+    if not symbol:
+        print("股票代號不可空白。\n")
+        return None
+    return symbol, ""
+
+
+def analyze_symbol(symbol: str, name: str = "") -> tuple[dict, Path, str, str] | None:
+    try:
+        print("")
+        print("正在下載資料...")
+        data = get_stock_data(symbol)
+        print("正在分析...")
+        result = analyze_stock(data)
+        print("正在產生報告...")
+        report_path = Path(generate_markdown_report(result))
+        return result, report_path, symbol, name
+    except Exception as error:
+        print(f"分析失敗：{error}\n")
+        return None
+
+
+def show_single_stock_result(result: dict, report_path: Path, requested_symbol: str, name: str) -> str:
+    display_symbol = requested_symbol.strip().upper().replace(".TW", "")
+    display_name = name or result.get("name") or ""
+
+    while True:
+        print("====================================")
+        print("")
+        print(f"股票：{display_symbol} {display_name}".rstrip())
+        print("")
+        print(f"SAP 評分：{result['sap_score']} 分")
+        print(f"投資等級：{result['grade']}")
+        print("")
+        print("==========================")
+        print("1. 開啟分析報告")
+        print("2. 分析另一檔股票")
+        print("0. 返回主選單")
+        print("==========================")
+        choice = input("請選擇功能：").strip()
+
+        if choice == "1":
+            open_file(report_path)
+        elif choice == "2":
+            return "another"
+        elif choice == "0":
+            return "menu"
+        else:
+            print("請輸入 0-2。\n")
+
+
+def run_stock_scan(mode: str, title: str) -> None:
+    rows = run_scan(mode)
+    show_scan_result(title, rows, mode)
+
+
+def show_scan_result(title: str, rows: list[dict], mode: str) -> None:
+    success_rows = [row for row in rows if row["status"] == "success"]
+    failed_count = len(rows) - len(success_rows)
+    full_report = WATCHLIST_REPORT_PATH if mode == "watchlist" else SUMMARY_PATH
+
+    while True:
+        print("====================================")
+        print("")
+        print(f"{title}完成")
+        print("")
+        print(f"成功：{len(success_rows)} 檔")
+        print(f"失敗：{failed_count} 檔")
+        print("")
+        print("本次前三名：")
+        print("")
+        for index, row in enumerate(success_rows[:3]):
+            rank_label = RANK_LABELS[index]
+            print(f"{rank_label} {row['symbol']}　SAP {row['sap_score']} 分")
+        if not success_rows:
+            print("無成功分析資料")
+        print("")
+        print("==========================")
+        print("1. 查看完整報告")
+        print("2. 查看排行榜")
+        print("3. 開啟 CSV")
+        print("0. 返回主選單")
+        print("==========================")
+        choice = input("請選擇功能：").strip()
+
+        if choice == "1":
+            open_file(full_report)
+        elif choice == "2":
+            open_file(TOP10_PATH)
+        elif choice == "3":
+            open_file(OUTPUT_PATH)
+        elif choice == "0":
+            return
+        else:
+            print("請輸入 0-3。\n")
+
+
+def run_cli(script_name: str, args: list[str] | None = None, report_to_open: Path | None = None) -> None:
     command = [sys.executable, script_name]
     if args:
         command.extend(args)
@@ -51,9 +214,23 @@ def run_cli(script_name: str, args: list[str] | None = None) -> None:
     result = subprocess.run(command, check=False)
     if result.returncode == 0:
         print("完成")
+        if report_to_open:
+            ask_open_report(report_to_open)
     else:
         print(f"失敗（代碼：{result.returncode}）")
     print("")
+    wait_for_main_menu()
+
+
+def ask_open_report(path: Path) -> None:
+    print("")
+    print("==========================")
+    print("1. 開啟報告")
+    print("0. 不開啟")
+    print("==========================")
+    choice = input("請選擇功能：").strip()
+    if choice == "1":
+        open_file(path)
 
 
 def prompt_optional(label: str, default: str | None = None) -> str | None:
@@ -64,18 +241,13 @@ def prompt_optional(label: str, default: str | None = None) -> str | None:
     return default
 
 
-def run_finmind_import():
-    print("\n[4] 匯入 FinMind 財報")
-    print("輸入 q 返回主選單")
-    print("------------------------------------")
-    symbol = input("請輸入股票代號：").strip()
-    if symbol.lower() == "q":
-        print("")
-        return
-    if not symbol:
-        print("股票代號不可空白。\n")
+def run_finmind_import() -> None:
+    print("\n[4] 更新 FinMind 財報")
+    stock = select_stock_for_tool()
+    if stock is None:
         return
 
+    symbol, _ = stock
     start_date = prompt_optional("開始日期 YYYY-MM-DD")
     end_date = prompt_optional("結束日期 YYYY-MM-DD")
     db_path = prompt_optional("資料庫路徑", "historical_snapshots.db")
@@ -91,46 +263,79 @@ def run_finmind_import():
     if token:
         args.extend(["--token", token])
 
-    run_cli("finmind_import.py", args)
+    run_cli("finmind_import.py", args, report_to_open=Path("reports/finmind_import_summary.md"))
 
 
-def run_historical_sap_generator():
+def select_stock_for_tool() -> tuple[str, str] | None:
+    print("==============================")
+    print("1. 常用股票")
+    print("2. 輸入其他股票")
+    print("0. 返回")
+    print("==============================")
+    choice = input("請選擇功能：").strip()
+    if choice == "1":
+        return select_common_stock()
+    if choice == "2":
+        return prompt_custom_stock()
+    return None
+
+
+def run_historical_sap_generator() -> None:
     print("\n[5] 建立歷史 SAP 評分")
-    print("可留空代表處理全部財報快照")
-    print("------------------------------------")
-    db_path = prompt_optional("資料庫路徑", "historical_snapshots.db")
-    symbol = prompt_optional("股票代號")
-    year = prompt_optional("會計年度")
-    quarter = prompt_optional("會計季度 1-4")
+    print("==============================")
+    print("1. 建立全部")
+    print("2. 依股票篩選")
+    print("3. 進階篩選")
+    print("0. 返回")
+    print("==============================")
+    choice = input("請選擇功能：").strip()
+    if choice == "0":
+        return
 
+    db_path = prompt_optional("資料庫路徑", "historical_snapshots.db")
     args = []
     if db_path:
         args.extend(["--db", db_path])
-    if symbol:
-        args.extend(["--symbol", symbol])
-    if year:
-        args.extend(["--year", year])
-    if quarter:
-        args.extend(["--quarter", quarter])
 
-    run_cli("historical_generate_sap.py", args)
+    if choice == "2":
+        stock = select_stock_for_tool()
+        if stock is None:
+            return
+        args.extend(["--symbol", stock[0]])
+    elif choice == "3":
+        symbol = prompt_optional("股票代號")
+        year = prompt_optional("會計年度")
+        quarter = prompt_optional("會計季度 1-4")
+        if symbol:
+            args.extend(["--symbol", symbol])
+        if year:
+            args.extend(["--year", year])
+        if quarter:
+            args.extend(["--quarter", quarter])
+    elif choice != "1":
+        print("請輸入 0-3。\n")
+        wait_for_main_menu()
+        return
+
+    run_cli("historical_generate_sap.py", args, report_to_open=Path("reports/historical_generator_summary.md"))
 
 
-def show_project_status():
+def show_project_status() -> None:
     status_path = Path("PROJECT_STATUS.md")
     print("\n[9] 查看專案狀態")
     print("------------------------------------")
     if not status_path.exists():
         print("找不到 PROJECT_STATUS.md\n")
-        return
-    print(status_path.read_text(encoding="utf-8"))
-    print("")
+    else:
+        print(status_path.read_text(encoding="utf-8"))
+        print("")
+    wait_for_main_menu()
 
 
-def show_menu():
+def show_menu() -> None:
     print("=========================================")
-    print("      StockAnalyzerPro v2.4")
-    print("          股票分析系統")
+    print("      StockAnalyzerPro v3.0")
+    print("         股票分析系統")
     print("=========================================")
     print("")
     print("【股票分析】")
@@ -139,7 +344,7 @@ def show_menu():
     print("3. 分析範例股票")
     print("")
     print("【歷史資料】")
-    print("4. 匯入 FinMind 財報")
+    print("4. 更新 FinMind 財報")
     print("5. 建立歷史 SAP 評分")
     print("")
     print("【策略研究】")
@@ -150,39 +355,38 @@ def show_menu():
     print("【系統】")
     print("9. 查看專案狀態")
     print("0. 離開")
-    print("------------------------------------")
+    print("")
+    print("=========================================")
 
 
-def main():
+def main() -> None:
     while True:
         show_menu()
-        choice = input("請選擇功能：").strip().lower()
+        choice = input("請選擇功能：").strip()
 
         if choice == "1":
             analyze_single_stock()
         elif choice == "2":
-            run_scan("watchlist")
-            print("")
+            run_stock_scan("watchlist", "自選股分析")
         elif choice == "3":
-            run_scan("sample")
-            print("")
+            run_stock_scan("sample", "範例股票分析")
         elif choice == "4":
             run_finmind_import()
         elif choice == "5":
             run_historical_sap_generator()
         elif choice == "6":
-            run_cli("backtest.py")
+            run_cli("backtest.py", report_to_open=Path("reports/backtest_summary.md"))
         elif choice == "7":
-            run_cli("strategy_compare.py")
+            run_cli("strategy_compare.py", report_to_open=Path("reports/strategy_comparison.md"))
         elif choice == "8":
-            run_cli("research_report.py")
+            run_cli("research_report.py", report_to_open=Path("reports/research_report.md"))
         elif choice == "9":
             show_project_status()
-        elif choice in {"0", "q"}:
+        elif choice == "0":
             print("已離開。")
             break
         else:
-            print("請輸入 0-9，或 q 離開。\n")
+            print("請輸入 0-9。\n")
 
 
 if __name__ == "__main__":
