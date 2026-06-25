@@ -245,18 +245,20 @@ The framework introduces:
 - `IDataProvider`: stable provider contract for normalized financial data, price history, universes, and diagnostics.
 - `YahooFinanceProvider`: yfinance adapter with access to `info`, `financials`, `balance_sheet`, `cashflow`, and `history`.
 - `FinMindProvider`: FinMind-first provider with metadata, diagnostics, Taiwan symbol detection, client injection, and initial FinancialData mapping from FinMind financial statement, balance sheet, and cash flow rows.
+- `CompositeProvider`: FinMind-first routing skeleton that uses FinMind for Taiwan stock financial data when available, falls back to Yahoo Finance on provider failure, routes non-Taiwan symbols directly to Yahoo Finance, and keeps price history on Yahoo Finance.
 - `CSVProvider`: strict CSV reader for SAP Score snapshot CSV files.
 - `MockProvider`: deterministic in-memory provider for unit tests.
-- `ProviderFactory`: factory for `cached_yahoo`, `yahoo`, `yfinance`, `yahoo_finance`, `finmind`, `csv`, and `mock`.
+- `ProviderFactory`: factory for `cached_yahoo`, `composite`, `yahoo`, `yfinance`, `yahoo_finance`, `finmind`, `csv`, and `mock`.
 
 FinMind First architecture direction:
 
 - `docs/FINMIND_FIRST_ARCHITECTURE.md` defines the next data-source architecture direction: `FinMind First, Yahoo Finance fallback`.
 - `FinMindProvider` is available through `ProviderFactory.create("finmind")`, but runtime default has not changed.
 - `FinMindProvider.get_financial_data()` now supports initial mock-testable mapping into `FinancialData`, including current/previous periods, revenue, net income, assets, liabilities, equity, cash flow, capex-derived free cash flow, EPS, book value per share, missing fields, and diagnostics.
-- Future runtime Taiwan stock fundamentals should come from `FinMindProvider` first after composite fallback and production rollout are implemented.
+- `CompositeProvider` is available through `ProviderFactory.create("composite")`, but runtime default has not changed.
+- Future runtime Taiwan stock fundamentals should come from `CompositeProvider` after production rollout, using FinMind first and Yahoo Finance fallback.
 - Yahoo Finance remains the fallback provider and the primary source for current prices, historical prices, US stocks, and ETFs.
-- The target provider structure is `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider`.
+- The target provider structure is now available as a skeleton: `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider`.
 - This architecture direction does not remove Yahoo Finance and does not change current Analyzer, SAP Score, CLI, Backtest, or Historical Qualification behavior.
 
 Cache layer design and implementation status:
@@ -292,7 +294,7 @@ Current Sprint boundary:
 - Analyzer is not changed and still receives `FinancialData`.
 - App, scan, and analyzer flows continue to call the existing downloader API.
 - `cached_yahoo` uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
-- `finmind` is registered in `ProviderFactory` with initial FinancialData mapping tests, but it is not used by default.
+- `finmind` and `composite` are registered in `ProviderFactory` with unit tests, but neither is used by default.
 - `SQLiteCache` remains available for tests and future integration, but runtime provider flow still uses `MemoryCache`.
 - Provider Framework is covered by unit tests and is ready for later integration.
 

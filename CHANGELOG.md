@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - CompositeProvider Skeleton
+
+- Added `data_provider/providers/composite_provider.py` with an `IDataProvider`-compatible `CompositeProvider`.
+- Added Taiwan stock routing that tries `FinMindProvider` first and falls back to `YahooFinanceProvider` on provider failure.
+- Added direct Yahoo routing for non-Taiwan symbols and Yahoo-only routing for price history.
+- Added structured routing diagnostics with primary provider, fallback provider, selected provider, fallback state, fallback reason, symbol type, and source chain.
+- Registered `composite` in `ProviderFactory.with_defaults()` without changing the existing `cached_yahoo` runtime default.
+- Added unit tests for FinMind primary success, Yahoo fallback, non-Taiwan routing, price-history routing, diagnostics, factory creation, and `cached_yahoo` compatibility.
+- No Analyzer, Downloader runtime default, YahooFinanceProvider behavior, FinMindProvider mapping, Strategy, SAP Score scoring logic, Backtest, Historical Pipeline, Qualification Logic, or CLI changes were added.
+
 ## Unreleased - FinMindProvider Financial Mapping v1
 
 - Implemented initial `FinMindProvider.get_financial_data()` mapping from FinMind financial statement, balance sheet, and cash flow rows into `FinancialData`.

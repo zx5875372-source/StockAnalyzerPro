@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-FinMindProvider Financial Mapping v1
+CompositeProvider Skeleton
 
 ## Completed
 
@@ -31,6 +31,7 @@ FinMindProvider Financial Mapping v1
 - FinMind First Architecture
 - FinMindProvider Skeleton
 - FinMindProvider Financial Mapping v1
+- CompositeProvider Skeleton
 - GitHub Actions
 - GitHub Releases
 
@@ -42,7 +43,6 @@ FinMindProvider Financial Mapping v1
 
 ## Planned
 
-- CompositeProvider
 - FinMind First Runtime Integration
 - Point-in-Time Timeline Engine
 - Historical Performance Validation
@@ -56,15 +56,16 @@ FinMindProvider Financial Mapping v1
 - fallback row is_point_in_time = false
 - Runtime stock analysis still uses Yahoo Finance until FinMind First provider integration is implemented
 - FinMindProvider has initial FinancialData mapping, but it is not the runtime default yet
+- CompositeProvider is registered for tests and future rollout, but downloader still uses cached_yahoo by default
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
 
-- Unit Tests: 236 passing
+- Unit Tests: 242 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
 ## Next Milestone
 
 Milestone 6
-CompositeProvider
+FinMind First Runtime Integration
