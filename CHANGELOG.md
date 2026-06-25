@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - FinMind First Architecture
+
+- Added `docs/FINMIND_FIRST_ARCHITECTURE.md` for the planned `FinMind First, Yahoo Finance fallback` data-source direction.
+- Documented the target `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider` structure.
+- Defined provider priority, Taiwan / US / ETF detection rules, FinancialData mapping, cache strategy, fallback behavior, migration plan, unit test plan, Mermaid diagrams, and code review checklist.
+- Updated README and project status with the next-stage data-source direction.
+- No Analyzer, Provider implementation, Strategy, SAP Score scoring logic, Backtest, Historical Pipeline, Qualification Logic, or CLI changes were added.
+
 ## Unreleased - Chinese UI Localization
 
 - Updated `app.py` to present StockAnalyzerPro v2.4 with a fully Chinese main menu and Chinese interactive prompts.

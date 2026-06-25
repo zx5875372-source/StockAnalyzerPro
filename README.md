@@ -248,6 +248,14 @@ The framework introduces:
 - `MockProvider`: deterministic in-memory provider for unit tests.
 - `ProviderFactory`: factory for `yahoo`, `yfinance`, `yahoo_finance`, `csv`, and `mock`.
 
+FinMind First architecture direction:
+
+- `docs/FINMIND_FIRST_ARCHITECTURE.md` defines the next data-source architecture direction: `FinMind First, Yahoo Finance fallback`.
+- Future runtime Taiwan stock fundamentals should come from `FinMindProvider` first.
+- Yahoo Finance remains the fallback provider and the primary source for current prices, historical prices, US stocks, and ETFs.
+- The target provider structure is `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider`.
+- This architecture direction does not remove Yahoo Finance and does not change current Analyzer, SAP Score, CLI, Backtest, or Historical Qualification behavior.
+
 Cache layer design and implementation status:
 
 - `docs/CACHE_LAYER_ARCHITECTURE.md` defines the cache key, TTL, interface, SQLite schema, failure handling, and migration plan.
@@ -288,9 +296,9 @@ Current Sprint boundary:
 
 Current and planned data-source roles:
 
-- Yahoo Finance: current runtime market and financial data source through `YahooFinanceProvider`.
+- Yahoo Finance: current runtime market and financial data source through `YahooFinanceProvider`; future fallback and price source after FinMind-first integration.
 - CSV: current historical snapshot import source through `CSVHistoricalImporter`.
-- FinMind (Partial): historical Taiwan financial statement import source; `FinMindImporter` can import financial statement snapshots through mapper, validator, and repository writes. SAP score snapshot import is still planned.
+- FinMind (Partial): historical Taiwan financial statement import source today; future primary Taiwan financial data source through planned `FinMindProvider` and `CompositeProvider`.
 - OpenBB (Planned): future multi-source research data option.
 - Polygon (Planned): future market data option.
 
@@ -298,6 +306,7 @@ FinMind architecture documentation:
 
 ```text
 docs/FINMIND_IMPORTER_ARCHITECTURE.md
+docs/FINMIND_FIRST_ARCHITECTURE.md
 ```
 
 ## FinMind Client

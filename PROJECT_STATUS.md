@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-v2.4 UI 中文化
+FinMind First Architecture
 
 ## Completed
 
@@ -28,16 +28,21 @@ v2.4 UI 中文化
 - Strategy Compare Qualification Integration
 - v2.4 Historical Backtesting RC Validation
 - Chinese UI Localization
+- FinMind First Architecture
 - GitHub Actions
 - GitHub Releases
 
 ## In Progress
 
+- FinMind First Provider Direction
 - Historical Backtesting
 - Point-in-Time Historical Database
 
 ## Planned
 
+- FinMindProvider
+- CompositeProvider
+- FinMind First Runtime Integration
 - Point-in-Time Timeline Engine
 - Historical Performance Validation
 - OpenBB Provider
@@ -48,6 +53,7 @@ v2.4 UI 中文化
 
 - FinMind financial statement 缺少 published_date 時使用 statement_date fallback
 - fallback row is_point_in_time = false
+- Runtime stock analysis still uses Yahoo Finance until FinMind First provider integration is implemented
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
@@ -59,4 +65,4 @@ v2.4 UI 中文化
 ## Next Milestone
 
 Milestone 6
-Historical Backtesting
+FinMind First Provider Implementation
