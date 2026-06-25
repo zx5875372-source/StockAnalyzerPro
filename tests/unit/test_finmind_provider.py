@@ -53,7 +53,7 @@ class FinMindProviderTests(unittest.TestCase):
         self.assertEqual(result.current.shares_outstanding, 100)
         self.assertEqual(result.current.eps, 9)
         self.assertEqual(result.current.book_value_per_share, 65)
-        self.assertIn("FinMindProvider mapped 6 raw rows", result.diagnostics[0])
+        self.assertIn("FinMindProvider mapped 6 raw rows", "\n".join(result.diagnostics))
         self.assertEqual(client.requested_financial_statement_symbols, ["2330"])
         self.assertEqual(client.requested_balance_sheet_symbols, ["2330"])
         self.assertEqual(client.requested_cash_flow_symbols, ["2330"])
@@ -71,10 +71,10 @@ class FinMindProviderTests(unittest.TestCase):
             balance_sheet_rows=[
                 long_row(113, "Q4", "資產總額", 10000),
                 long_row(113, "Q4", "負債總額", 3500),
-                long_row(113, "Q4", "股本", 100),
+                long_row(113, "Q4", "股本", 1000),
                 long_row(112, "Q4", "資產總額", 9000),
                 long_row(112, "Q4", "負債總額", 3300),
-                long_row(112, "Q4", "股本", 100),
+                long_row(112, "Q4", "股本", 1000),
             ],
             cash_flow_rows=[
                 long_row(113, "Q4", "營業活動現金流量", 1200),
@@ -134,6 +134,71 @@ class FinMindProviderTests(unittest.TestCase):
         provider_diagnostics = provider.get_provider_diagnostics()
         self.assertEqual(provider_diagnostics[0].severity, "warning")
         self.assertIn("current.total_assets", provider_diagnostics[0].message)
+
+    def test_real_finmind_aliases_and_derived_fields_are_mapped(self):
+        client = FakeFinMindClient(
+            financial_statement_rows=[
+                long_row_with_date("2024-12-31", "Revenue", 3000),
+                long_row_with_date("2024-12-31", "IncomeAfterTaxes", 900),
+                long_row_with_date("2024-12-31", "GrossProfit", 1500),
+                long_row_with_date("2023-12-31", "Revenue", 2500),
+                long_row_with_date("2023-12-31", "IncomeAfterTaxes", 700),
+                long_row_with_date("2023-12-31", "GrossProfit", 1200),
+            ],
+            balance_sheet_rows=[
+                long_row_with_date("2024-12-31", "TotalAssets", 10000),
+                long_row_with_date("2024-12-31", "Liabilities", 3500),
+                long_row_with_date("2024-12-31", "OrdinaryShare", 1000),
+                long_row_with_date("2023-12-31", "TotalAssets", 9000),
+                long_row_with_date("2023-12-31", "Liabilities", 3300),
+                long_row_with_date("2023-12-31", "OrdinaryShare", 1000),
+            ],
+            cash_flow_rows=[
+                long_row_with_date("2024-12-31", "CashFlowsFromOperatingActivities", 1200),
+                long_row_with_date("2024-12-31", "PropertyAndPlantAndEquipment", -300),
+                long_row_with_date("2023-12-31", "CashFlowsFromOperatingActivities", 1000),
+                long_row_with_date("2023-12-31", "PropertyAndPlantAndEquipment", -250),
+            ],
+        )
+        provider = FinMindProvider(client=client)
+
+        result = provider.get_financial_data("2330")
+
+        self.assertEqual(result.current.net_income, 900)
+        self.assertEqual(result.current.total_assets, 10000)
+        self.assertEqual(result.current.total_debt, 3500)
+        self.assertEqual(result.current.total_equity, 6500)
+        self.assertEqual(result.current.operating_cashflow, 1200)
+        self.assertEqual(result.current.free_cashflow, 900)
+        self.assertEqual(result.current.shares_outstanding, 100)
+        self.assertEqual(result.current.eps, 9)
+        self.assertEqual(result.current.book_value_per_share, 65)
+
+    def test_diagnostics_include_mapping_coverage(self):
+        provider = FinMindProvider(
+            client=FakeFinMindClient(
+                financial_statement_rows=[
+                    long_row_with_date("2024-12-31", "Revenue", 3000),
+                    long_row_with_date("2024-12-31", "IncomeAfterTaxes", 900),
+                    long_row_with_date("2024-12-31", "UnmappedFinMindField", 1),
+                ],
+                balance_sheet_rows=[
+                    long_row_with_date("2024-12-31", "TotalAssets", 10000),
+                    long_row_with_date("2024-12-31", "Liabilities", 3500),
+                ],
+            )
+        )
+
+        result = provider.get_financial_data("2330")
+        diagnostics_text = "\n".join(result.diagnostics)
+
+        self.assertIn("provider=finmind", diagnostics_text)
+        self.assertIn("mapped_fields_count:", diagnostics_text)
+        self.assertIn("mapped_fields:", diagnostics_text)
+        self.assertIn("derived_fields:", diagnostics_text)
+        self.assertIn("missing_fields:", diagnostics_text)
+        self.assertIn("unmapped_raw_fields:", diagnostics_text)
+        self.assertIn("UnmappedFinMindField", diagnostics_text)
 
     def test_missing_date_range_uses_safe_defaults(self):
         client = FakeFinMindClient(
@@ -217,6 +282,14 @@ def long_row(fiscal_year, fiscal_quarter, name, value):
         "fiscal_year": fiscal_year,
         "fiscal_quarter": fiscal_quarter,
         "name": name,
+        "value": value,
+    }
+
+
+def long_row_with_date(statement_date, name, value):
+    return {
+        "date": statement_date,
+        "type": name,
         "value": value,
     }
 

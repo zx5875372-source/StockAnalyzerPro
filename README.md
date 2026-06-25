@@ -307,9 +307,11 @@ Provider dry run diagnostics:
 .venv\Scripts\python.exe provider_dry_run.py --provider composite --symbol 2330 --start 2022-01-01 --end 2024-12-31 --show-diagnostics
 ```
 
-`provider_dry_run.py` is a safe diagnostics-only tool. It displays symbol normalization, selected provider, fallback status, fallback reason, symbol type, missing-field count, source chain, and optional diagnostics. It does not modify `downloader.py`, does not switch the runtime default provider, does not write reports, does not write the historical repository, and is not wired into the main CLI menu.
+`provider_dry_run.py` is a safe diagnostics-only tool. It displays symbol normalization, selected provider, fallback status, fallback reason, symbol type, mapped-field count, derived-field count, missing-field count, source chain, and optional diagnostics. It does not modify `downloader.py`, does not switch the runtime default provider, does not write reports, does not write the historical repository, and is not wired into the main CLI menu.
 
 When `--start` and `--end` are omitted, `FinMindProvider` uses a safe default date range from the last 3 years through today. If FinMind raises an API error during CompositeProvider dry runs, the diagnostic output should show Yahoo fallback with `fallback_used: true`, the FinMind error as `fallback_reason`, and `source_chain: finmind -> yahoo`.
+
+FinMindProvider mapping coverage diagnostics include `provider=finmind`, `mapped_fields`, `derived_fields`, `missing_fields`, and `unmapped_raw_fields`. Mapping coverage v2 adds support for real FinMind row types such as `IncomeAfterTaxes`, `Liabilities`, `Equity`, `OrdinaryShare`, and `CashFlowsFromOperatingActivities`.
 
 ## Planned Data Sources
 

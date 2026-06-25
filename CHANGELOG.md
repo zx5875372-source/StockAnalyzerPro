@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - FinMindProvider Mapping Coverage v2
+
+- Expanded `FinMindProvider` alias coverage for real FinMind XBRL-style row types, including `IncomeAfterTaxes`, `Revenue`, `GrossProfit`, `TotalAssets`, `Liabilities`, `Equity`, `OrdinaryShare`, `CashFlowsFromOperatingActivities`, `PropertyAndPlantAndEquipment`, and `EPS`.
+- Added dataset-aware mapping guards so aliases with similar names are only used from the correct FinMind statement source.
+- Added safer derived fields for total equity, free cash flow, EPS, and book value per share; ordinary share capital is converted into shares using Taiwan par value assumptions before EPS/BVPS derivation.
+- Added mapping coverage diagnostics for `mapped_fields`, `derived_fields`, `missing_fields`, `unmapped_raw_fields`, and `provider=finmind`.
+- Added dry-run display fields for `mapped_fields_count`, `derived_fields_count`, and `missing_fields_count`.
+- Added unit tests for real FinMind-style aliases, derived fields, diagnostics coverage, and dry-run mapping coverage output.
+- No Analyzer, Downloader runtime default, YahooFinanceProvider, SAP Score scoring logic, Strategy, Backtest, or Historical Pipeline changes were added.
+
 ## Unreleased - Fix FinMindProvider Dry Run Date Defaults
 
 - Added safe default date ranges to `FinMindProvider.get_financial_data()`: missing dates now default to the last 3 years through today.

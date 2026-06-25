@@ -45,6 +45,8 @@ class ProviderDryRunTests(unittest.TestCase):
         self.assertFalse(result["fallback_used"])
         self.assertEqual(result["symbol_type"], "taiwan_stock")
         self.assertEqual(result["source_chain"], ["finmind"])
+        self.assertEqual(result["mapped_fields_count"], 10)
+        self.assertEqual(result["derived_fields_count"], 2)
 
     def test_composite_mock_fallback_routes_to_yahoo(self):
         provider = build_mock_composite_provider(
@@ -95,6 +97,8 @@ class ProviderDryRunTests(unittest.TestCase):
 
         self.assertIn("diagnostics:", output)
         self.assertIn("mock financial data", output)
+        self.assertIn("mapped_fields_count: 10", output)
+        self.assertIn("derived_fields_count: 2", output)
         self.assertIn("selected_provider: finmind", output)
 
     def test_failure_does_not_crash(self):

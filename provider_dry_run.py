@@ -40,6 +40,8 @@ def run_dry_run(args: argparse.Namespace, provider: IDataProvider | None = None)
     source_chain: list[str] = []
     diagnostics: list[str] = []
     missing_fields_count = 0
+    mapped_fields_count = 0
+    derived_fields_count = 0
     start_date = getattr(args, "start", None)
     end_date = getattr(args, "end", None)
 
@@ -53,6 +55,8 @@ def run_dry_run(args: argparse.Namespace, provider: IDataProvider | None = None)
         )
         missing_fields_count = len(data.missing_fields)
         diagnostics.extend(data.diagnostics)
+        mapped_fields_count = _count_from_diagnostics(diagnostics, "mapped_fields_count")
+        derived_fields_count = _count_from_diagnostics(diagnostics, "derived_fields_count")
         route = _last_route(active_provider)
         if route:
             selected_provider = route.get("selected_provider")
@@ -75,6 +79,8 @@ def run_dry_run(args: argparse.Namespace, provider: IDataProvider | None = None)
             "fallback_reason": fallback_reason,
             "symbol_type": symbol_type,
             "source_chain": source_chain,
+            "mapped_fields_count": mapped_fields_count,
+            "derived_fields_count": derived_fields_count,
             "missing_fields_count": missing_fields_count,
             "diagnostics": diagnostics,
             "error": None,
@@ -97,6 +103,8 @@ def run_dry_run(args: argparse.Namespace, provider: IDataProvider | None = None)
             "fallback_reason": fallback_reason,
             "symbol_type": symbol_type,
             "source_chain": source_chain,
+            "mapped_fields_count": mapped_fields_count,
+            "derived_fields_count": derived_fields_count,
             "missing_fields_count": missing_fields_count,
             "diagnostics": diagnostics,
             "error": str(error),
@@ -137,6 +145,8 @@ def format_result(result: dict[str, Any], show_diagnostics: bool = False) -> str
         f"fallback_used: {str(result.get('fallback_used')).lower()}",
         f"fallback_reason: {result.get('fallback_reason') or '-'}",
         f"symbol_type: {result.get('symbol_type') or '-'}",
+        f"mapped_fields_count: {result.get('mapped_fields_count', 0)}",
+        f"derived_fields_count: {result.get('derived_fields_count', 0)}",
         f"missing_fields_count: {result.get('missing_fields_count', 0)}",
         f"source_chain: {' -> '.join(result.get('source_chain') or []) or '-'}",
     ]
@@ -179,6 +189,18 @@ def _provider_name(provider: IDataProvider) -> str:
     return getattr(provider, "name", provider.__class__.__name__).lower()
 
 
+def _count_from_diagnostics(diagnostics: list[str], key: str) -> int:
+    prefix = f"{key}:"
+    for item in diagnostics:
+        if item.startswith(prefix):
+            value = item.split(":", 1)[1].strip()
+            try:
+                return int(value)
+            except ValueError:
+                return 0
+    return 0
+
+
 def _get_financial_data(
     provider: IDataProvider,
     symbol: str,
@@ -215,7 +237,11 @@ def _mock_financial_data(symbols: list[str]) -> dict[str, FinancialData]:
                 book_value_per_share=12,
             ),
             previous=FinancialPeriod(period="2023-12-31", revenue=900, net_income=90),
-            diagnostics=["mock financial data"],
+            diagnostics=[
+                "mock financial data",
+                "mapped_fields_count: 10",
+                "derived_fields_count: 2",
+            ],
         )
     return data
 

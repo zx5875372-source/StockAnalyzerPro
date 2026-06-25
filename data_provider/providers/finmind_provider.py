@@ -20,6 +20,9 @@ FIELD_ALIASES = {
     ],
     "net_income": [
         "net_income",
+        "IncomeAfterTaxes",
+        "IncomeFromContinuingOperations",
+        "EquityAttributableToOwnersOfParent",
         "本期淨利",
         "本期淨利（淨損）",
         "本期淨利(淨損)",
@@ -34,12 +37,16 @@ FIELD_ALIASES = {
     ],
     "total_liabilities": [
         "total_liabilities",
+        "Liabilities",
+        "TotalLiabilities",
         "負債總額",
         "負債合計",
         "total liabilities",
     ],
     "total_equity": [
         "total_equity",
+        "Equity",
+        "EquityAttributableToOwnersOfParent",
         "權益總額",
         "權益合計",
         "股東權益總額",
@@ -55,6 +62,7 @@ FIELD_ALIASES = {
     ],
     "capital_expenditure": [
         "capital_expenditure",
+        "PropertyAndPlantAndEquipment",
         "資本支出",
         "購置不動產、廠房及設備",
         "取得不動產、廠房及設備",
@@ -69,6 +77,8 @@ FIELD_ALIASES = {
     ],
     "shares_outstanding": [
         "shares_outstanding",
+        "OrdinaryShare",
+        "CapitalStock",
         "流通在外股數",
         "普通股股本",
         "股本",
@@ -76,6 +86,7 @@ FIELD_ALIASES = {
     ],
     "eps": [
         "eps",
+        "EPS",
         "基本每股盈餘",
         "基本每股盈餘（元）",
         "basic eps",
@@ -85,6 +96,19 @@ FIELD_ALIASES = {
         "每股淨值",
         "book value per share",
     ],
+}
+
+FIELD_SOURCE_ALLOW = {
+    "revenue": {"get_financial_statement"},
+    "net_income": {"get_financial_statement"},
+    "gross_profit": {"get_financial_statement"},
+    "eps": {"get_financial_statement"},
+    "total_assets": {"get_balance_sheet"},
+    "total_liabilities": {"get_balance_sheet"},
+    "total_equity": {"get_balance_sheet"},
+    "shares_outstanding": {"get_balance_sheet"},
+    "cash_from_operations": {"get_cash_flow"},
+    "capital_expenditure": {"get_cash_flow"},
 }
 
 PERIOD_FIELDS = [
@@ -103,6 +127,7 @@ PERIOD_FIELDS = [
 
 ACCOUNT_KEYS = ["type", "name", "account", "item", "field", "label"]
 VALUE_KEYS = ["value", "amount", "data", "number"]
+CAPITAL_STOCK_ALIASES = {"ordinaryshare", "capitalstock", "普通股股本", "股本", "股本合計"}
 
 
 class FinMindProvider(IDataProvider):
@@ -158,7 +183,7 @@ class FinMindProvider(IDataProvider):
             self._record("warning", message, normalized_symbol)
             raise ProviderError(message)
 
-        periods = self._build_periods(rows)
+        periods, mapping_metadata = self._build_periods(rows)
         if not periods:
             message = f"{normalized_symbol}: FinMind rows do not contain usable financial periods"
             self._record("warning", message, normalized_symbol)
@@ -173,15 +198,32 @@ class FinMindProvider(IDataProvider):
             missing_fields.extend(self._missing_fields(previous_period, prefix="previous"))
 
         diagnostics = [
+            "provider=finmind",
             f"FinMindProvider mapped {len(rows)} raw rows into FinancialData",
             f"current period: {current_period_key}",
+            f"mapped_fields_count: {len(mapping_metadata['mapped_fields'])}",
+            "mapped_fields: " + self._format_fields(mapping_metadata["mapped_fields"]),
+            f"derived_fields_count: {len(mapping_metadata['derived_fields'])}",
+            "derived_fields: " + self._format_fields(mapping_metadata["derived_fields"]),
+            "unmapped_raw_fields: " + self._format_fields(mapping_metadata["unmapped_raw_fields"]),
         ]
         if previous_period is not None:
             diagnostics.append(f"previous period: {periods[1][0]}")
         if missing_fields:
             missing_text = ", ".join(missing_fields)
+            diagnostics.append("missing_fields: " + missing_text)
             diagnostics.append("missing fields: " + missing_text)
             self._record("warning", f"{normalized_symbol}: missing fields: {missing_text}", normalized_symbol)
+
+        self._record(
+            "info",
+            (
+                f"{normalized_symbol}: mapped_fields={len(mapping_metadata['mapped_fields'])}, "
+                f"derived_fields={len(mapping_metadata['derived_fields'])}, "
+                f"missing_fields={len(missing_fields)}"
+            ),
+            normalized_symbol,
+        )
 
         return FinancialData(
             symbol=normalized_symbol,
@@ -267,7 +309,7 @@ class FinMindProvider(IDataProvider):
             raise
         except Exception as error:
             raise ProviderError(str(error)) from error
-        return self._extract_rows(response)
+        return [self._with_source(row, method_name) for row in self._extract_rows(response)]
 
     @staticmethod
     def _extract_rows(response: Any) -> list[dict]:
@@ -284,74 +326,110 @@ class FinMindProvider(IDataProvider):
                 return [row for row in data if isinstance(row, dict)]
         return []
 
-    def _build_periods(self, rows: list[dict]) -> list[tuple[str, FinancialPeriod]]:
+    def _build_periods(self, rows: list[dict]) -> tuple[list[tuple[str, FinancialPeriod]], dict[str, set[str]]]:
         grouped: dict[str, dict[str, float]] = {}
         sort_keys: dict[str, date] = {}
+        mapped_fields: set[str] = set()
+        derived_fields: set[str] = set()
+        unmapped_raw_fields: set[str] = set()
         for row in rows:
             period_key, sort_key = self._period_key(row)
             if not period_key or sort_key is None:
                 continue
             grouped.setdefault(period_key, {})
             sort_keys[period_key] = sort_key
-            self._merge_row_values(grouped[period_key], row)
+            row_mapped_fields = self._merge_row_values(grouped[period_key], row)
+            mapped_fields.update(row_mapped_fields)
+            raw_field_name = self._raw_field_name(row)
+            if raw_field_name and not row_mapped_fields and self._row_amount(row) is not None:
+                unmapped_raw_fields.add(raw_field_name)
 
         periods = []
         for period_key, values in grouped.items():
-            period = self._financial_period(period_key, values)
+            period, period_derived_fields = self._financial_period(period_key, values)
+            derived_fields.update(period_derived_fields)
             periods.append((period_key, sort_keys[period_key], period))
         periods.sort(key=lambda item: item[1], reverse=True)
-        return [(period_key, period) for period_key, _, period in periods]
+        return (
+            [(period_key, period) for period_key, _, period in periods],
+            {
+                "mapped_fields": mapped_fields,
+                "derived_fields": derived_fields,
+                "unmapped_raw_fields": unmapped_raw_fields,
+            },
+        )
 
-    def _merge_row_values(self, values: dict[str, float], row: dict) -> None:
+    def _merge_row_values(self, values: dict[str, float], row: dict) -> set[str]:
+        mapped_fields: set[str] = set()
         for internal_field, aliases in FIELD_ALIASES.items():
+            if not self._field_allowed_for_row(internal_field, row):
+                continue
             direct_value = self._value_from_alias(row, aliases)
             if direct_value is not None:
                 values[internal_field] = direct_value
+                mapped_fields.add(internal_field)
 
         account_name = self._account_name(row)
         if not account_name:
-            return
+            return mapped_fields
         amount = self._row_amount(row)
         if amount is None:
-            return
+            return mapped_fields
         normalized_account = self._normalize_label(account_name)
         for internal_field, aliases in FIELD_ALIASES.items():
+            if not self._field_allowed_for_row(internal_field, row):
+                continue
             if normalized_account in {self._normalize_label(alias) for alias in aliases}:
+                if internal_field == "shares_outstanding" and normalized_account in CAPITAL_STOCK_ALIASES:
+                    amount = amount / 10
                 values[internal_field] = amount
-                return
+                mapped_fields.add(internal_field)
+                return mapped_fields
+        return mapped_fields
 
-    def _financial_period(self, period_key: str, values: dict[str, float]) -> FinancialPeriod:
+    def _financial_period(self, period_key: str, values: dict[str, float]) -> tuple[FinancialPeriod, set[str]]:
+        derived_fields: set[str] = set()
         total_assets = values.get("total_assets")
         total_liabilities = values.get("total_liabilities")
         total_equity = values.get("total_equity")
         if total_equity is None and total_assets is not None and total_liabilities is not None:
             total_equity = total_assets - total_liabilities
+            derived_fields.add("total_equity")
 
         operating_cashflow = values.get("cash_from_operations")
         capital_expenditure = values.get("capital_expenditure")
         free_cashflow = self._free_cashflow(operating_cashflow, capital_expenditure)
+        if free_cashflow is not None:
+            derived_fields.add("free_cashflow")
 
         shares_outstanding = values.get("shares_outstanding")
         eps = values.get("eps")
         if eps is None:
             eps = safe_divide(values.get("net_income"), shares_outstanding, precision=4)
+            if eps is not None:
+                derived_fields.add("eps")
         book_value_per_share = values.get("book_value_per_share")
         if book_value_per_share is None:
             book_value_per_share = safe_divide(total_equity, shares_outstanding, precision=4)
+            if book_value_per_share is not None:
+                derived_fields.add("book_value_per_share")
 
-        return FinancialPeriod(
-            period=period_key,
-            net_income=values.get("net_income"),
-            total_assets=total_assets,
-            total_equity=total_equity,
-            total_debt=total_liabilities,
-            revenue=values.get("revenue"),
-            gross_profit=values.get("gross_profit"),
-            operating_cashflow=operating_cashflow,
-            free_cashflow=free_cashflow,
-            shares_outstanding=shares_outstanding,
-            eps=eps,
-            book_value_per_share=book_value_per_share,
+        return (
+            FinancialPeriod(
+                period=period_key,
+                net_income=values.get("net_income"),
+                total_assets=total_assets,
+                total_equity=total_equity,
+                total_debt=total_liabilities,
+                revenue=values.get("revenue"),
+                gross_profit=values.get("gross_profit"),
+                operating_cashflow=operating_cashflow,
+                free_cashflow=free_cashflow,
+                shares_outstanding=shares_outstanding,
+                eps=eps,
+                book_value_per_share=book_value_per_share,
+            ),
+            derived_fields,
         )
 
     def _company_name(self, stock_id: str) -> str | None:
@@ -365,6 +443,33 @@ class FinMindProvider(IDataProvider):
         if isinstance(info, dict):
             return info.get("company_name") or info.get("name") or info.get("shortName") or info.get("longName")
         return None
+
+    @classmethod
+    def _field_allowed_for_row(cls, internal_field: str, row: dict) -> bool:
+        source = row.get("_finmind_source")
+        allowed_sources = FIELD_SOURCE_ALLOW.get(internal_field)
+        if not source or not allowed_sources:
+            return True
+        return str(source) in allowed_sources
+
+    @staticmethod
+    def _with_source(row: dict, source: str) -> dict:
+        tagged_row = dict(row)
+        tagged_row["_finmind_source"] = source
+        return tagged_row
+
+    @classmethod
+    def _raw_field_name(cls, row: dict) -> str | None:
+        return cls._account_name(row)
+
+    @staticmethod
+    def _format_fields(fields: set[str], limit: int = 30) -> str:
+        if not fields:
+            return "-"
+        ordered_fields = sorted(fields)
+        visible_fields = ordered_fields[:limit]
+        suffix = f" (+{len(ordered_fields) - limit} more)" if len(ordered_fields) > limit else ""
+        return ", ".join(visible_fields) + suffix
 
     @classmethod
     def _missing_fields(cls, period: FinancialPeriod, prefix: str) -> list[str]:
