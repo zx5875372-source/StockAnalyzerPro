@@ -298,6 +298,16 @@ Current Sprint boundary:
 - `SQLiteCache` remains available for tests and future integration, but runtime provider flow still uses `MemoryCache`.
 - Provider Framework is covered by unit tests and is ready for later integration.
 
+Provider dry run diagnostics:
+
+```powershell
+.venv\Scripts\python.exe provider_dry_run.py --provider composite --symbol 2330 --mock --show-diagnostics
+.venv\Scripts\python.exe provider_dry_run.py --provider composite --symbol AAPL --mock
+.venv\Scripts\python.exe provider_dry_run.py --provider finmind --symbol 2330 --mock
+```
+
+`provider_dry_run.py` is a safe diagnostics-only tool. It displays symbol normalization, selected provider, fallback status, fallback reason, symbol type, missing-field count, source chain, and optional diagnostics. It does not modify `downloader.py`, does not switch the runtime default provider, does not write reports, does not write the historical repository, and is not wired into the main CLI menu.
+
 ## Planned Data Sources
 
 Current and planned data-source roles:

@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-CompositeProvider Skeleton
+CompositeProvider Runtime Dry Run
 
 ## Completed
 
@@ -32,6 +32,7 @@ CompositeProvider Skeleton
 - FinMindProvider Skeleton
 - FinMindProvider Financial Mapping v1
 - CompositeProvider Skeleton
+- CompositeProvider Runtime Dry Run
 - GitHub Actions
 - GitHub Releases
 
@@ -57,11 +58,12 @@ CompositeProvider Skeleton
 - Runtime stock analysis still uses Yahoo Finance until FinMind First provider integration is implemented
 - FinMindProvider has initial FinancialData mapping, but it is not the runtime default yet
 - CompositeProvider is registered for tests and future rollout, but downloader still uses cached_yahoo by default
+- provider_dry_run.py is diagnostics-only and is not connected to the main CLI menu
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
 
-- Unit Tests: 242 passing
+- Unit Tests: 248 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 

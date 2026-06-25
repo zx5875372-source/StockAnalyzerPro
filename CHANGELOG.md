@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - CompositeProvider Runtime Dry Run
+
+- Added `provider_dry_run.py` as a safe provider diagnostics CLI for `composite`, `finmind`, and `yahoo`.
+- Added dry-run output for symbol normalization, selected provider, fallback state, fallback reason, symbol type, missing-field count, source chain, and optional diagnostics.
+- Added `--mock` mode for unit-testable routing diagnostics without real API calls.
+- Added unit tests for CLI argument parsing, CompositeProvider Taiwan routing, fallback routing, non-Taiwan Yahoo routing, diagnostics formatting, and failure handling without crashing.
+- The dry-run tool does not write reports, does not write historical repositories, does not modify downloader defaults, and is not connected to the main CLI menu.
+- No Analyzer, Downloader runtime default, YahooFinanceProvider behavior, FinMindProvider mapping, Strategy, SAP Score scoring logic, Backtest, Historical Pipeline, Qualification Logic, or CLI main menu changes were added.
+
 ## Unreleased - CompositeProvider Skeleton
 
 - Added `data_provider/providers/composite_provider.py` with an `IDataProvider`-compatible `CompositeProvider`.
