@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-CompositeProvider Runtime Dry Run
+Fix FinMindProvider Dry Run Date Defaults
 
 ## Completed
 
@@ -33,6 +33,7 @@ CompositeProvider Runtime Dry Run
 - FinMindProvider Financial Mapping v1
 - CompositeProvider Skeleton
 - CompositeProvider Runtime Dry Run
+- FinMindProvider Dry Run Date Defaults
 - GitHub Actions
 - GitHub Releases
 
@@ -59,11 +60,12 @@ CompositeProvider Runtime Dry Run
 - FinMindProvider has initial FinancialData mapping, but it is not the runtime default yet
 - CompositeProvider is registered for tests and future rollout, but downloader still uses cached_yahoo by default
 - provider_dry_run.py is diagnostics-only and is not connected to the main CLI menu
+- FinMindProvider dry runs use a safe 3-year default date range when start/end are omitted
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
 
-- Unit Tests: 248 passing
+- Unit Tests: 251 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 

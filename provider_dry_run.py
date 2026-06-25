@@ -22,6 +22,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--provider", choices=SUPPORTED_PROVIDERS, default="composite")
     parser.add_argument("--symbol", required=True)
+    parser.add_argument("--start")
+    parser.add_argument("--end")
     parser.add_argument("--mock", action="store_true")
     parser.add_argument("--show-diagnostics", action="store_true")
     return parser.parse_args(argv)
@@ -38,10 +40,17 @@ def run_dry_run(args: argparse.Namespace, provider: IDataProvider | None = None)
     source_chain: list[str] = []
     diagnostics: list[str] = []
     missing_fields_count = 0
+    start_date = getattr(args, "start", None)
+    end_date = getattr(args, "end", None)
 
     active_provider = provider or build_provider(provider_name, mock=args.mock)
     try:
-        data = active_provider.get_financial_data(symbol)
+        data = _get_financial_data(
+            active_provider,
+            symbol,
+            start_date=start_date,
+            end_date=end_date,
+        )
         missing_fields_count = len(data.missing_fields)
         diagnostics.extend(data.diagnostics)
         route = _last_route(active_provider)
@@ -129,7 +138,7 @@ def format_result(result: dict[str, Any], show_diagnostics: bool = False) -> str
         f"fallback_reason: {result.get('fallback_reason') or '-'}",
         f"symbol_type: {result.get('symbol_type') or '-'}",
         f"missing_fields_count: {result.get('missing_fields_count', 0)}",
-        f"source_chain: {', '.join(result.get('source_chain') or []) or '-'}",
+        f"source_chain: {' -> '.join(result.get('source_chain') or []) or '-'}",
     ]
     if result.get("error"):
         lines.append(f"error: {result['error']}")
@@ -170,6 +179,20 @@ def _provider_name(provider: IDataProvider) -> str:
     return getattr(provider, "name", provider.__class__.__name__).lower()
 
 
+def _get_financial_data(
+    provider: IDataProvider,
+    symbol: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> FinancialData:
+    if start_date is not None or end_date is not None:
+        try:
+            return provider.get_financial_data(symbol, start_date=start_date, end_date=end_date)
+        except TypeError:
+            return provider.get_financial_data(symbol, as_of=end_date)
+    return provider.get_financial_data(symbol)
+
+
 def _mock_financial_data(symbols: list[str]) -> dict[str, FinancialData]:
     data = {}
     for symbol in symbols:
@@ -203,7 +226,13 @@ class DryRunMockProvider(IDataProvider):
     financial_data_by_symbol: dict[str, FinancialData] = field(default_factory=dict)
     failure_by_symbol: dict[str, Exception | None] | None = None
 
-    def get_financial_data(self, symbol: str, as_of: str | None = None) -> FinancialData:
+    def get_financial_data(
+        self,
+        symbol: str,
+        as_of: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> FinancialData:
         normalized_symbol = normalize_symbol(symbol)
         failure = (self.failure_by_symbol or {}).get(normalized_symbol)
         if failure is not None:

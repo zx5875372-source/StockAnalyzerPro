@@ -12,10 +12,25 @@ from provider_dry_run import (
 
 class ProviderDryRunTests(unittest.TestCase):
     def test_parse_cli_args(self):
-        args = parse_args(["--provider", "composite", "--symbol", "2330", "--mock", "--show-diagnostics"])
+        args = parse_args(
+            [
+                "--provider",
+                "composite",
+                "--symbol",
+                "2330",
+                "--start",
+                "2022-01-01",
+                "--end",
+                "2024-12-31",
+                "--mock",
+                "--show-diagnostics",
+            ]
+        )
 
         self.assertEqual(args.provider, "composite")
         self.assertEqual(args.symbol, "2330")
+        self.assertEqual(args.start, "2022-01-01")
+        self.assertEqual(args.end, "2024-12-31")
         self.assertTrue(args.mock)
         self.assertTrue(args.show_diagnostics)
 
@@ -32,7 +47,9 @@ class ProviderDryRunTests(unittest.TestCase):
         self.assertEqual(result["source_chain"], ["finmind"])
 
     def test_composite_mock_fallback_routes_to_yahoo(self):
-        provider = build_mock_composite_provider(finmind_failure=ProviderError("FinMind dry-run failure"))
+        provider = build_mock_composite_provider(
+            finmind_failure=ProviderError("FinMind API error for TaiwanStockFinancialStatements: HTTP 400")
+        )
         args = argparse.Namespace(provider="composite", symbol="2330", mock=True, show_diagnostics=False)
 
         result = run_dry_run(args, provider=provider)
@@ -40,8 +57,23 @@ class ProviderDryRunTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertEqual(result["selected_provider"], "yahoo")
         self.assertTrue(result["fallback_used"])
-        self.assertEqual(result["fallback_reason"], "FinMind dry-run failure")
+        self.assertIn("FinMind API error", result["fallback_reason"])
         self.assertEqual(result["source_chain"], ["finmind", "yahoo"])
+
+    def test_composite_api_error_diagnostics_show_fallback_used_true(self):
+        provider = build_mock_composite_provider(
+            finmind_failure=ProviderError("FinMind API error for TaiwanStockFinancialStatements: HTTP 400")
+        )
+        args = argparse.Namespace(provider="composite", symbol="2330", mock=True, show_diagnostics=True)
+
+        result = run_dry_run(args, provider=provider)
+        output = format_result(result, show_diagnostics=True)
+
+        self.assertTrue(result["fallback_used"])
+        self.assertIn("selected_provider: yahoo", output)
+        self.assertIn("fallback_used: true", output)
+        self.assertIn("FinMind API error", output)
+        self.assertIn("source_chain: finmind -> yahoo", output)
 
     def test_composite_mock_non_taiwan_routes_to_yahoo(self):
         args = argparse.Namespace(provider="composite", symbol="AAPL", mock=True, show_diagnostics=False)

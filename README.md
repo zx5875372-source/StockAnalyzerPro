@@ -304,9 +304,12 @@ Provider dry run diagnostics:
 .venv\Scripts\python.exe provider_dry_run.py --provider composite --symbol 2330 --mock --show-diagnostics
 .venv\Scripts\python.exe provider_dry_run.py --provider composite --symbol AAPL --mock
 .venv\Scripts\python.exe provider_dry_run.py --provider finmind --symbol 2330 --mock
+.venv\Scripts\python.exe provider_dry_run.py --provider composite --symbol 2330 --start 2022-01-01 --end 2024-12-31 --show-diagnostics
 ```
 
 `provider_dry_run.py` is a safe diagnostics-only tool. It displays symbol normalization, selected provider, fallback status, fallback reason, symbol type, missing-field count, source chain, and optional diagnostics. It does not modify `downloader.py`, does not switch the runtime default provider, does not write reports, does not write the historical repository, and is not wired into the main CLI menu.
+
+When `--start` and `--end` are omitted, `FinMindProvider` uses a safe default date range from the last 3 years through today. If FinMind raises an API error during CompositeProvider dry runs, the diagnostic output should show Yahoo fallback with `fallback_used: true`, the FinMind error as `fallback_reason`, and `source_chain: finmind -> yahoo`.
 
 ## Planned Data Sources
 

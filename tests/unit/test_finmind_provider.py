@@ -135,6 +135,33 @@ class FinMindProviderTests(unittest.TestCase):
         self.assertEqual(provider_diagnostics[0].severity, "warning")
         self.assertIn("current.total_assets", provider_diagnostics[0].message)
 
+    def test_missing_date_range_uses_safe_defaults(self):
+        client = FakeFinMindClient(
+            financial_statement_rows=[
+                wide_row("2024-12-31", revenue=3000, net_income=900),
+            ],
+        )
+        provider = FinMindProvider(client=client)
+
+        provider.get_financial_data("2330")
+
+        stock_id, start_date, end_date = client.financial_statement_calls[0]
+        self.assertEqual(stock_id, "2330")
+        self.assertRegex(start_date, r"^\d{4}-\d{2}-\d{2}$")
+        self.assertRegex(end_date, r"^\d{4}-\d{2}-\d{2}$")
+
+    def test_explicit_date_range_is_forwarded_to_finmind_client(self):
+        client = FakeFinMindClient(
+            financial_statement_rows=[
+                wide_row("2024-12-31", revenue=3000, net_income=900),
+            ],
+        )
+        provider = FinMindProvider(client=client)
+
+        provider.get_financial_data("2330", start_date="2022-01-01", end_date="2024-12-31")
+
+        self.assertEqual(client.financial_statement_calls[0], ("2330", "2022-01-01", "2024-12-31"))
+
     def test_symbol_helpers(self):
         self.assertEqual(FinMindProvider.normalize_symbol("2330"), "2330.TW")
         self.assertTrue(FinMindProvider.is_taiwan_symbol("6290.TWO"))
@@ -160,9 +187,11 @@ class FakeFinMindClient:
         self.requested_financial_statement_symbols = []
         self.requested_balance_sheet_symbols = []
         self.requested_cash_flow_symbols = []
+        self.financial_statement_calls = []
 
     def get_financial_statement(self, stock_id: str, start_date=None, end_date=None):
         self.requested_financial_statement_symbols.append(stock_id)
+        self.financial_statement_calls.append((stock_id, start_date, end_date))
         return FinMindResponse(status=200, message="", data=self.financial_statement_rows)
 
     def get_balance_sheet(self, stock_id: str, start_date=None, end_date=None):

@@ -113,7 +113,13 @@ class FinMindProvider(IDataProvider):
         self.client = client or FinMindClient()
         self._diagnostics: list[ProviderDiagnostic] = []
 
-    def get_financial_data(self, symbol: str, as_of: str | None = None) -> FinancialData:
+    def get_financial_data(
+        self,
+        symbol: str,
+        as_of: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> FinancialData:
         normalized_symbol = self.normalize_symbol(symbol)
         if not self.is_taiwan_symbol(normalized_symbol):
             message = f"{normalized_symbol}: FinMindProvider supports Taiwan stock symbols only; use Yahoo fallback"
@@ -121,10 +127,32 @@ class FinMindProvider(IDataProvider):
             raise ProviderError(message)
 
         stock_id = self.finmind_stock_id(normalized_symbol)
+        resolved_start_date, resolved_end_date = self.default_date_range(start_date=start_date, end_date=end_date, as_of=as_of)
         rows = []
-        rows.extend(self._client_rows("get_financial_statement", stock_id, as_of=as_of))
-        rows.extend(self._client_rows("get_balance_sheet", stock_id, as_of=as_of))
-        rows.extend(self._client_rows("get_cash_flow", stock_id, as_of=as_of))
+        rows.extend(
+            self._client_rows(
+                "get_financial_statement",
+                stock_id,
+                start_date=resolved_start_date,
+                end_date=resolved_end_date,
+            )
+        )
+        rows.extend(
+            self._client_rows(
+                "get_balance_sheet",
+                stock_id,
+                start_date=resolved_start_date,
+                end_date=resolved_end_date,
+            )
+        )
+        rows.extend(
+            self._client_rows(
+                "get_cash_flow",
+                stock_id,
+                start_date=resolved_start_date,
+                end_date=resolved_end_date,
+            )
+        )
         if not rows:
             message = f"{normalized_symbol}: no FinMind financial rows returned; use Yahoo fallback"
             self._record("warning", message, normalized_symbol)
@@ -196,6 +224,18 @@ class FinMindProvider(IDataProvider):
     def finmind_stock_id(symbol: str) -> str:
         return normalize_symbol(symbol).split(".", 1)[0]
 
+    @classmethod
+    def default_date_range(
+        cls,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        as_of: str | None = None,
+        today: date | None = None,
+    ) -> tuple[str, str]:
+        resolved_end = cls._parse_date(end_date or as_of) or today or date.today()
+        resolved_start = cls._parse_date(start_date) or cls._years_before(resolved_end, 3)
+        return resolved_start.isoformat(), resolved_end.isoformat()
+
     def _record(self, severity: str, message: str, symbol: str | None = None) -> None:
         self._diagnostics.append(
             ProviderDiagnostic(
@@ -206,14 +246,27 @@ class FinMindProvider(IDataProvider):
             )
         )
 
-    def _client_rows(self, method_name: str, stock_id: str, as_of: str | None = None) -> list[dict]:
+    def _client_rows(
+        self,
+        method_name: str,
+        stock_id: str,
+        start_date: str,
+        end_date: str,
+    ) -> list[dict]:
         method = getattr(self.client, method_name, None)
         if method is None:
             return []
         try:
-            response = method(stock_id, end_date=as_of)
+            response = method(stock_id, start_date=start_date, end_date=end_date)
         except TypeError:
-            response = method(stock_id)
+            try:
+                response = method(stock_id)
+            except Exception as error:
+                raise ProviderError(str(error)) from error
+        except ProviderError:
+            raise
+        except Exception as error:
+            raise ProviderError(str(error)) from error
         return self._extract_rows(response)
 
     @staticmethod
@@ -405,6 +458,22 @@ class FinMindProvider(IDataProvider):
         if parsed in {1, 2, 3, 4}:
             return parsed
         return None
+
+    @staticmethod
+    def _parse_date(value: str | None) -> date | None:
+        if not value:
+            return None
+        try:
+            return date.fromisoformat(str(value)[:10])
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _years_before(value: date, years: int) -> date:
+        try:
+            return value.replace(year=value.year - years)
+        except ValueError:
+            return value.replace(year=value.year - years, day=28)
 
     @staticmethod
     def _free_cashflow(operating_cashflow: float | None, capital_expenditure: float | None) -> float | None:

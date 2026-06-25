@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Fix FinMindProvider Dry Run Date Defaults
+
+- Added safe default date ranges to `FinMindProvider.get_financial_data()`: missing dates now default to the last 3 years through today.
+- Forwarded `start_date` and `end_date` to FinMind financial statement, balance sheet, and cash flow client calls.
+- Converted FinMind client/API failures into `ProviderError` so `CompositeProvider` can use the existing Yahoo fallback path.
+- Added `provider_dry_run.py --start` and `--end` options for explicit provider dry-run date ranges.
+- Updated dry-run output to render `source_chain` with `->` for clearer fallback diagnostics.
+- Added unit tests for FinMindProvider date defaults, explicit date forwarding, dry-run date argument parsing, API-error fallback, and fallback diagnostics.
+- No Analyzer, Downloader runtime default, SAP Score, Strategy, Backtest, or Historical Pipeline changes were added.
+
 ## Unreleased - CompositeProvider Runtime Dry Run
 
 - Added `provider_dry_run.py` as a safe provider diagnostics CLI for `composite`, `finmind`, and `yahoo`.

@@ -24,12 +24,22 @@ class CompositeProvider(IDataProvider):
         self._diagnostics: list[ProviderDiagnostic] = []
         self._routing_diagnostics: list[dict[str, Any]] = []
 
-    def get_financial_data(self, symbol: str, as_of: str | None = None) -> FinancialData:
+    def get_financial_data(
+        self,
+        symbol: str,
+        as_of: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> FinancialData:
         normalized_symbol = normalize_symbol(symbol)
         symbol_type = self.symbol_type(normalized_symbol)
 
         if symbol_type != "taiwan_stock":
-            data = self.fallback_provider.get_financial_data(normalized_symbol, as_of=as_of)
+            data = self._get_provider_financial_data(
+                self.fallback_provider,
+                normalized_symbol,
+                as_of=as_of or end_date,
+            )
             self._record_route(
                 symbol=normalized_symbol,
                 symbol_type=symbol_type,
@@ -40,7 +50,13 @@ class CompositeProvider(IDataProvider):
             return data
 
         try:
-            data = self.primary_provider.get_financial_data(normalized_symbol, as_of=as_of)
+            data = self._get_provider_financial_data(
+                self.primary_provider,
+                normalized_symbol,
+                as_of=as_of,
+                start_date=start_date,
+                end_date=end_date,
+            )
             self._record_route(
                 symbol=normalized_symbol,
                 symbol_type=symbol_type,
@@ -50,7 +66,11 @@ class CompositeProvider(IDataProvider):
             )
             return data
         except ProviderError as error:
-            data = self.fallback_provider.get_financial_data(normalized_symbol, as_of=as_of)
+            data = self._get_provider_financial_data(
+                self.fallback_provider,
+                normalized_symbol,
+                as_of=as_of or end_date,
+            )
             self._record_route(
                 symbol=normalized_symbol,
                 symbol_type=symbol_type,
@@ -135,3 +155,23 @@ class CompositeProvider(IDataProvider):
     @staticmethod
     def _provider_name(provider: IDataProvider) -> str:
         return getattr(provider, "name", provider.__class__.__name__).lower()
+
+    @staticmethod
+    def _get_provider_financial_data(
+        provider: IDataProvider,
+        symbol: str,
+        as_of: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> FinancialData:
+        if start_date is not None or end_date is not None:
+            try:
+                return provider.get_financial_data(
+                    symbol,
+                    as_of=as_of,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            except TypeError:
+                pass
+        return provider.get_financial_data(symbol, as_of=as_of)
