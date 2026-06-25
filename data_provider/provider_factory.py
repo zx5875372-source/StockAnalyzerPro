@@ -29,6 +29,7 @@ class ProviderFactory:
     def with_defaults() -> "ProviderFactory":
         from data_provider.cached_provider import CachedDataProvider
         from data_provider.providers.csv_provider import CSVProvider
+        from data_provider.providers.finmind_provider import FinMindProvider
         from data_provider.providers.mock_provider import MockProvider
         from data_provider.providers.yahoo_finance_provider import YahooFinanceProvider
 
@@ -45,6 +46,7 @@ class ProviderFactory:
         factory = ProviderFactory()
         factory.register("cached_yahoo", build_cached_yahoo)
         factory.register("csv", CSVProvider)
+        factory.register("finmind", FinMindProvider)
         factory.register("mock", MockProvider)
         factory.register("yahoo", YahooFinanceProvider)
         factory.register("yfinance", YahooFinanceProvider)

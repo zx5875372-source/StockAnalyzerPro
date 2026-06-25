@@ -244,14 +244,16 @@ The framework introduces:
 
 - `IDataProvider`: stable provider contract for normalized financial data, price history, universes, and diagnostics.
 - `YahooFinanceProvider`: yfinance adapter with access to `info`, `financials`, `balance_sheet`, `cashflow`, and `history`.
+- `FinMindProvider`: FinMind-first provider skeleton with metadata, diagnostics, Taiwan symbol detection, client injection, and placeholder FinancialData behavior.
 - `CSVProvider`: strict CSV reader for SAP Score snapshot CSV files.
 - `MockProvider`: deterministic in-memory provider for unit tests.
-- `ProviderFactory`: factory for `yahoo`, `yfinance`, `yahoo_finance`, `csv`, and `mock`.
+- `ProviderFactory`: factory for `cached_yahoo`, `yahoo`, `yfinance`, `yahoo_finance`, `finmind`, `csv`, and `mock`.
 
 FinMind First architecture direction:
 
 - `docs/FINMIND_FIRST_ARCHITECTURE.md` defines the next data-source architecture direction: `FinMind First, Yahoo Finance fallback`.
-- Future runtime Taiwan stock fundamentals should come from `FinMindProvider` first.
+- `FinMindProvider` skeleton is available through `ProviderFactory.create("finmind")`, but runtime default has not changed.
+- Future runtime Taiwan stock fundamentals should come from `FinMindProvider` first after mapping and composite fallback are implemented.
 - Yahoo Finance remains the fallback provider and the primary source for current prices, historical prices, US stocks, and ETFs.
 - The target provider structure is `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider`.
 - This architecture direction does not remove Yahoo Finance and does not change current Analyzer, SAP Score, CLI, Backtest, or Historical Qualification behavior.
@@ -289,6 +291,7 @@ Current Sprint boundary:
 - Analyzer is not changed and still receives `FinancialData`.
 - App, scan, and analyzer flows continue to call the existing downloader API.
 - `cached_yahoo` uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
+- `finmind` is registered in `ProviderFactory` for skeleton tests and future integration, but it is not used by default.
 - `SQLiteCache` remains available for tests and future integration, but runtime provider flow still uses `MemoryCache`.
 - Provider Framework is covered by unit tests and is ready for later integration.
 

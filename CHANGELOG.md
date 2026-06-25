@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - FinMindProvider Skeleton
+
+- Added `data_provider/providers/finmind_provider.py` with `FinMindProvider` skeleton.
+- Added provider metadata, diagnostics, Taiwan symbol detection, symbol normalization helpers, client injection, and clear placeholder behavior for unimplemented mapping and price history.
+- Registered `finmind` in `ProviderFactory.with_defaults()` without changing runtime default provider selection.
+- Added unit tests for factory creation, metadata, mock client injection, unsupported non-Taiwan symbols, placeholder diagnostics, symbol helpers, and `cached_yahoo` default compatibility.
+- Updated README and project status to note that FinMindProvider skeleton exists but runtime analysis still uses the existing default provider.
+- No Analyzer, runtime default provider, Strategy, SAP Score scoring logic, Backtest, Historical Pipeline, Qualification Logic, or CLI changes were added.
+
 ## Unreleased - FinMind First Architecture
 
 - Added `docs/FINMIND_FIRST_ARCHITECTURE.md` for the planned `FinMind First, Yahoo Finance fallback` data-source direction.
