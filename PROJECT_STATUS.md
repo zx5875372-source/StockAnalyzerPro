@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-FinMind First Architecture
+FinMindProvider Financial Mapping v1
 
 ## Completed
 
@@ -30,6 +30,7 @@ FinMind First Architecture
 - Chinese UI Localization
 - FinMind First Architecture
 - FinMindProvider Skeleton
+- FinMindProvider Financial Mapping v1
 - GitHub Actions
 - GitHub Releases
 
@@ -42,7 +43,6 @@ FinMind First Architecture
 ## Planned
 
 - CompositeProvider
-- FinMind FinancialData Mapping
 - FinMind First Runtime Integration
 - Point-in-Time Timeline Engine
 - Historical Performance Validation
@@ -55,16 +55,16 @@ FinMind First Architecture
 - FinMind financial statement 缺少 published_date 時使用 statement_date fallback
 - fallback row is_point_in_time = false
 - Runtime stock analysis still uses Yahoo Finance until FinMind First provider integration is implemented
-- FinMindProvider skeleton is registered but FinancialData mapping is not implemented yet
+- FinMindProvider has initial FinancialData mapping, but it is not the runtime default yet
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
 
-- Unit Tests: 208 passing
+- Unit Tests: 236 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
 ## Next Milestone
 
 Milestone 6
-FinMind FinancialData Mapping
+CompositeProvider

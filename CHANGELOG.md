@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - FinMindProvider Financial Mapping v1
+
+- Implemented initial `FinMindProvider.get_financial_data()` mapping from FinMind financial statement, balance sheet, and cash flow rows into `FinancialData`.
+- Added centralized field alias mapping, current/previous period selection, ROC year and quarter handling, derived equity, EPS, book value per share, and free cash flow.
+- Added missing-field diagnostics on both `FinancialData.diagnostics` and provider diagnostics without crashing on partial FinMind rows.
+- Updated FinMindProvider unit tests for valid mock responses, current/previous periods, long-form rows, missing fields, non-Taiwan symbols, factory creation, and `cached_yahoo` default compatibility.
+- Runtime default remains unchanged; downloader and existing Yahoo/cached_yahoo analysis flows are not switched to FinMind.
+- No Analyzer, Downloader runtime default, YahooFinanceProvider, Strategy, SAP Score scoring logic, Backtest, Historical Pipeline, Qualification Logic, or CLI changes were added.
+
 ## Unreleased - FinMindProvider Skeleton
 
 - Added `data_provider/providers/finmind_provider.py` with `FinMindProvider` skeleton.
