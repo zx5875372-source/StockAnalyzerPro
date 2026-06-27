@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-FinMindProvider Multi-Symbol Dry Run Validation
+FinMind First Runtime Integration Beta
 
 ## Completed
 
@@ -36,6 +36,7 @@ FinMindProvider Multi-Symbol Dry Run Validation
 - FinMindProvider Dry Run Date Defaults
 - FinMindProvider Mapping Coverage v2
 - FinMindProvider Multi-Symbol Dry Run Validation
+- FinMind First Runtime Integration Beta
 - GitHub Actions
 - GitHub Releases
 
@@ -65,11 +66,12 @@ FinMindProvider Multi-Symbol Dry Run Validation
 - FinMindProvider dry runs use a safe 3-year default date range when start/end are omitted
 - FinMindProvider mapping is broader but still needs more symbols before runtime default rollout
 - provider_multi_dry_run.py validates watchlist/sample coverage before FinMind First runtime rollout
+- Runtime provider default is now composite; set SAP_PROVIDER=cached_yahoo to roll back to the previous Yahoo flow
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
 
-- Unit Tests: 260 passing
+- Unit Tests: 264 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 

@@ -1,7 +1,13 @@
+import json
+import os
+
 import pandas as pd
 
 from data_provider.provider_factory import ProviderFactory
 from models.financial_data import FinancialData, FinancialPeriod, safe_divide
+
+DEFAULT_RUNTIME_PROVIDER = "composite"
+SAP_PROVIDER_ENV = "SAP_PROVIDER"
 
 
 FIELD_ALIASES = {
@@ -221,5 +227,79 @@ def build_diagnostics(current: FinancialPeriod | None, previous: FinancialPeriod
 
 
 def get_stock_data(symbol: str) -> FinancialData:
-    provider = ProviderFactory.with_defaults().create("cached_yahoo")
-    return provider.get_financial_data(symbol)
+    provider_name = runtime_provider_name()
+    provider = ProviderFactory.with_defaults().create(provider_name)
+    data = provider.get_financial_data(symbol)
+    attach_provider_metadata(data, provider, provider_name)
+    return data
+
+
+def runtime_provider_name() -> str:
+    return os.environ.get(SAP_PROVIDER_ENV, DEFAULT_RUNTIME_PROVIDER).strip() or DEFAULT_RUNTIME_PROVIDER
+
+
+def attach_provider_metadata(data: FinancialData, provider, provider_name: str) -> None:
+    metadata = provider_metadata(provider, provider_name)
+    diagnostics = list(data.diagnostics)
+    diagnostics.extend(
+        [
+            f"provider_source: {metadata['source_label']}",
+            f"provider_selected_provider: {metadata['selected_provider']}",
+            f"provider_fallback_used: {str(metadata['fallback_used']).lower()}",
+            f"provider_fallback_reason: {metadata['fallback_reason'] or '-'}",
+            "provider_route: " + json.dumps(metadata["route"], ensure_ascii=False, sort_keys=True),
+        ]
+    )
+    data.diagnostics = diagnostics
+
+
+def provider_metadata(provider, provider_name: str) -> dict:
+    route = last_routing_diagnostic(provider)
+    if route is None:
+        selected_provider = normalize_provider_name(provider_name)
+        route = {
+            "primary_provider": selected_provider,
+            "fallback_provider": "",
+            "selected_provider": selected_provider,
+            "fallback_used": False,
+            "fallback_reason": None,
+            "symbol_type": "",
+            "source_chain": [selected_provider],
+        }
+    selected_provider = normalize_provider_name(str(route.get("selected_provider") or provider_name))
+    fallback_used = bool(route.get("fallback_used"))
+    fallback_reason = route.get("fallback_reason")
+    return {
+        "selected_provider": selected_provider,
+        "fallback_used": fallback_used,
+        "fallback_reason": fallback_reason,
+        "source_label": provider_source_label(selected_provider, fallback_used),
+        "route": route,
+    }
+
+
+def last_routing_diagnostic(provider):
+    routing = getattr(provider, "routing_diagnostics", None)
+    if not callable(routing):
+        return None
+    routes = routing()
+    return routes[-1] if routes else None
+
+
+def normalize_provider_name(value: str) -> str:
+    normalized = value.strip().lower()
+    if normalized in {"yfinance", "yahoo_finance", "cached_yahoo"}:
+        return "yahoo"
+    return normalized
+
+
+def provider_source_label(selected_provider: str, fallback_used: bool) -> str:
+    if selected_provider == "finmind":
+        return "FinMind"
+    if selected_provider == "yahoo" and fallback_used:
+        return "Yahoo Finance（FinMind fallback）"
+    if selected_provider == "yahoo":
+        return "Yahoo Finance"
+    if selected_provider == "composite":
+        return "CompositeProvider"
+    return selected_provider

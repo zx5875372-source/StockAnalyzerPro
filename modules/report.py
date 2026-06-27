@@ -93,6 +93,8 @@ def generate_markdown_report(result: dict) -> str:
     scoring_categories = default_scoring_categories()
     scoring_categories.update(scoring.get("categories", {}))
     scoring_rows = scoring_item_rows(scoring_categories)
+    fallback_text = "是" if result.get("provider_fallback_used") else "否"
+    fallback_reason = result.get("provider_fallback_reason") or "-"
     piotroski_rows = "\n".join(
         [
             "| "
@@ -118,6 +120,13 @@ def generate_markdown_report(result: dict) -> str:
 | 目前股價 | {fmt(result["price"])} |
 | 最新財報期 | {fmt(result["current_period"])} |
 | 前一財報期 | {fmt(result["previous_period"])} |
+| 資料來源 | {result.get("provider_source", "未知")} |
+| Fallback | {fallback_text} |
+| Fallback 原因 | {fallback_reason} |
+
+資料來源：{result.get("provider_source", "未知")}
+
+Fallback：{fallback_text}
 
 ---
 

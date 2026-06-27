@@ -21,10 +21,10 @@ class ScanReportTests(unittest.TestCase):
             content = output_path.read_text(encoding="utf-8")
 
         self.assert_markdown_tables_consistent(content)
-        self.assertIn("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 |", content)
-        self.assertEqual(markdown_column_count("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 |"), 9)
-        self.assertIn("| 1 | 2330.TW | 台積電 | 95 | A | 9/9 | 512.35 | 620.99 | 優先研究 |", content)
-        self.assertIn("| 2 | 2454.TW | 聯發科 | 70 | B | 7/9 | - | - | 可觀察 |", content)
+        self.assertIn("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 資料來源 |", content)
+        self.assertEqual(markdown_column_count("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 資料來源 |"), 10)
+        self.assertIn("| 1 | 2330.TW | 台積電 | 95 | A | 9/9 | 512.35 | 620.99 | 優先研究 | FinMind |", content)
+        self.assertIn("| 2 | 2454.TW | 聯發科 | 70 | B | 7/9 | - | - | 可觀察 | Yahoo Finance（FinMind fallback） |", content)
 
     def test_watchlist_report_table_columns_are_consistent(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -112,6 +112,9 @@ def sample_rows():
             "missing_count": 0,
             "missing_fields": "",
             "data_quality_score": 100,
+            "provider_source": "FinMind",
+            "provider_fallback_used": False,
+            "provider_fallback_reason": "",
         },
         {
             "symbol": "2454.TW",
@@ -127,6 +130,9 @@ def sample_rows():
             "missing_count": 2,
             "missing_fields": "current.revenue | previous.net_income",
             "data_quality_score": 90,
+            "provider_source": "Yahoo Finance（FinMind fallback）",
+            "provider_fallback_used": True,
+            "provider_fallback_reason": "FinMind API error",
         },
     ]
 

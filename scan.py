@@ -210,6 +210,9 @@ def scan_stock(stock: dict) -> dict:
             "missing_count": missing_count,
             "missing_fields": " | ".join(missing_fields),
             "data_quality_score": data_quality_score(missing_count),
+            "provider_source": result.get("provider_source", "未知"),
+            "provider_fallback_used": result.get("provider_fallback_used", False),
+            "provider_fallback_reason": result.get("provider_fallback_reason", ""),
             "diagnostics_count": len(result.get("diagnostics", [])),
             "diagnostics": " | ".join(result.get("diagnostics", [])),
             "elapsed_seconds": elapsed_seconds,
@@ -237,6 +240,9 @@ def scan_stock(stock: dict) -> dict:
             "missing_count": "",
             "missing_fields": "",
             "data_quality_score": "",
+            "provider_source": "",
+            "provider_fallback_used": "",
+            "provider_fallback_reason": "",
             "diagnostics_count": "",
             "diagnostics": "",
             "elapsed_seconds": elapsed_seconds,
@@ -266,6 +272,9 @@ def write_results(rows: list[dict], output_path: Path = OUTPUT_PATH) -> None:
         "missing_count",
         "missing_fields",
         "data_quality_score",
+        "provider_source",
+        "provider_fallback_used",
+        "provider_fallback_reason",
         "diagnostics_count",
         "diagnostics",
         "elapsed_seconds",
@@ -341,14 +350,14 @@ def recommendation_for_grade(grade: str) -> str:
 
 
 def ranking_table_header() -> str:
-    return """| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 |
-| -: | ---- | ---- | ----: | -- | --------: | ---: | ----: | -- |"""
+    return """| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 資料來源 |
+| -: | ---- | ---- | ----: | -- | --------: | ---: | ----: | -- | ---- |"""
 
 
 def ranking_table(rows: list[dict], limit: int | None = None) -> str:
     selected_rows = rows[:limit] if limit is not None else rows
     if not selected_rows:
-        return "| - | - | - | - | - | - | - | - | - |"
+        return "| - | - | - | - | - | - | - | - | - | - |"
 
     table_rows = []
     for rank, row in enumerate(selected_rows, start=1):
@@ -365,6 +374,7 @@ def ranking_table(rows: list[dict], limit: int | None = None) -> str:
                     format_decimal(row.get("reasonable_buy")),
                     format_decimal(row.get("first_target_price")),
                     recommendation_for_grade(row.get("grade")),
+                    markdown_value(row.get("provider_source") or "未知"),
                 ]
             )
             + " |"

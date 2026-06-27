@@ -253,13 +253,22 @@ The framework introduces:
 FinMind First architecture direction:
 
 - `docs/FINMIND_FIRST_ARCHITECTURE.md` defines the next data-source architecture direction: `FinMind First, Yahoo Finance fallback`.
-- `FinMindProvider` is available through `ProviderFactory.create("finmind")`, but runtime default has not changed.
+- `FinMindProvider` is available through `ProviderFactory.create("finmind")`.
 - `FinMindProvider.get_financial_data()` now supports initial mock-testable mapping into `FinancialData`, including current/previous periods, revenue, net income, assets, liabilities, equity, cash flow, capex-derived free cash flow, EPS, book value per share, missing fields, and diagnostics.
-- `CompositeProvider` is available through `ProviderFactory.create("composite")`, but runtime default has not changed.
-- Future runtime Taiwan stock fundamentals should come from `CompositeProvider` after production rollout, using FinMind first and Yahoo Finance fallback.
+- `CompositeProvider` is now the beta runtime default through `modules/downloader.py`.
+- Runtime Taiwan stock fundamentals now use FinMind first and automatically fall back to Yahoo Finance when FinMind fails.
 - Yahoo Finance remains the fallback provider and the primary source for current prices, historical prices, US stocks, and ETFs.
-- The target provider structure is now available as a skeleton: `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider`.
-- This architecture direction does not remove Yahoo Finance and does not change current Analyzer, SAP Score, CLI, Backtest, or Historical Qualification behavior.
+- The provider structure is `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider`.
+- This runtime beta does not remove Yahoo Finance and does not change SAP Score, Strategy, Backtest, Historical Pipeline, or Historical Qualification behavior.
+
+Runtime provider override:
+
+```powershell
+$env:SAP_PROVIDER="cached_yahoo"
+.venv\Scripts\python.exe app.py
+```
+
+Use `SAP_PROVIDER=cached_yahoo` if FinMind has temporary API issues or if you need to return to the previous Yahoo-based runtime flow. If `SAP_PROVIDER` is not set, StockAnalyzerPro uses `composite`.
 
 Cache layer design and implementation status:
 
@@ -278,23 +287,25 @@ Cached provider flow:
 
 ```mermaid
 flowchart TD
-    Request["downloader.get_stock_data(symbol)"] --> Factory["ProviderFactory.create(cached_yahoo)"]
-    Factory --> Cached["CachedDataProvider"]
-    Cached --> Cache{"MemoryCache hit?"}
-    Cache -->|yes| ReturnCached["Return cached FinancialData"]
-    Cache -->|no or expired| Provider["YahooFinanceProvider"]
-    Provider --> Store["MemoryCache.set(key, value)"]
-    Store --> ReturnFresh["Return fresh FinancialData"]
+    Request["downloader.get_stock_data(symbol)"] --> Env{"SAP_PROVIDER set?"}
+    Env -->|no| Composite["ProviderFactory.create(composite)"]
+    Env -->|cached_yahoo| Cached["ProviderFactory.create(cached_yahoo)"]
+    Composite --> Symbol{"Taiwan stock?"}
+    Symbol -->|yes| FinMind["FinMindProvider"]
+    FinMind -->|success| ReturnFinMind["Return FinMind FinancialData"]
+    FinMind -->|failure| YahooFallback["YahooFinanceProvider fallback"]
+    Symbol -->|no| YahooDirect["YahooFinanceProvider"]
+    Cached --> Cache["CachedDataProvider + MemoryCache"]
 ```
 
 Current Sprint boundary:
 
-- `modules/downloader.py` now creates `cached_yahoo` through `ProviderFactory`.
+- `modules/downloader.py` now creates the provider named by `SAP_PROVIDER`, defaulting to `composite`.
 - The public downloader API remains `get_stock_data(symbol)`.
-- Analyzer is not changed and still receives `FinancialData`.
+- Analyzer scoring rules are not changed and still receive `FinancialData`.
 - App, scan, and analyzer flows continue to call the existing downloader API.
-- `cached_yahoo` uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
-- `finmind` and `composite` are registered in `ProviderFactory` with unit tests, but neither is used by default.
+- `cached_yahoo` remains available as the rollback path and uses `MemoryCache`, `CachedDataProvider`, and `YahooFinanceProvider`.
+- Runtime reports and console output now show provider source and fallback status.
 - `SQLiteCache` remains available for tests and future integration, but runtime provider flow still uses `MemoryCache`.
 - Provider Framework is covered by unit tests and is ready for later integration.
 
@@ -328,15 +339,15 @@ reports/provider_multi_dry_run.md
 reports/provider_multi_dry_run.csv
 ```
 
-The summary includes success count, failed count, FinMind usage, Yahoo fallback usage, missing-field stocks, failed stocks, and whether the observed coverage is strong enough to consider a future FinMind First runtime integration dry run. It does not switch `downloader.py`, does not change runtime defaults, does not write the historical repository, and does not modify Analyzer or SAP Score behavior.
+The summary includes success count, failed count, FinMind usage, Yahoo fallback usage, missing-field stocks, failed stocks, and whether the observed coverage is strong enough to consider a future FinMind First runtime integration dry run. It does not write the historical repository and does not modify Analyzer or SAP Score behavior.
 
 ## Planned Data Sources
 
 Current and planned data-source roles:
 
-- Yahoo Finance: current runtime market and financial data source through `YahooFinanceProvider`; future fallback and price source after FinMind-first integration.
+- Yahoo Finance: runtime fallback and price source through `YahooFinanceProvider`; also available through `SAP_PROVIDER=cached_yahoo`.
 - CSV: current historical snapshot import source through `CSVHistoricalImporter`.
-- FinMind (Partial): historical Taiwan financial statement import source today; future primary Taiwan financial data source through `FinMindProvider` and planned `CompositeProvider`.
+- FinMind (Partial): historical Taiwan financial statement import source and beta runtime primary Taiwan fundamentals source through `CompositeProvider`.
 - OpenBB (Planned): future multi-source research data option.
 - Polygon (Planned): future market data option.
 

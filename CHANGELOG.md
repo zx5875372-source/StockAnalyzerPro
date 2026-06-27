@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - FinMind First Runtime Integration Beta
+
+- Switched the runtime stock-data provider default from `cached_yahoo` to `composite`.
+- Added `SAP_PROVIDER` environment override so users can set `SAP_PROVIDER=cached_yahoo` to return to the previous Yahoo-based flow.
+- Added provider source metadata to runtime financial data diagnostics and analysis results.
+- Added console and Markdown report display for provider source and fallback status.
+- Added scan CSV and ranking report provider source fields.
+- Added unit tests for default composite provider selection, `SAP_PROVIDER=cached_yahoo` rollback, FinMind route metadata, Yahoo fallback metadata, non-Taiwan Yahoo routing, and report provider source output.
+- No SAP Score scoring logic, Analyzer scoring rules, Strategy, Backtest, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - FinMindProvider Multi-Symbol Dry Run Validation
 
 - Added `provider_multi_dry_run.py` for safe multi-symbol provider dry-run validation before any FinMind First runtime rollout.

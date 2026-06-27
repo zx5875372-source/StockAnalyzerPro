@@ -227,6 +227,7 @@ def show_single_stock_result(result: dict, report_path: Path, requested_symbol: 
         print("")
         print(f"SAP 評分：{result['sap_score']} 分")
         print(f"投資等級：{result['grade']}")
+        print(f"資料來源：{result.get('provider_source', '未知')}")
         print("")
         print("==========================")
         print("1. 開啟分析報告")
@@ -289,7 +290,8 @@ def show_scan_result(title: str, rows: list[dict], mode: str) -> None:
             symbol = str(row.get("symbol", "")).split(".", 1)[0]
             name = display_stock_name(row)
             grade = row.get("grade") or ""
-            print(f"{rank_label}：{symbol} {name} SAP {row['sap_score']} 分 {grade}".rstrip())
+            source = row.get("provider_source") or "未知"
+            print(f"{rank_label}：{symbol} {name} SAP {row['sap_score']} 分 {grade} 資料來源 {source}".rstrip())
         if not success_rows:
             print("無成功分析資料")
         print("")

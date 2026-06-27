@@ -83,6 +83,8 @@ def analyze_stock(data: FinancialData) -> dict:
     growth = calculate_growth(data)
     diagnostics = data.diagnostics + valuation["diagnostics"] + growth["diagnostics"]
 
+    provider_metadata = extract_provider_metadata(data.diagnostics)
+
     result = {
         "symbol": data.symbol,
         "company_name": data.company_name or "未知公司",
@@ -101,6 +103,10 @@ def analyze_stock(data: FinancialData) -> dict:
         "operating_cashflow": data.current.operating_cashflow,
         "missing_fields": data.missing_fields,
         "diagnostics": diagnostics,
+        "provider_source": provider_metadata["provider_source"],
+        "provider_selected_provider": provider_metadata["provider_selected_provider"],
+        "provider_fallback_used": provider_metadata["provider_fallback_used"],
+        "provider_fallback_reason": provider_metadata["provider_fallback_reason"],
         "roe_judgement": judge_roe(roe),
         "roa_judgement": judge_roa(roa),
         "debt_to_equity_judgement": judge_debt_to_equity(debt_to_equity),
@@ -125,3 +131,23 @@ def analyze_stock(data: FinancialData) -> dict:
     })
 
     return result
+
+
+def extract_provider_metadata(diagnostics: list[str]) -> dict:
+    metadata = {
+        "provider_source": "未知",
+        "provider_selected_provider": "",
+        "provider_fallback_used": False,
+        "provider_fallback_reason": "",
+    }
+    for item in diagnostics:
+        if item.startswith("provider_source:"):
+            metadata["provider_source"] = item.split(":", 1)[1].strip()
+        elif item.startswith("provider_selected_provider:"):
+            metadata["provider_selected_provider"] = item.split(":", 1)[1].strip()
+        elif item.startswith("provider_fallback_used:"):
+            metadata["provider_fallback_used"] = item.split(":", 1)[1].strip().lower() == "true"
+        elif item.startswith("provider_fallback_reason:"):
+            reason = item.split(":", 1)[1].strip()
+            metadata["provider_fallback_reason"] = "" if reason == "-" else reason
+    return metadata
