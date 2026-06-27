@@ -2,9 +2,57 @@ from pathlib import Path
 from datetime import datetime
 
 
+INDUSTRY_TRANSLATIONS = {
+    "Technology": "科技",
+    "Communication Equipment": "通訊設備",
+    "Semiconductors": "半導體",
+    "Electronic Components": "電子零組件",
+    "Computer Hardware": "電腦及週邊設備",
+    "Consumer Electronics": "消費性電子",
+    "Industrials": "工業",
+    "Basic Materials": "原物料",
+    "Financial Services": "金融",
+    "Healthcare": "醫療保健",
+    "Consumer Cyclical": "非必需消費",
+    "Consumer Defensive": "民生消費",
+    "Utilities": "公用事業",
+    "Real Estate": "房地產",
+    "Energy": "能源",
+}
+
+CRITICAL_MISSING_FIELDS = {
+    "current_price",
+    "price",
+    "current.price",
+    "current.eps",
+    "eps",
+    "current.revenue",
+    "revenue",
+    "current.net_income",
+    "net_income",
+    "current.total_assets",
+    "total_assets",
+}
+
+ADVANCED_DIAGNOSTIC_MARKERS = [
+    "unmapped_raw_fields",
+    "provider_route",
+    "finmind_mapped_fields",
+    "mapped_fields:",
+    "mapped_fields_count",
+    "derived_fields",
+    "yahoo_enriched_fields",
+    "provider_selected_provider",
+    "provider_fallback_used",
+    "provider_fallback_reason",
+]
+
+
 def fmt(value, suffix=""):
     if value is None:
         return "資料不足"
+    if isinstance(value, (int, float)):
+        return f"{value:.2f}{suffix}"
     return f"{value}{suffix}"
 
 
@@ -12,9 +60,7 @@ def metric(value):
     if value is None:
         return "資料不足"
     if isinstance(value, (int, float)):
-        if abs(value) >= 100000:
-            return f"{value:,.0f}"
-        return f"{value:.4f}".rstrip("0").rstrip(".")
+        return f"{value:,.2f}"
     return str(value)
 
 
@@ -27,7 +73,7 @@ def percent(value):
 def money(value):
     if value is None:
         return "資料不足"
-    return f"{value:,.0f}"
+    return f"{value:,.2f}"
 
 
 def yes_no(value):
@@ -73,6 +119,142 @@ def default_scoring_categories() -> dict:
     }
 
 
+def translate_industry(value) -> str:
+    if value in {None, ""}:
+        return "資料不足"
+    return INDUSTRY_TRANSLATIONS.get(str(value), str(value))
+
+
+def data_completeness_summary(result: dict) -> dict:
+    missing_fields = extract_still_missing_fields(result)
+    if result.get("price") is None:
+        missing_fields.append("current_price")
+
+    unique_missing_fields = sorted(set(missing_fields))
+    missing_text = "無" if not unique_missing_fields else ", ".join(unique_missing_fields)
+    has_critical_missing = any(field in CRITICAL_MISSING_FIELDS for field in unique_missing_fields)
+
+    if not unique_missing_fields:
+        status = "完整"
+    elif has_critical_missing:
+        status = "資料不足"
+    else:
+        status = "部分缺漏"
+
+    return {
+        "status": status,
+        "primary_source": primary_source(result),
+        "supplement_source": supplement_source(result),
+        "missing_text": missing_text,
+    }
+
+
+def extract_still_missing_fields(result: dict) -> list[str]:
+    fields = []
+    for item in result.get("diagnostics", []):
+        if not item.startswith("still_missing_fields:"):
+            continue
+        value = item.split(":", 1)[1].strip()
+        if value and value != "-":
+            fields.extend([field.strip() for field in value.split(",") if field.strip()])
+    if fields:
+        return fields
+    return list(result.get("missing_fields", []))
+
+
+def primary_source(result: dict) -> str:
+    provider_source = result.get("provider_source") or "未知"
+    if "fallback" in provider_source:
+        return "Yahoo Finance"
+    if "Yahoo" in provider_source:
+        return "Yahoo Finance"
+    if "FinMind" in provider_source:
+        return "FinMind"
+    return provider_source
+
+
+def supplement_source(result: dict) -> str:
+    diagnostics = result.get("diagnostics", [])
+    if primary_source(result) == "FinMind" and any(
+        item.startswith("yahoo_enriched_fields:") and item.split(":", 1)[1].strip() != "-"
+        for item in diagnostics
+    ):
+        return "Yahoo Finance"
+    if result.get("provider_fallback_used"):
+        return "FinMind fallback"
+    return "無"
+
+
+def split_diagnostics(diagnostics: list[str]) -> tuple[list[str], list[str]]:
+    general = []
+    advanced = []
+    for item in diagnostics:
+        if is_advanced_diagnostic(item):
+            advanced.append(item)
+        else:
+            general.append(item)
+    return general or ["無明顯缺漏"], advanced or ["無"]
+
+
+def is_advanced_diagnostic(item: str) -> bool:
+    return any(marker in item for marker in ADVANCED_DIAGNOSTIC_MARKERS)
+
+
+def plain_language_judgement(result: dict) -> dict:
+    grade = str(result.get("grade", "")).strip().upper().replace("級", "")
+    if grade in {"S", "A"}:
+        summary = "可優先研究。"
+    elif grade == "B":
+        summary = "可觀察，需等合理買點。"
+    elif grade == "C":
+        summary = "保守觀察。"
+    else:
+        summary = "目前不建議買進。"
+
+    reasons = []
+    sap_score = result.get("sap_score")
+    if sap_score is not None and sap_score < 60:
+        reasons.append("SAP 評分偏低，整體基本面仍需改善。")
+    elif sap_score is not None and sap_score >= 80:
+        reasons.append("SAP 評分較高，基本面可優先研究。")
+    if result.get("free_cashflow") is not None and result.get("free_cashflow") < 0:
+        reasons.append("自由現金流為負，需特別注意。")
+    if result.get("operating_cashflow") is not None and result.get("operating_cashflow") < 0:
+        reasons.append("營業現金流為負，需特別注意。")
+
+    valuation = result.get("valuation", {})
+    price = result.get("price")
+    first_target_price = valuation.get("first_target_price")
+    upside_percent = valuation.get("upside_percent")
+    if price is not None and first_target_price is not None and price > first_target_price:
+        reasons.append("目前股價高於第一目標價，追價風險偏高。")
+    if upside_percent is not None and upside_percent < 0:
+        reasons.append("預估上漲空間為負，代表目前價格高於模型估算目標價。")
+    if result.get("pe_judgement") == "偏高" or result.get("pb_judgement") == "偏高":
+        reasons.append("PE / PB 偏高，估值不便宜。")
+    if not reasons:
+        reasons.append("目前沒有明顯重大警訊，但仍需搭配產業與風險評估。")
+
+    return {"summary": summary, "reasons": reasons}
+
+
+def numbered_lines(items: list[str]) -> str:
+    return "\n".join(f"{index}. {item}" for index, item in enumerate(items, start=1))
+
+
+def valuation_warnings(result: dict) -> str:
+    valuation = result.get("valuation", {})
+    warnings = []
+    price = result.get("price")
+    first_target_price = valuation.get("first_target_price")
+    upside_percent = valuation.get("upside_percent")
+    if price is not None and first_target_price is not None and price > first_target_price:
+        warnings.append("⚠ 目前股價已高於第一目標價，追價風險偏高。")
+    if upside_percent is not None and upside_percent < 0:
+        warnings.append("預估上漲空間為負，代表目前價格高於模型估算目標價。")
+    return "\n".join(warnings) if warnings else "無明顯估值警示。"
+
+
 def generate_markdown_report(result: dict) -> str:
     reports_dir = Path("reports")
     reports_dir.mkdir(exist_ok=True)
@@ -83,7 +265,9 @@ def generate_markdown_report(result: dict) -> str:
 
     reasons_text = "\n".join([f"- {r}" for r in result["reasons"]])
     diagnostics = result.get("diagnostics") or ["無明顯缺漏"]
-    diagnostics_text = "\n".join([f"- {item}" for item in diagnostics])
+    general_diagnostics, advanced_diagnostics = split_diagnostics(diagnostics)
+    general_diagnostics_text = "\n".join([f"- {item}" for item in general_diagnostics])
+    advanced_diagnostics_text = "\n".join([f"- {item}" for item in advanced_diagnostics])
 
     piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
     piotroski_total = piotroski.get("total", 9)
@@ -95,6 +279,10 @@ def generate_markdown_report(result: dict) -> str:
     scoring_rows = scoring_item_rows(scoring_categories)
     fallback_text = "是" if result.get("provider_fallback_used") else "否"
     fallback_reason = result.get("provider_fallback_reason") or "-"
+    completeness = data_completeness_summary(result)
+    plain_judgement = plain_language_judgement(result)
+    plain_judgement_reasons = numbered_lines(plain_judgement["reasons"])
+    valuation_warning_text = valuation_warnings(result)
     piotroski_rows = "\n".join(
         [
             "| "
@@ -115,8 +303,8 @@ def generate_markdown_report(result: dict) -> str:
 |---|---|
 | 股票代號 | {result["symbol"]} |
 | 公司名稱 | {result["company_name"]} |
-| 產業 | {result["industry"]} |
-| 類別 | {result["sector"]} |
+| 產業 | {translate_industry(result["industry"])} |
+| 類別 | {translate_industry(result["sector"])} |
 | 目前股價 | {fmt(result["price"])} |
 | 最新財報期 | {fmt(result["current_period"])} |
 | 前一財報期 | {fmt(result["previous_period"])} |
@@ -127,6 +315,17 @@ def generate_markdown_report(result: dict) -> str:
 資料來源：{result.get("provider_source", "未知")}
 
 Fallback：{fallback_text}
+
+---
+
+## 資料完整度摘要
+
+| 項目 | 結果 |
+|---|---|
+| 資料完整度 | {completeness["status"]} |
+| 主要資料來源 | {completeness["primary_source"]} |
+| 補充資料來源 | {completeness["supplement_source"]} |
+| 目前缺漏欄位 | {completeness["missing_text"]} |
 
 ---
 
@@ -194,6 +393,10 @@ Fallback：{fallback_text}
 | PB 合理價 | {metric(valuation.get("pb_fair_price"))} | 每股淨值 × 合理 PB |
 | 綜合合理價 | {metric(valuation.get("fair_price"))} | PE/PB 合理價平均 |
 
+### 估值警示
+
+{valuation_warning_text}
+
 ---
 
 ## 八、動態買點區間
@@ -223,9 +426,15 @@ Fallback：{fallback_text}
 
 ---
 
-## 十一、資料缺漏診斷
+## 十一、資料完整度與診斷
 
-{diagnostics_text}
+### 一般診斷
+
+{general_diagnostics_text}
+
+### 進階診斷
+
+{advanced_diagnostics_text}
 
 ---
 
@@ -256,6 +465,16 @@ Fallback：{fallback_text}
 ## 十三、投資建議
 
 目前版本為 StockAnalyzerPro v3.0 FinMind First Beta。
+
+### 白話判斷
+
+{plain_judgement["summary"]}
+
+原因：
+
+{plain_judgement_reasons}
+
+### 評分摘要
 
 初步判斷：
 

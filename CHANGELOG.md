@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - Report Readability Improvement v1
+
+- Added Chinese report mapping for common Yahoo/FinMind sector and industry labels.
+- Added a data-completeness summary after company basics, including completeness status, primary source, supplemental source, and missing fields.
+- Added plain-language investment judgement by grade, with clearer D-grade "not recommended" language and reason bullets.
+- Added valuation warnings when current price is above the first target price or upside is negative.
+- Standardized report valuation, price, PE/PB, and percentage formatting to 2 decimal places.
+- Split diagnostics into general diagnostics and advanced diagnostics so long raw mapping output such as `unmapped_raw_fields` no longer appears in the general diagnostics section.
+- Added unit tests for Chinese mapping, completeness summary, D-grade plain-language judgement, valuation warnings, numeric formatting, and advanced diagnostics separation.
+- No SAP Score, Piotroski scoring, Analyzer scoring rules, Provider mapping, Strategy, Backtest, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - FinMindProvider Completeness v3
 
 - Expanded `FinMindProvider` balance-sheet mapping for current assets, current liabilities, long-term debt aliases, and current-ratio diagnostics.

@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-FinMindProvider Completeness v3
+Report Readability Improvement v1
 
 ## Completed
 
@@ -38,6 +38,7 @@ FinMindProvider Completeness v3
 - FinMindProvider Multi-Symbol Dry Run Validation
 - FinMind First Runtime Integration Beta
 - FinMindProvider Completeness v3
+- Report Readability Improvement v1
 - GitHub Actions
 - GitHub Releases
 
@@ -69,7 +70,7 @@ FinMindProvider Completeness v3
 
 ## Test Status
 
-- Unit Tests: 271 passing
+- Unit Tests: 278 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
