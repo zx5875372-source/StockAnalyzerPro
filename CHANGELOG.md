@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - FinMindProvider Multi-Symbol Dry Run Validation
+
+- Added `provider_multi_dry_run.py` for safe multi-symbol provider dry-run validation before any FinMind First runtime rollout.
+- Added support for watchlist, sample, and explicit symbol inputs with Markdown and CSV outputs under `reports/`.
+- Added summary metrics for total count, success count, failed count, FinMind usage, Yahoo fallback usage, missing-field rows, failed rows, and runtime integration recommendation.
+- Added unit tests for symbol input, watchlist source loading, sample source loading, Markdown generation, CSV generation, recommendation logic, and failure rows without crashing.
+- The multi-symbol dry run does not modify downloader defaults, Analyzer, SAP Score, Strategy, Backtest, Historical Pipeline, or the historical repository.
+
 ## Unreleased - FinMindProvider Mapping Coverage v2
 
 - Expanded `FinMindProvider` alias coverage for real FinMind XBRL-style row types, including `IncomeAfterTaxes`, `Revenue`, `GrossProfit`, `TotalAssets`, `Liabilities`, `Equity`, `OrdinaryShare`, `CashFlowsFromOperatingActivities`, `PropertyAndPlantAndEquipment`, and `EPS`.

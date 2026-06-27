@@ -313,6 +313,23 @@ When `--start` and `--end` are omitted, `FinMindProvider` uses a safe default da
 
 FinMindProvider mapping coverage diagnostics include `provider=finmind`, `mapped_fields`, `derived_fields`, `missing_fields`, and `unmapped_raw_fields`. Mapping coverage v2 adds support for real FinMind row types such as `IncomeAfterTaxes`, `Liabilities`, `Equity`, `OrdinaryShare`, and `CashFlowsFromOperatingActivities`.
 
+Multi-symbol provider dry run validation:
+
+```powershell
+.venv\Scripts\python.exe provider_multi_dry_run.py --provider composite --source watchlist
+.venv\Scripts\python.exe provider_multi_dry_run.py --provider composite --source sample
+.venv\Scripts\python.exe provider_multi_dry_run.py --provider composite --symbols 2330 2454 2327 --show-diagnostics
+```
+
+`provider_multi_dry_run.py` runs the same dry-run diagnostics across watchlist, sample, or explicit symbols and writes:
+
+```text
+reports/provider_multi_dry_run.md
+reports/provider_multi_dry_run.csv
+```
+
+The summary includes success count, failed count, FinMind usage, Yahoo fallback usage, missing-field stocks, failed stocks, and whether the observed coverage is strong enough to consider a future FinMind First runtime integration dry run. It does not switch `downloader.py`, does not change runtime defaults, does not write the historical repository, and does not modify Analyzer or SAP Score behavior.
+
 ## Planned Data Sources
 
 Current and planned data-source roles:

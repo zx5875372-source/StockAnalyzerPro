@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-FinMindProvider Mapping Coverage v2
+FinMindProvider Multi-Symbol Dry Run Validation
 
 ## Completed
 
@@ -35,6 +35,7 @@ FinMindProvider Mapping Coverage v2
 - CompositeProvider Runtime Dry Run
 - FinMindProvider Dry Run Date Defaults
 - FinMindProvider Mapping Coverage v2
+- FinMindProvider Multi-Symbol Dry Run Validation
 - GitHub Actions
 - GitHub Releases
 
@@ -63,11 +64,12 @@ FinMindProvider Mapping Coverage v2
 - provider_dry_run.py is diagnostics-only and is not connected to the main CLI menu
 - FinMindProvider dry runs use a safe 3-year default date range when start/end are omitted
 - FinMindProvider mapping is broader but still needs more symbols before runtime default rollout
+- provider_multi_dry_run.py validates watchlist/sample coverage before FinMind First runtime rollout
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
 
-- Unit Tests: 253 passing
+- Unit Tests: 260 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
