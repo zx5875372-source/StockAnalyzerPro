@@ -148,9 +148,15 @@ class FinMindProviderTests(unittest.TestCase):
             balance_sheet_rows=[
                 long_row_with_date("2024-12-31", "TotalAssets", 10000),
                 long_row_with_date("2024-12-31", "Liabilities", 3500),
+                long_row_with_date("2024-12-31", "CurrentAssets", 4200),
+                long_row_with_date("2024-12-31", "CurrentLiabilities", 2100),
+                long_row_with_date("2024-12-31", "BondsPayable", 800),
                 long_row_with_date("2024-12-31", "OrdinaryShare", 1000),
                 long_row_with_date("2023-12-31", "TotalAssets", 9000),
                 long_row_with_date("2023-12-31", "Liabilities", 3300),
+                long_row_with_date("2023-12-31", "CurrentAssets", 3600),
+                long_row_with_date("2023-12-31", "CurrentLiabilities", 2400),
+                long_row_with_date("2023-12-31", "LongTermBorrowings", 700),
                 long_row_with_date("2023-12-31", "OrdinaryShare", 1000),
             ],
             cash_flow_rows=[
@@ -168,6 +174,10 @@ class FinMindProviderTests(unittest.TestCase):
         self.assertEqual(result.current.total_assets, 10000)
         self.assertEqual(result.current.total_debt, 3500)
         self.assertEqual(result.current.total_equity, 6500)
+        self.assertEqual(result.current.current_assets, 4200)
+        self.assertEqual(result.current.current_liabilities, 2100)
+        self.assertEqual(result.current.long_term_debt, 800)
+        self.assertEqual(result.current_ratio(), 2)
         self.assertEqual(result.current.operating_cashflow, 1200)
         self.assertEqual(result.current.free_cashflow, 900)
         self.assertEqual(result.current.shares_outstanding, 100)
@@ -199,6 +209,53 @@ class FinMindProviderTests(unittest.TestCase):
         self.assertIn("missing_fields:", diagnostics_text)
         self.assertIn("unmapped_raw_fields:", diagnostics_text)
         self.assertIn("UnmappedFinMindField", diagnostics_text)
+
+    def test_current_ratio_can_be_derived_from_current_assets_and_liabilities(self):
+        provider = FinMindProvider(
+            client=FakeFinMindClient(
+                financial_statement_rows=[wide_row("2024-12-31", revenue=3000, net_income=900)],
+                balance_sheet_rows=[
+                    long_row_with_date("2024-12-31", "CurrentAssets", 5000),
+                    long_row_with_date("2024-12-31", "CurrentLiabilities", 2500),
+                ],
+            )
+        )
+
+        result = provider.get_financial_data("2330")
+
+        self.assertEqual(result.current.current_assets, 5000)
+        self.assertEqual(result.current.current_liabilities, 2500)
+        self.assertEqual(result.current_ratio(), 2)
+        self.assertIn("current_ratio", "\n".join(result.diagnostics))
+
+    def test_long_term_debt_alias_mapping(self):
+        provider = FinMindProvider(
+            client=FakeFinMindClient(
+                financial_statement_rows=[wide_row("2024-12-31", revenue=3000, net_income=900)],
+                balance_sheet_rows=[
+                    long_row_with_date("2024-12-31", "LongTermBorrowings", 700),
+                    long_row_with_date("2024-12-31", "BondsPayable", 300),
+                ],
+            )
+        )
+
+        result = provider.get_financial_data("2330")
+
+        self.assertEqual(result.current.long_term_debt, 1000)
+        self.assertNotIn("current.long_term_debt_missing", result.missing_fields)
+
+    def test_missing_long_term_debt_is_explicit_in_diagnostics(self):
+        provider = FinMindProvider(
+            client=FakeFinMindClient(
+                financial_statement_rows=[wide_row("2024-12-31", revenue=3000, net_income=900)],
+                balance_sheet_rows=[long_row_with_date("2024-12-31", "CurrentAssets", 5000)],
+            )
+        )
+
+        result = provider.get_financial_data("2330")
+
+        self.assertIn("current.long_term_debt_missing", result.missing_fields)
+        self.assertIn("still_missing_fields:", "\n".join(result.diagnostics))
 
     def test_missing_date_range_uses_safe_defaults(self):
         client = FakeFinMindClient(

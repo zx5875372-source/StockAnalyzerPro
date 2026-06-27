@@ -6,8 +6,9 @@ from typing import Any
 from data_provider.interfaces import IDataProvider, PriceHistory, ProviderDiagnostic, ProviderError
 from data_provider.providers.finmind_provider import FinMindProvider
 from data_provider.providers.yahoo_finance_provider import YahooFinanceProvider
-from models.financial_data import FinancialData
+from models.financial_data import FinancialData, safe_divide
 from modules.downloader import normalize_symbol
+from modules.stock_names import taiwan_stock_name
 
 
 class CompositeProvider(IDataProvider):
@@ -57,6 +58,7 @@ class CompositeProvider(IDataProvider):
                 start_date=start_date,
                 end_date=end_date,
             )
+            self._enrich_with_fallback_market_data(data, normalized_symbol, as_of=as_of or end_date)
             self._record_route(
                 symbol=normalized_symbol,
                 symbol_type=symbol_type,
@@ -151,6 +153,81 @@ class CompositeProvider(IDataProvider):
                 message=json.dumps(route, ensure_ascii=False, sort_keys=True),
             )
         )
+
+    def _enrich_with_fallback_market_data(
+        self,
+        data: FinancialData,
+        symbol: str,
+        as_of: str | None = None,
+    ) -> None:
+        enriched_fields: set[str] = set()
+        derived_fields: set[str] = set()
+        if self._apply_taiwan_name_fallback(data, symbol):
+            enriched_fields.add("company_name")
+        try:
+            yahoo_data = self._get_provider_financial_data(self.fallback_provider, symbol, as_of=as_of)
+        except Exception as error:
+            data.diagnostics.append(f"yahoo_enrichment_failed: {error}")
+            data.diagnostics.append("yahoo_enriched_fields: " + self._format_fields(enriched_fields))
+            data.diagnostics.append("still_missing_fields: " + self._format_missing_fields(data))
+            return
+
+        if self._is_missing_text(data.company_name) and not self._is_missing_text(yahoo_data.company_name):
+            data.company_name = yahoo_data.company_name
+            enriched_fields.add("company_name")
+        if self._is_missing_text(data.industry) and not self._is_missing_text(yahoo_data.industry):
+            data.industry = yahoo_data.industry
+            enriched_fields.add("industry")
+        if self._is_missing_text(data.sector) and not self._is_missing_text(yahoo_data.sector):
+            data.sector = yahoo_data.sector
+            enriched_fields.add("sector")
+        for field_name in ["price", "pe", "pb"]:
+            if getattr(data, field_name, None) is None and getattr(yahoo_data, field_name, None) is not None:
+                setattr(data, field_name, getattr(yahoo_data, field_name))
+                enriched_fields.add(field_name)
+
+        if data.pe is None and data.price is not None and data.current.eps is not None:
+            data.pe = safe_divide(data.price, data.current.eps, precision=2)
+            if data.pe is not None:
+                derived_fields.add("pe")
+        if data.pb is None and data.price is not None and data.current.book_value_per_share is not None:
+            data.pb = safe_divide(data.price, data.current.book_value_per_share, precision=2)
+            if data.pb is not None:
+                derived_fields.add("pb")
+
+        data.diagnostics.extend(
+            [
+                "yahoo_enriched_fields: " + self._format_fields(enriched_fields),
+                "derived_fields: " + self._format_fields(derived_fields),
+                "still_missing_fields: " + self._format_missing_fields(data),
+            ]
+        )
+
+    @staticmethod
+    def _apply_taiwan_name_fallback(data: FinancialData, symbol: str) -> bool:
+        if CompositeProvider._is_missing_text(data.company_name):
+            fallback_name = taiwan_stock_name(symbol)
+            if fallback_name:
+                data.company_name = fallback_name
+                data.diagnostics.append(f"company_name_fallback: {fallback_name}")
+                return True
+        return False
+
+    @staticmethod
+    def _is_missing_text(value) -> bool:
+        return value in {None, "", "-", "未知公司", "未知產業", "未知類別"}
+
+    @staticmethod
+    def _format_fields(fields: set[str]) -> str:
+        if not fields:
+            return "-"
+        return ", ".join(sorted(fields))
+
+    @staticmethod
+    def _format_missing_fields(data: FinancialData) -> str:
+        if not data.missing_fields:
+            return "-"
+        return ", ".join(data.missing_fields)
 
     @staticmethod
     def _provider_name(provider: IDataProvider) -> str:

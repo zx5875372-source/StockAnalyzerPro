@@ -244,8 +244,8 @@ The framework introduces:
 
 - `IDataProvider`: stable provider contract for normalized financial data, price history, universes, and diagnostics.
 - `YahooFinanceProvider`: yfinance adapter with access to `info`, `financials`, `balance_sheet`, `cashflow`, and `history`.
-- `FinMindProvider`: FinMind-first provider with metadata, diagnostics, Taiwan symbol detection, client injection, and initial FinancialData mapping from FinMind financial statement, balance sheet, and cash flow rows.
-- `CompositeProvider`: FinMind-first routing skeleton that uses FinMind for Taiwan stock financial data when available, falls back to Yahoo Finance on provider failure, routes non-Taiwan symbols directly to Yahoo Finance, and keeps price history on Yahoo Finance.
+- `FinMindProvider`: FinMind-first provider with metadata, diagnostics, Taiwan symbol detection, client injection, and FinancialData mapping from FinMind financial statement, balance sheet, and cash flow rows.
+- `CompositeProvider`: FinMind-first runtime provider that uses FinMind for Taiwan stock financial data when available, enriches successful FinMind data with Yahoo market data, falls back to Yahoo Finance on provider failure, routes non-Taiwan symbols directly to Yahoo Finance, and keeps price history on Yahoo Finance.
 - `CSVProvider`: strict CSV reader for SAP Score snapshot CSV files.
 - `MockProvider`: deterministic in-memory provider for unit tests.
 - `ProviderFactory`: factory for `cached_yahoo`, `composite`, `yahoo`, `yfinance`, `yahoo_finance`, `finmind`, `csv`, and `mock`.
@@ -254,10 +254,12 @@ FinMind First architecture direction:
 
 - `docs/FINMIND_FIRST_ARCHITECTURE.md` defines the next data-source architecture direction: `FinMind First, Yahoo Finance fallback`.
 - `FinMindProvider` is available through `ProviderFactory.create("finmind")`.
-- `FinMindProvider.get_financial_data()` now supports initial mock-testable mapping into `FinancialData`, including current/previous periods, revenue, net income, assets, liabilities, equity, cash flow, capex-derived free cash flow, EPS, book value per share, missing fields, and diagnostics.
+- `FinMindProvider.get_financial_data()` maps into `FinancialData`, including current/previous periods, revenue, net income, assets, liabilities, equity, current assets, current liabilities, long-term debt, cash flow, capex-derived free cash flow, EPS, book value per share, missing fields, and diagnostics.
 - `CompositeProvider` is now the beta runtime default through `modules/downloader.py`.
 - Runtime Taiwan stock fundamentals now use FinMind first and automatically fall back to Yahoo Finance when FinMind fails.
-- Yahoo Finance remains the fallback provider and the primary source for current prices, historical prices, US stocks, and ETFs.
+- Yahoo Finance remains the fallback provider and the primary source for current prices, market valuation inputs, historical prices, US stocks, and ETFs.
+- When FinMind financial data succeeds, CompositeProvider still enriches the result with Yahoo current price, industry/sector, PE/PB market data, and derives PE/PB from Yahoo price plus FinMind EPS/BVPS when Yahoo does not provide PE/PB directly.
+- Taiwan stock company names use a Chinese fallback map when provider metadata is missing, including `6285.TW: 啟碁`.
 - The provider structure is `ProviderFactory -> CompositeProvider -> FinMindProvider / YahooFinanceProvider`.
 - This runtime beta does not remove Yahoo Finance and does not change SAP Score, Strategy, Backtest, Historical Pipeline, or Historical Qualification behavior.
 
@@ -322,7 +324,9 @@ Provider dry run diagnostics:
 
 When `--start` and `--end` are omitted, `FinMindProvider` uses a safe default date range from the last 3 years through today. If FinMind raises an API error during CompositeProvider dry runs, the diagnostic output should show Yahoo fallback with `fallback_used: true`, the FinMind error as `fallback_reason`, and `source_chain: finmind -> yahoo`.
 
-FinMindProvider mapping coverage diagnostics include `provider=finmind`, `mapped_fields`, `derived_fields`, `missing_fields`, and `unmapped_raw_fields`. Mapping coverage v2 adds support for real FinMind row types such as `IncomeAfterTaxes`, `Liabilities`, `Equity`, `OrdinaryShare`, and `CashFlowsFromOperatingActivities`.
+FinMindProvider mapping coverage diagnostics include `provider=finmind`, `finmind_mapped_fields`, `mapped_fields`, `derived_fields`, `missing_fields`, `still_missing_fields`, and `unmapped_raw_fields`. Mapping coverage v3 adds support for real FinMind row types such as `CurrentAssets`, `CurrentLiabilities`, `LongTermBorrowings`, `BondsPayable`, and `LongTermLoansPayable`. Unsupported cash fields such as `CashAndCashEquivalents` remain visible in unmapped diagnostics when `FinancialData` has no matching field.
+
+CompositeProvider enrichment diagnostics include `yahoo_enriched_fields`, `derived_fields`, and `still_missing_fields`.
 
 Multi-symbol provider dry run validation:
 

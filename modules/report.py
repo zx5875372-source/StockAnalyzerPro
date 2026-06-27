@@ -255,7 +255,7 @@ Fallback：{fallback_text}
 
 ## 十三、投資建議
 
-目前版本為 SAP v1.4 CLI UX Improvement。
+目前版本為 StockAnalyzerPro v3.0 FinMind First Beta。
 
 初步判斷：
 

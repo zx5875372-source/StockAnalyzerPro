@@ -6,6 +6,7 @@ from pathlib import Path
 
 from modules.analyzer import analyze_stock
 from modules.downloader import get_stock_data, normalize_symbol
+from modules.stock_names import TAIWAN_STOCK_NAME_FALLBACKS
 
 
 SAMPLE_STOCKS_PATH = Path("tests/sample_data/sample_stocks.json")
@@ -14,21 +15,7 @@ OUTPUT_PATH = Path("reports/scan_results.csv")
 SUMMARY_PATH = Path("reports/scan_summary.md")
 TOP10_PATH = Path("reports/top10.md")
 WATCHLIST_REPORT_PATH = Path("reports/watchlist_report.md")
-STOCK_NAME_FALLBACKS = {
-    "2330.TW": "台積電",
-    "2454.TW": "聯發科",
-    "2327.TW": "國巨",
-    "6271.TW": "同欣電",
-    "3189.TW": "景碩",
-    "3265.TWO": "台星科",
-    "1605.TW": "華新",
-    "6290.TWO": "良維",
-    "2344.TW": "華邦電",
-    "2408.TW": "南亞科",
-    "6187.TW": "萬潤",
-    "1735.TW": "日勝化",
-    "9945.TW": "潤泰新",
-}
+STOCK_NAME_FALLBACKS = TAIWAN_STOCK_NAME_FALLBACKS
 
 
 def load_sample_stocks(path: Path = SAMPLE_STOCKS_PATH) -> list[dict]:

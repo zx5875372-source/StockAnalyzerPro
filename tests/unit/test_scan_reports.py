@@ -63,6 +63,13 @@ class ScanReportTests(unittest.TestCase):
 
         self.assertEqual(name, "良維")
 
+    def test_stock_name_fallback_map_handles_6285(self):
+        data = FinancialData(symbol="6285.TW", company_name="Unknown Company")
+
+        name = resolve_stock_name({"symbol": "6285.TW", "name": ""}, data)
+
+        self.assertEqual(name, "啟碁")
+
     def test_display_stock_name_prefers_chinese_fallback_over_english_row_name(self):
         self.assertEqual(
             display_stock_name({"symbol": "6290.TWO", "name": "Longwell Company"}),

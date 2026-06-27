@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - FinMindProvider Completeness v3
+
+- Expanded `FinMindProvider` balance-sheet mapping for current assets, current liabilities, long-term debt aliases, and current-ratio diagnostics.
+- Added explicit `long_term_debt_missing`, `finmind_mapped_fields`, and `still_missing_fields` diagnostics so incomplete FinMind rows are visible instead of silent.
+- Enhanced `CompositeProvider` to enrich successful FinMind financial data with Yahoo Finance market data, including current price, industry, sector, PE, and PB where available.
+- Added PE/PB derivation from Yahoo current price plus FinMind EPS/BVPS when Yahoo PE/PB values are missing.
+- Added Taiwan Chinese company-name fallback support for runtime analysis, including `6285.TW: 啟碁`.
+- Updated single-stock report version text to `StockAnalyzerPro v3.0 FinMind First Beta`.
+- Added unit tests for current-ratio mapping, long-term-debt alias mapping, Yahoo enrichment, PE/PB derivation, 6285 Chinese fallback, and report version regression.
+- No SAP Score scoring logic, Strategy, Backtest, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - FinMind First Runtime Integration Beta
 
 - Switched the runtime stock-data provider default from `cached_yahoo` to `composite`.

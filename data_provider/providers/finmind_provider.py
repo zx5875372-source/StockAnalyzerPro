@@ -52,6 +52,34 @@ FIELD_ALIASES = {
         "股東權益總額",
         "total equity",
     ],
+    "current_assets": [
+        "current_assets",
+        "CurrentAssets",
+        "流動資產",
+        "流動資產合計",
+        "total current assets",
+    ],
+    "current_liabilities": [
+        "current_liabilities",
+        "CurrentLiabilities",
+        "流動負債",
+        "流動負債合計",
+        "total current liabilities",
+    ],
+    "long_term_debt": [
+        "long_term_debt",
+        "NoncurrentLiabilities",
+        "LongTermBorrowings",
+        "BondsPayable",
+        "LongTermLoansPayable",
+        "非流動負債",
+        "非流動負債合計",
+        "長期借款",
+        "應付公司債",
+        "long term borrowings",
+        "bonds payable",
+        "long term loans payable",
+    ],
     "cash_from_operations": [
         "cash_from_operations",
         "operating_cashflow",
@@ -106,6 +134,9 @@ FIELD_SOURCE_ALLOW = {
     "total_assets": {"get_balance_sheet"},
     "total_liabilities": {"get_balance_sheet"},
     "total_equity": {"get_balance_sheet"},
+    "current_assets": {"get_balance_sheet"},
+    "current_liabilities": {"get_balance_sheet"},
+    "long_term_debt": {"get_balance_sheet"},
     "shares_outstanding": {"get_balance_sheet"},
     "cash_from_operations": {"get_cash_flow"},
     "capital_expenditure": {"get_cash_flow"},
@@ -117,6 +148,8 @@ PERIOD_FIELDS = [
     "total_assets",
     "total_equity",
     "total_debt",
+    "current_assets",
+    "current_liabilities",
     "gross_profit",
     "operating_cashflow",
     "free_cashflow",
@@ -128,6 +161,7 @@ PERIOD_FIELDS = [
 ACCOUNT_KEYS = ["type", "name", "account", "item", "field", "label"]
 VALUE_KEYS = ["value", "amount", "data", "number"]
 CAPITAL_STOCK_ALIASES = {"ordinaryshare", "capitalstock", "普通股股本", "股本", "股本合計"}
+SUM_FIELDS = {"long_term_debt"}
 
 
 class FinMindProvider(IDataProvider):
@@ -203,6 +237,7 @@ class FinMindProvider(IDataProvider):
             f"current period: {current_period_key}",
             f"mapped_fields_count: {len(mapping_metadata['mapped_fields'])}",
             "mapped_fields: " + self._format_fields(mapping_metadata["mapped_fields"]),
+            "finmind_mapped_fields: " + self._format_fields(mapping_metadata["mapped_fields"]),
             f"derived_fields_count: {len(mapping_metadata['derived_fields'])}",
             "derived_fields: " + self._format_fields(mapping_metadata["derived_fields"]),
             "unmapped_raw_fields: " + self._format_fields(mapping_metadata["unmapped_raw_fields"]),
@@ -213,6 +248,7 @@ class FinMindProvider(IDataProvider):
             missing_text = ", ".join(missing_fields)
             diagnostics.append("missing_fields: " + missing_text)
             diagnostics.append("missing fields: " + missing_text)
+            diagnostics.append("still_missing_fields: " + missing_text)
             self._record("warning", f"{normalized_symbol}: missing fields: {missing_text}", normalized_symbol)
 
         self._record(
@@ -366,7 +402,7 @@ class FinMindProvider(IDataProvider):
                 continue
             direct_value = self._value_from_alias(row, aliases)
             if direct_value is not None:
-                values[internal_field] = direct_value
+                self._set_value(values, internal_field, direct_value)
                 mapped_fields.add(internal_field)
 
         account_name = self._account_name(row)
@@ -382,10 +418,17 @@ class FinMindProvider(IDataProvider):
             if normalized_account in {self._normalize_label(alias) for alias in aliases}:
                 if internal_field == "shares_outstanding" and normalized_account in CAPITAL_STOCK_ALIASES:
                     amount = amount / 10
-                values[internal_field] = amount
+                self._set_value(values, internal_field, amount)
                 mapped_fields.add(internal_field)
                 return mapped_fields
         return mapped_fields
+
+    @staticmethod
+    def _set_value(values: dict[str, float], field_name: str, value: float) -> None:
+        if field_name in SUM_FIELDS and field_name in values:
+            values[field_name] += value
+            return
+        values[field_name] = value
 
     def _financial_period(self, period_key: str, values: dict[str, float]) -> tuple[FinancialPeriod, set[str]]:
         derived_fields: set[str] = set()
@@ -401,6 +444,13 @@ class FinMindProvider(IDataProvider):
         free_cashflow = self._free_cashflow(operating_cashflow, capital_expenditure)
         if free_cashflow is not None:
             derived_fields.add("free_cashflow")
+
+        if (
+            values.get("current_assets") is not None
+            and values.get("current_liabilities") is not None
+            and safe_divide(values.get("current_assets"), values.get("current_liabilities")) is not None
+        ):
+            derived_fields.add("current_ratio")
 
         shares_outstanding = values.get("shares_outstanding")
         eps = values.get("eps")
@@ -421,6 +471,9 @@ class FinMindProvider(IDataProvider):
                 total_assets=total_assets,
                 total_equity=total_equity,
                 total_debt=total_liabilities,
+                long_term_debt=values.get("long_term_debt"),
+                current_assets=values.get("current_assets"),
+                current_liabilities=values.get("current_liabilities"),
                 revenue=values.get("revenue"),
                 gross_profit=values.get("gross_profit"),
                 operating_cashflow=operating_cashflow,
@@ -477,6 +530,8 @@ class FinMindProvider(IDataProvider):
         for field_name in PERIOD_FIELDS:
             if getattr(period, field_name, None) is None:
                 missing.append(f"{prefix}.{field_name}")
+        if period.long_term_debt is None:
+            missing.append(f"{prefix}.long_term_debt_missing")
         return missing
 
     @classmethod

@@ -21,7 +21,7 @@ class CompositeProviderTests(unittest.TestCase):
 
         self.assertIs(result, finmind_data)
         self.assertEqual(finmind.financial_calls, [("2330.TW", None)])
-        self.assertEqual(yahoo.financial_calls, [])
+        self.assertEqual(yahoo.financial_calls, [("2330.TW", None)])
         route = provider.routing_diagnostics()[0]
         self.assertEqual(route["primary_provider"], "finmind")
         self.assertEqual(route["fallback_provider"], "yahoo")
@@ -89,6 +89,77 @@ class CompositeProviderTests(unittest.TestCase):
         provider = create_provider("composite")
 
         self.assertIsInstance(provider, CompositeProvider)
+
+    def test_yahoo_enrichment_fills_current_price_and_metadata(self):
+        finmind_data = FinancialData(
+            symbol="2330.TW",
+            company_name=None,
+            current=FinancialPeriod(period="2024-12-31", eps=10, book_value_per_share=50),
+        )
+        yahoo_data = FinancialData(
+            symbol="2330.TW",
+            company_name="Taiwan Semiconductor Manufacturing Company Limited",
+            industry="Semiconductors",
+            sector="Technology",
+            price=100,
+            current=FinancialPeriod(period="2024-12-31"),
+        )
+        provider = CompositeProvider(
+            primary_provider=FakeProvider("finmind", financial_data=finmind_data),
+            fallback_provider=FakeProvider("yahoo", financial_data=yahoo_data),
+        )
+
+        result = provider.get_financial_data("2330")
+
+        self.assertEqual(result.company_name, "台積電")
+        self.assertEqual(result.industry, "Semiconductors")
+        self.assertEqual(result.sector, "Technology")
+        self.assertEqual(result.price, 100)
+        self.assertIn("yahoo_enriched_fields:", "\n".join(result.diagnostics))
+
+    def test_pe_and_pb_are_derived_from_yahoo_price_and_finmind_eps_bvps(self):
+        finmind_data = FinancialData(
+            symbol="2330.TW",
+            current=FinancialPeriod(period="2024-12-31", eps=10, book_value_per_share=50),
+        )
+        yahoo_data = FinancialData(
+            symbol="2330.TW",
+            price=100,
+            current=FinancialPeriod(period="2024-12-31"),
+        )
+        provider = CompositeProvider(
+            primary_provider=FakeProvider("finmind", financial_data=finmind_data),
+            fallback_provider=FakeProvider("yahoo", financial_data=yahoo_data),
+        )
+
+        result = provider.get_financial_data("2330")
+
+        self.assertEqual(result.price, 100)
+        self.assertEqual(result.pe, 10)
+        self.assertEqual(result.pb, 2)
+        diagnostics_text = "\n".join(result.diagnostics)
+        self.assertIn("derived_fields: pb, pe", diagnostics_text)
+
+    def test_taiwan_name_fallback_handles_6285(self):
+        finmind_data = FinancialData(
+            symbol="6285.TW",
+            company_name=None,
+            current=FinancialPeriod(period="2024-12-31"),
+        )
+        yahoo_data = FinancialData(
+            symbol="6285.TW",
+            company_name=None,
+            current=FinancialPeriod(period="2024-12-31"),
+        )
+        provider = CompositeProvider(
+            primary_provider=FakeProvider("finmind", financial_data=finmind_data),
+            fallback_provider=FakeProvider("yahoo", financial_data=yahoo_data),
+        )
+
+        result = provider.get_financial_data("6285")
+
+        self.assertEqual(result.company_name, "啟碁")
+        self.assertIn("company_name_fallback: 啟碁", result.diagnostics)
 
     def test_cached_yahoo_default_provider_is_unchanged(self):
         provider = create_provider("cached_yahoo")

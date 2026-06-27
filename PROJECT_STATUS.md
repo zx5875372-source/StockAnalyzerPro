@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-FinMind First Runtime Integration Beta
+FinMindProvider Completeness v3
 
 ## Completed
 
@@ -37,6 +37,7 @@ FinMind First Runtime Integration Beta
 - FinMindProvider Mapping Coverage v2
 - FinMindProvider Multi-Symbol Dry Run Validation
 - FinMind First Runtime Integration Beta
+- FinMindProvider Completeness v3
 - GitHub Actions
 - GitHub Releases
 
@@ -59,19 +60,16 @@ FinMind First Runtime Integration Beta
 
 - FinMind financial statement 缺少 published_date 時使用 statement_date fallback
 - fallback row is_point_in_time = false
-- Runtime stock analysis still uses Yahoo Finance until FinMind First provider integration is implemented
-- FinMindProvider has initial FinancialData mapping, but it is not the runtime default yet
-- CompositeProvider is registered for tests and future rollout, but downloader still uses cached_yahoo by default
 - provider_dry_run.py is diagnostics-only and is not connected to the main CLI menu
 - FinMindProvider dry runs use a safe 3-year default date range when start/end are omitted
-- FinMindProvider mapping is broader but still needs more symbols before runtime default rollout
+- FinMindProvider mapping is broader, but unsupported fields such as cash equivalents remain diagnostics-only until `FinancialData` supports them
 - provider_multi_dry_run.py validates watchlist/sample coverage before FinMind First runtime rollout
 - Runtime provider default is now composite; set SAP_PROVIDER=cached_yahoo to roll back to the previous Yahoo flow
 - 尚未完成完整 point-in-time historical database
 
 ## Test Status
 
-- Unit Tests: 264 passing
+- Unit Tests: 271 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 

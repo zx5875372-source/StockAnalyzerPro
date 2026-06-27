@@ -21,6 +21,8 @@ class ReportProviderSourceTests(unittest.TestCase):
         self.assertIn("| Fallback | 否 |", content)
         self.assertIn("資料來源：FinMind", content)
         self.assertIn("Fallback：否", content)
+        self.assertIn("目前版本為 StockAnalyzerPro v3.0 FinMind First Beta。", content)
+        self.assertNotIn("v1.4 CLI UX Improvement", content)
 
 
 def sample_result():
