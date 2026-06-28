@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Piotroski Report UX Fix
+
+- Updated the Piotroski F-Score detail table header from `去年值/比較值` to `比較值`.
+- Displayed `不適用` for comparison values on items that only require current-period data, including positive ROA and positive operating cash flow.
+- Kept current net income visible as the comparison value for `營業現金流大於淨利`.
+- Preserved previous-period comparison values for ROA improvement, long-term debt ratio decline, current ratio improvement, share dilution, gross margin improvement, and asset turnover improvement.
+- Added unit tests to verify comparison display behavior and prevent `資料不足` from appearing as the comparison value for the first two Piotroski rows.
+- No Piotroski scoring logic, SAP Score scoring logic, Analyzer scoring rules, Provider mapping, Strategy, Backtest, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - Report Readability Improvement v1
 
 - Added Chinese report mapping for common Yahoo/FinMind sector and industry labels.

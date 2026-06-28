@@ -123,6 +123,62 @@ class ReportProviderSourceTests(unittest.TestCase):
         self.assertNotIn("unmapped_raw_fields", general_section)
         self.assertIn("unmapped_raw_fields: CashAndCashEquivalents (+70 more)", advanced_section)
 
+    def test_piotroski_header_uses_comparison_value(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn("| 細項 | 結果 | 目前值 | 比較值 | 說明 |", content)
+        self.assertNotIn("去年值/比較值", content)
+
+    def test_positive_roa_comparison_value_is_not_applicable(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn("| 1. ROA 為正 | 通過 | 1.31% | 不適用 | current ROA > 0 加 1 分 |", content)
+        self.assertNotIn("| 1. ROA 為正 | 通過 | 1.31% | 資料不足 |", content)
+
+    def test_positive_operating_cashflow_comparison_value_is_not_applicable(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn(
+            "| 2. 營業現金流為正 | 未通過 | -3,386,907,000.00 | 不適用 | "
+            "current operating_cashflow > 0 加 1 分 |",
+            content,
+        )
+        self.assertNotIn("| 2. 營業現金流為正 | 未通過 | -3,386,907,000.00 | 資料不足 |", content)
+
+    def test_cashflow_greater_than_net_income_shows_current_net_income_as_comparison(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn(
+            "| 4. 營業現金流大於淨利 | 未通過 | -3,386,907,000.00 | 1,132,064,000.00 | "
+            "current operating_cashflow > current net_income 加 1 分 |",
+            content,
+        )
+
+    def test_piotroski_period_comparison_items_still_show_previous_values(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn("| 3. ROA 較去年提升 | 未通過 | 1.31% | 1.11% |", content)
+        self.assertIn("| 5. 長期負債比下降 | 未通過 | 0.42 | 0.35 |", content)
+        self.assertIn("| 6. 流動比率提升 | 通過 | 1.25 | 1.10 |", content)
+        self.assertIn("| 7. 股本未稀釋 | 通過 | 100,000.00 | 100,000.00 |", content)
+        self.assertIn("| 8. 毛利率提升 | 通過 | 0.30 | 0.25 |", content)
+        self.assertIn("| 9. 資產週轉率提升 | 未通過 | 0.80 | 0.90 |", content)
+
 
 def sample_result():
     return {
@@ -185,6 +241,74 @@ def render_report(result):
             return Path(report_path).read_text(encoding="utf-8")
         finally:
             os.chdir(original_cwd)
+
+
+def piotroski_items():
+    return [
+        {
+            "name": "1. ROA 為正",
+            "passed": True,
+            "current_value": 1.31,
+            "previous_value": None,
+            "note": "current ROA > 0 加 1 分",
+        },
+        {
+            "name": "2. 營業現金流為正",
+            "passed": False,
+            "current_value": -3386907000,
+            "previous_value": None,
+            "note": "current operating_cashflow > 0 加 1 分",
+        },
+        {
+            "name": "3. ROA 較去年提升",
+            "passed": False,
+            "current_value": 1.31,
+            "previous_value": 1.11,
+            "note": "current ROA > previous ROA 加 1 分",
+        },
+        {
+            "name": "4. 營業現金流大於淨利",
+            "passed": False,
+            "current_value": -3386907000,
+            "previous_value": 1132064000,
+            "note": "current operating_cashflow > current net_income 加 1 分",
+        },
+        {
+            "name": "5. 長期負債比下降",
+            "passed": False,
+            "current_value": 0.42,
+            "previous_value": 0.35,
+            "note": "current long_term_debt / total_assets < previous long_term_debt / total_assets 加 1 分",
+        },
+        {
+            "name": "6. 流動比率提升",
+            "passed": True,
+            "current_value": 1.25,
+            "previous_value": 1.10,
+            "note": "current current_ratio > previous current_ratio 加 1 分",
+        },
+        {
+            "name": "7. 股本未稀釋",
+            "passed": True,
+            "current_value": 100000,
+            "previous_value": 100000,
+            "note": "current shares_outstanding <= previous shares_outstanding 加 1 分",
+        },
+        {
+            "name": "8. 毛利率提升",
+            "passed": True,
+            "current_value": 0.30,
+            "previous_value": 0.25,
+            "note": "current gross_profit / revenue > previous gross_profit / revenue 加 1 分",
+        },
+        {
+            "name": "9. 資產週轉率提升",
+            "passed": False,
+            "current_value": 0.80,
+            "previous_value": 0.90,
+            "note": "current revenue / total_assets > previous revenue / total_assets 加 1 分",
+        },
+    ]
 
 
 if __name__ == "__main__":

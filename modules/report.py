@@ -84,6 +84,28 @@ def yes_no(value):
     return "資料不足"
 
 
+def piotroski_value(item: dict, field_name: str) -> str:
+    value = item.get(field_name)
+    if value is None:
+        return "資料不足"
+    formatted = metric(value)
+    if item.get("name") in {
+        "1. ROA 為正",
+        "3. ROA 較去年提升",
+    }:
+        return f"{formatted}%"
+    return formatted
+
+
+def piotroski_comparison_value(item: dict) -> str:
+    if item.get("name") in {
+        "1. ROA 為正",
+        "2. 營業現金流為正",
+    }:
+        return "不適用"
+    return piotroski_value(item, "previous_value")
+
+
 def scoring_item_rows(categories: dict) -> str:
     category_names = {
         "piotroski": "Piotroski F-Score",
@@ -288,8 +310,8 @@ def generate_markdown_report(result: dict) -> str:
             "| "
             f"{item['name']} | "
             f"{yes_no(item['passed'])} | "
-            f"{metric(item.get('current_value'))} | "
-            f"{metric(item.get('previous_value'))} | "
+            f"{piotroski_value(item, 'current_value')} | "
+            f"{piotroski_comparison_value(item)} | "
             f"{item['note']} |"
             for item in piotroski["items"]
         ]
@@ -336,7 +358,7 @@ Fallback：{fallback_text}
 | 完整分數 | {piotroski["score"]} / {piotroski_total} |
 | 可計算項目 | {piotroski["score"]} / {piotroski["available"]} |
 
-| 細項 | 結果 | 目前值 | 去年值/比較值 | 說明 |
+| 細項 | 結果 | 目前值 | 比較值 | 說明 |
 |---|---|---:|---:|---|
 {piotroski_rows}
 

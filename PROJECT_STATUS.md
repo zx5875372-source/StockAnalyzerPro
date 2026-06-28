@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-Report Readability Improvement v1
+Piotroski Report UX Fix
 
 ## Completed
 
@@ -39,6 +39,7 @@ Report Readability Improvement v1
 - FinMind First Runtime Integration Beta
 - FinMindProvider Completeness v3
 - Report Readability Improvement v1
+- Piotroski Report UX Fix
 - GitHub Actions
 - GitHub Releases
 
@@ -70,7 +71,7 @@ Report Readability Improvement v1
 
 ## Test Status
 
-- Unit Tests: 278 passing
+- Unit Tests: 283 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
