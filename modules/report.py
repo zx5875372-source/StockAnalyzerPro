@@ -388,6 +388,29 @@ def yes_no_plain(value: bool) -> str:
     return "是" if value else "否"
 
 
+def industry_rank_text(rank, size) -> str:
+    if rank in {None, ""} or not size:
+        return "資料不足"
+    return f"{rank} / {size}"
+
+
+def industry_ranking_result(result: dict) -> dict:
+    ranking = dict(result.get("industry_ranking") or {})
+    industry_name = ranking.get("industry_name") or result.get("industry") or "未知產業"
+    size = ranking.get("industry_size") or 0
+    top_percent = ranking.get("top_percent") or "資料不足"
+    return {
+        "industry_name": translate_industry(industry_name),
+        "industry_size": size or "資料不足",
+        "sap_rank": industry_rank_text(ranking.get("sap_rank"), size),
+        "trend_rank": industry_rank_text(ranking.get("trend_rank"), size),
+        "total_rank": industry_rank_text(ranking.get("total_rank"), size),
+        "top_percent": top_percent,
+        "rating": ranking.get("rating") or ("資料不足" if top_percent == "資料不足" else "★★★"),
+        "summary_text": ranking.get("summary_text") or "產業資料不足，暫無法排名",
+    }
+
+
 def generate_markdown_report(result: dict) -> str:
     reports_dir = Path("reports")
     reports_dir.mkdir(exist_ok=True)
@@ -420,6 +443,7 @@ def generate_markdown_report(result: dict) -> str:
     technical = technical_result(result)
     combined_total_score = total_score(result.get("sap_score"), technical.get("trend_score"))
     technical_diagnostics_text = diagnostic_lines(technical.get("diagnostics", []))
+    industry_ranking = industry_ranking_result(result)
     piotroski_rows = "\n".join(
         [
             "| "
@@ -581,6 +605,22 @@ Fallback：{fallback_text}
 | 綜合評分 | {metric(combined_total_score)} |
 
 綜合評分 = SAP 基本面評分 * 0.6 + 技術評分 * 0.4。此分數只供參考，不影響 SAP Score 或原本投資等級。
+
+---
+
+## 產業排名
+
+| 項目 | 結果 |
+|---|---|
+| 所屬產業 | {industry_ranking["industry_name"]} |
+| 產業股票數 | {industry_ranking["industry_size"]} |
+| SAP 排名 | {industry_ranking["sap_rank"]} |
+| 技術排名 | {industry_ranking["trend_rank"]} |
+| 綜合排名 | {industry_ranking["total_rank"]} |
+| 百分位 | {industry_ranking["top_percent"]} |
+| 評價 | {industry_ranking["rating"]} |
+
+{industry_ranking["summary_text"]}
 
 ---
 

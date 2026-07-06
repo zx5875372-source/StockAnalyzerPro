@@ -7,6 +7,7 @@ from pathlib import Path
 from modules.analyzer import analyze_stock
 from modules.downloader import get_stock_data, normalize_symbol
 from modules.stock_names import TAIWAN_STOCK_NAME_FALLBACKS
+from ranking import IndustryRankingEngine
 
 
 SAMPLE_STOCKS_PATH = Path("tests/sample_data/sample_stocks.json")
@@ -181,8 +182,11 @@ def scan_stock(stock: dict) -> dict:
             "symbol": result["symbol"],
             "name": resolve_stock_name(stock, data),
             "category": stock.get("category", ""),
+            "industry": result.get("industry", "未知產業"),
             "status": "success",
             "sap_score": result["sap_score"],
+            "trend_score": "",
+            "total_score": "",
             "grade": result["grade"],
             "price": result.get("price"),
             "piotroski_score": piotroski["score"],
@@ -211,8 +215,11 @@ def scan_stock(stock: dict) -> dict:
             "symbol": symbol,
             "name": stock.get("name", ""),
             "category": stock.get("category", ""),
+            "industry": "",
             "status": "failed",
             "sap_score": "",
+            "trend_score": "",
+            "total_score": "",
             "grade": "",
             "price": "",
             "piotroski_score": "",
@@ -243,8 +250,11 @@ def write_results(rows: list[dict], output_path: Path = OUTPUT_PATH) -> None:
         "symbol",
         "name",
         "category",
+        "industry",
         "status",
         "sap_score",
+        "trend_score",
+        "total_score",
         "grade",
         "price",
         "piotroski_score",
@@ -262,6 +272,15 @@ def write_results(rows: list[dict], output_path: Path = OUTPUT_PATH) -> None:
         "provider_source",
         "provider_fallback_used",
         "provider_fallback_reason",
+        "industry_rank_label",
+        "industry_size",
+        "sap_rank",
+        "trend_rank",
+        "total_rank",
+        "industry_average_sap",
+        "industry_average_trend",
+        "industry_average_total",
+        "industry_ranking_summary",
         "diagnostics_count",
         "diagnostics",
         "elapsed_seconds",
@@ -336,15 +355,27 @@ def recommendation_for_grade(grade: str) -> str:
     return "-"
 
 
+def apply_industry_rankings(rows: list[dict]) -> list[dict]:
+    return IndustryRankingEngine(rows).annotate_rows(rows)
+
+
+def ensure_industry_rankings(rows: list[dict]) -> list[dict]:
+    if not rows:
+        return rows
+    if all("industry_rank_label" in row for row in rows):
+        return rows
+    return apply_industry_rankings(rows)
+
+
 def ranking_table_header() -> str:
-    return """| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 資料來源 |
-| -: | ---- | ---- | ----: | -- | --------: | ---: | ----: | -- | ---- |"""
+    return """| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 產業排名 | 資料來源 |
+| -: | ---- | ---- | ----: | -- | --------: | ---: | ----: | -- | ---- | ---- |"""
 
 
 def ranking_table(rows: list[dict], limit: int | None = None) -> str:
     selected_rows = rows[:limit] if limit is not None else rows
     if not selected_rows:
-        return "| - | - | - | - | - | - | - | - | - | - |"
+        return "| - | - | - | - | - | - | - | - | - | - | - |"
 
     table_rows = []
     for rank, row in enumerate(selected_rows, start=1):
@@ -361,6 +392,7 @@ def ranking_table(rows: list[dict], limit: int | None = None) -> str:
                     format_decimal(row.get("reasonable_buy")),
                     format_decimal(row.get("first_target_price")),
                     recommendation_for_grade(row.get("grade")),
+                    markdown_value(row.get("industry_rank_label") or "資料不足"),
                     markdown_value(row.get("provider_source") or "未知"),
                 ]
             )
@@ -384,6 +416,7 @@ def markdown_missing_fields(value: str) -> str:
 
 def write_summary(rows: list[dict], output_path: Path = SUMMARY_PATH) -> None:
     output_path.parent.mkdir(exist_ok=True)
+    rows = ensure_industry_rankings(rows)
 
     success_rows = [row for row in rows if row["status"] == "success"]
     failed_rows = [row for row in rows if row["status"] != "success"]
@@ -433,6 +466,7 @@ def write_summary(rows: list[dict], output_path: Path = SUMMARY_PATH) -> None:
 
 def write_top10(rows: list[dict], output_path: Path = TOP10_PATH) -> None:
     output_path.parent.mkdir(exist_ok=True)
+    rows = ensure_industry_rankings(rows)
     success_rows = [row for row in rows if row["status"] == "success"]
     top_rows = sort_rows(success_rows)[:10]
 
@@ -447,6 +481,7 @@ def write_top10(rows: list[dict], output_path: Path = TOP10_PATH) -> None:
 
 def write_watchlist_report(rows: list[dict], output_path: Path = WATCHLIST_REPORT_PATH) -> None:
     output_path.parent.mkdir(exist_ok=True)
+    rows = ensure_industry_rankings(rows)
     success_rows = [row for row in rows if row["status"] == "success"]
     sorted_rows = sort_rows(success_rows)
 
@@ -473,7 +508,8 @@ def run_scan(mode: str = "watchlist") -> list[dict]:
         print(f"[{index}/{len(stocks)}] 分析 {stock['symbol']} {stock.get('name', '')}")
         rows.append(scan_stock(stock))
 
-    sorted_rows = sort_rows(rows)
+    ranked_rows = apply_industry_rankings(rows)
+    sorted_rows = sort_rows(ranked_rows)
     write_results(sorted_rows)
     write_summary(sorted_rows)
     write_top10(sorted_rows)

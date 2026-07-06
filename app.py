@@ -7,6 +7,7 @@ import sys
 from modules.downloader import get_stock_data
 from modules.analyzer import analyze_stock
 from modules.report import generate_markdown_report
+from ranking.industry_ranking import IndustryRankingEngine, load_analyzed_rows_from_csv
 from technical import TechnicalAnalysis
 from scan import (
     OUTPUT_PATH,
@@ -211,12 +212,28 @@ def analyze_symbol(symbol: str, name: str = "") -> tuple[dict, Path, str, str] |
         result = analyze_stock(data)
         print("正在分析技術指標...")
         result["technical"] = TechnicalAnalysis().analyze(result["symbol"]).to_dict()
+        attach_industry_ranking(result)
         print("正在產生報告...")
         report_path = Path(generate_markdown_report(result))
         return result, report_path, symbol, name
     except Exception as error:
         print(f"分析失敗：{error}\n")
         return None
+
+
+def attach_industry_ranking(result: dict) -> None:
+    technical = result.get("technical") or {}
+    rows = load_analyzed_rows_from_csv(OUTPUT_PATH)
+    current_row = {
+        "symbol": result.get("symbol"),
+        "status": "success",
+        "industry": result.get("industry", "未知產業"),
+        "sap_score": result.get("sap_score"),
+        "trend_score": technical.get("trend_score"),
+    }
+    rows = [row for row in rows if row.get("symbol") != current_row["symbol"]]
+    rows.append(current_row)
+    result["industry_ranking"] = IndustryRankingEngine(rows).rank(str(result.get("symbol", ""))).to_dict()
 
 
 def show_single_stock_result(result: dict, report_path: Path, requested_symbol: str, name: str) -> str:

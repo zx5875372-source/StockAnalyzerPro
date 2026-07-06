@@ -4,6 +4,7 @@ from pathlib import Path
 
 from models.financial_data import FinancialData
 from scan import (
+    apply_industry_rankings,
     display_stock_name,
     recommendation_for_grade,
     resolve_stock_name,
@@ -21,10 +22,10 @@ class ScanReportTests(unittest.TestCase):
             content = output_path.read_text(encoding="utf-8")
 
         self.assert_markdown_tables_consistent(content)
-        self.assertIn("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 資料來源 |", content)
-        self.assertEqual(markdown_column_count("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 資料來源 |"), 10)
-        self.assertIn("| 1 | 2330.TW | 台積電 | 95 | A | 9/9 | 512.35 | 620.99 | 優先研究 | FinMind |", content)
-        self.assertIn("| 2 | 2454.TW | 聯發科 | 70 | B | 7/9 | - | - | 可觀察 | Yahoo Finance（FinMind fallback） |", content)
+        self.assertIn("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 產業排名 | 資料來源 |", content)
+        self.assertEqual(markdown_column_count("| 排名 | 股票代號 | 股票名稱 | SAP評分 | 等級 | Piotroski | 合理買點 | 第一目標價 | 建議 | 產業排名 | 資料來源 |"), 11)
+        self.assertIn("| 1 | 2330.TW | 台積電 | 95 | A | 9/9 | 512.35 | 620.99 | 優先研究 | 前 50% | FinMind |", content)
+        self.assertIn("| 2 | 2454.TW | 聯發科 | 70 | B | 7/9 | - | - | 可觀察 | 後 50% | Yahoo Finance（FinMind fallback） |", content)
 
     def test_watchlist_report_table_columns_are_consistent(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -90,6 +91,13 @@ class ScanReportTests(unittest.TestCase):
         self.assertEqual(recommendation_for_grade("C"), "保守觀察")
         self.assertEqual(recommendation_for_grade("D"), "暫不建議")
 
+    def test_watchlist_industry_ranking_integration(self):
+        rows = apply_industry_rankings(sample_rows())
+
+        self.assertEqual(rows[0]["industry_rank_label"], "前 50%")
+        self.assertEqual(rows[0]["industry_size"], 2)
+        self.assertEqual(rows[1]["industry_rank_label"], "後 50%")
+
     def assert_markdown_tables_consistent(self, content: str):
         current_width = None
         for line in content.splitlines():
@@ -109,8 +117,11 @@ def sample_rows():
             "symbol": "2330.TW",
             "name": "台積電",
             "category": "watchlist",
+            "industry": "半導體",
             "status": "success",
             "sap_score": 95,
+            "trend_score": 80,
+            "total_score": 89,
             "grade": "A",
             "piotroski_score": 9,
             "piotroski_total": 9,
@@ -127,8 +138,11 @@ def sample_rows():
             "symbol": "2454.TW",
             "name": "",
             "category": "watchlist",
+            "industry": "半導體",
             "status": "success",
             "sap_score": 70,
+            "trend_score": 60,
+            "total_score": 66,
             "grade": "B",
             "piotroski_score": 7,
             "piotroski_total": 9,

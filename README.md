@@ -63,6 +63,7 @@ Current version: v2.4 UI 中文化
 - Includes profitability, financial health, cashflow, valuation, and growth analysis.
 - Estimates dynamic industry-based valuation, buy zones, and first target price.
 - Adds an independent Technical Analysis Engine for MA, RSI, MACD, volume ratio, Trend Score, and display-only Total Score.
+- Adds a reusable Industry Ranking Engine for comparing analyzed stocks within the same industry by SAP Score, technical score, and total score.
 - Shows diagnostics when required financial fields are missing.
 - Provides a validation scan over a sample stock universe and exports CSV results.
 - Provides an interactive v2.4 Chinese CLI console for stock analysis, historical data tools, research tools, and project status.
@@ -111,6 +112,16 @@ The `technical/` module adds an independent technical-analysis layer for single-
 - Trend Score uses MA trend, RSI, MACD, and volume weights to produce a 0-100 technical score and S/A/B/C/D technical grade.
 - Single-stock Markdown reports display Technical Analysis and a display-only Total Score: `SAP Score * 0.6 + Trend Score * 0.4`.
 - Technical Analysis uses Yahoo Finance historical prices and does not modify FinMindProvider, CompositeProvider, downloader defaults, SAP Score, or backtest strategy logic.
+
+## Industry Ranking Engine
+
+The `ranking/` module compares already analyzed stock rows within the same industry. It does not fetch data, call providers, or recalculate SAP Score.
+
+- Ranks SAP Score, technical score, and display-only total score within the same industry.
+- Produces percentile labels such as `前 10%`, `前 25%`, and `後 50%`.
+- Adds industry ranking summaries to single-stock Markdown reports.
+- Adds an industry ranking column to watchlist, top10, and scan summary ranking tables.
+- Unknown industries are shown as `資料不足` instead of crashing.
 
 ## Installation
 

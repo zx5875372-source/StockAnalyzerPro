@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Industry Ranking Engine v1
+
+- Added a reusable `ranking/` module with `IndustryRankingEngine` and `IndustryRankingResult` for datasource-agnostic same-industry ranking.
+- Added SAP, technical, and total-score ranks, percentiles, top-percent labels, industry averages, and plain-language industry ranking summaries.
+- Integrated industry ranking display into single-stock Markdown reports and scan ranking tables for watchlist, top10, and scan summary reports.
+- Added scan CSV fields for industry ranking metadata while keeping ranking input limited to already analyzed rows.
+- Added unit tests for ranking sort order, percentile labels, unknown industry handling, empty input, report rendering, watchlist integration, and Markdown table consistency.
+- No SAP Score, Trend Score, Total Score formula, Piotroski, Analyzer fundamental calculations, Provider, FinMind, CompositeProvider, Strategy, Backtest, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - Chinese Report Localization v2
 
 - Localized technical report labels from `Trend Score` and `Technical Grade` to `技術評分` and `技術等級`.

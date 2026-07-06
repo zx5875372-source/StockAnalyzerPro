@@ -182,6 +182,22 @@ class ReportProviderSourceTests(unittest.TestCase):
         self.assertIn("綜合評分 = SAP 基本面評分 * 0.6 + 技術評分 * 0.4", content)
         self.assertIn("不影響 SAP Score 或原本投資等級", content)
 
+    def test_report_renders_industry_ranking(self):
+        result = sample_result()
+        result["industry_ranking"] = sample_industry_ranking()
+
+        content = render_report(result)
+
+        self.assertIn("## 產業排名", content)
+        self.assertIn("| 所屬產業 | 半導體 |", content)
+        self.assertIn("| 產業股票數 | 31 |", content)
+        self.assertIn("| SAP 排名 | 3 / 31 |", content)
+        self.assertIn("| 技術排名 | 5 / 31 |", content)
+        self.assertIn("| 綜合排名 | 4 / 31 |", content)
+        self.assertIn("| 百分位 | 前 10% |", content)
+        self.assertIn("| 評價 | ★★★★★ |", content)
+        self.assertIn("產業排名屬前 10%", content)
+
     def test_report_localizes_advanced_diagnostics(self):
         result = sample_result()
         result["diagnostics"] = [
@@ -493,6 +509,25 @@ def sample_technical():
             "technical_price_count: 260",
             "technical_missing_fields: -",
         ],
+    }
+
+
+def sample_industry_ranking():
+    return {
+        "industry_name": "半導體",
+        "industry_size": 31,
+        "sap_rank": 3,
+        "trend_rank": 5,
+        "total_rank": 4,
+        "sap_percentile": 9.68,
+        "trend_percentile": 16.13,
+        "total_percentile": 12.9,
+        "top_percent": "前 10%",
+        "industry_average_sap": 72.5,
+        "industry_average_trend": 68.1,
+        "industry_average_total": 70.2,
+        "rating": "★★★★★",
+        "summary_text": "產業排名屬前 10%，在同產業中屬於相對強勢公司。",
     }
 
 
