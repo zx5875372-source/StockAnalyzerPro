@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - Financial Metrics Display Improvement
+
+- Added shared report display formatters for percent, ratio, and currency values.
+- Updated Piotroski detail display so ROA, gross margin, and long-term debt ratio render as percentages with two decimals.
+- Kept current ratio and asset turnover displayed as multiplier/turnover ratios instead of incorrectly converting them to percentages.
+- Added unit tests for formatter behavior and financial metric display in the Piotroski report table.
+- No SAP Score, Piotroski calculation, Analyzer, Provider, FinMind, Strategy, Backtest, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - Dynamic Valuation Engine v2
 
 - Added `valuation/valuation_profiles.py` with reusable industry valuation profiles for 半導體, 電子零組件, 通訊設備, 電腦及週邊, 金融, and 傳產.

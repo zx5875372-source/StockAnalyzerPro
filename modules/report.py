@@ -67,6 +67,23 @@ def metric(value):
     return str(value)
 
 
+def format_percent(value, *, value_is_ratio: bool = True) -> str:
+    if value is None:
+        return "資料不足"
+    if not isinstance(value, (int, float)):
+        return str(value)
+    percent_value = value * 100 if value_is_ratio else value
+    return f"{percent_value:,.2f}%"
+
+
+def format_ratio(value) -> str:
+    return metric(value)
+
+
+def format_currency(value) -> str:
+    return metric(value)
+
+
 def compact_metric(value):
     if value is None:
         return "資料不足"
@@ -91,7 +108,7 @@ def percent(value):
 def money(value):
     if value is None:
         return "資料不足"
-    return f"{value:,.2f}"
+    return format_currency(value)
 
 
 def yes_no(value):
@@ -106,13 +123,14 @@ def piotroski_value(item: dict, field_name: str) -> str:
     value = item.get(field_name)
     if value is None:
         return "資料不足"
-    formatted = metric(value)
-    if item.get("name") in {
-        "1. ROA 為正",
-        "3. ROA 較去年提升",
-    }:
-        return f"{formatted}%"
-    return formatted
+    item_name = item.get("name")
+    if item_name in {"1. ROA 為正", "3. ROA 較去年提升"}:
+        return format_percent(value, value_is_ratio=False)
+    if item_name in {"5. 長期負債比下降", "8. 毛利率提升"}:
+        return format_percent(value, value_is_ratio=True)
+    if item_name in {"6. 流動比率提升", "9. 資產週轉率提升"}:
+        return format_ratio(value)
+    return format_currency(value)
 
 
 def piotroski_comparison_value(item: dict) -> str:

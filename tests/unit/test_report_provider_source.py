@@ -3,10 +3,22 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from modules.report import generate_markdown_report
+from modules.report import format_currency, format_percent, format_ratio, generate_markdown_report
 
 
 class ReportProviderSourceTests(unittest.TestCase):
+    def test_percent_formatter_formats_ratio(self):
+        self.assertEqual(format_percent(0.1376), "13.76%")
+
+    def test_percent_formatter_formats_percent_points(self):
+        self.assertEqual(format_percent(1.31, value_is_ratio=False), "1.31%")
+
+    def test_ratio_formatter_keeps_multiplier(self):
+        self.assertEqual(format_ratio(1.25), "1.25")
+
+    def test_currency_formatter_uses_grouped_two_decimals(self):
+        self.assertEqual(format_currency(-3386907000), "-3,386,907,000.00")
+
     def test_markdown_report_includes_provider_source(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             original_cwd = os.getcwd()
@@ -198,11 +210,45 @@ class ReportProviderSourceTests(unittest.TestCase):
         content = render_report(result)
 
         self.assertIn("| 3. ROA 較去年提升 | 未通過 | 1.31% | 1.11% |", content)
-        self.assertIn("| 5. 長期負債比下降 | 未通過 | 0.42 | 0.35 |", content)
+        self.assertIn("| 5. 長期負債比下降 | 未通過 | 42.00% | 35.00% |", content)
         self.assertIn("| 6. 流動比率提升 | 通過 | 1.25 | 1.10 |", content)
         self.assertIn("| 7. 股本未稀釋 | 通過 | 100,000.00 | 100,000.00 |", content)
-        self.assertIn("| 8. 毛利率提升 | 通過 | 0.30 | 0.25 |", content)
+        self.assertIn("| 8. 毛利率提升 | 通過 | 30.00% | 25.00% |", content)
         self.assertIn("| 9. 資產週轉率提升 | 未通過 | 0.80 | 0.90 |", content)
+
+    def test_piotroski_roa_displays_percent(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn("| 1. ROA 為正 | 通過 | 1.31% | 不適用 |", content)
+        self.assertIn("| 3. ROA 較去年提升 | 未通過 | 1.31% | 1.11% |", content)
+
+    def test_piotroski_gross_margin_displays_percent(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn("| 8. 毛利率提升 | 通過 | 30.00% | 25.00% |", content)
+
+    def test_piotroski_long_term_debt_ratio_displays_percent(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn("| 5. 長期負債比下降 | 未通過 | 42.00% | 35.00% |", content)
+
+    def test_piotroski_current_ratio_remains_multiplier(self):
+        result = sample_result()
+        result["piotroski"]["items"] = piotroski_items()
+
+        content = render_report(result)
+
+        self.assertIn("| 6. 流動比率提升 | 通過 | 1.25 | 1.10 |", content)
+        self.assertNotIn("| 6. 流動比率提升 | 通過 | 125.00% | 110.00% |", content)
 
 
 def sample_result():

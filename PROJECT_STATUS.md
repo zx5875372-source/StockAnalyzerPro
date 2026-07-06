@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-Dynamic Valuation Engine v2
+Financial Metrics Display Improvement
 
 ## Completed
 
@@ -41,6 +41,7 @@ Dynamic Valuation Engine v2
 - Report Readability Improvement v1
 - Piotroski Report UX Fix
 - Dynamic Valuation Engine v2
+- Financial Metrics Display Improvement
 - GitHub Actions
 - GitHub Releases
 
@@ -72,7 +73,7 @@ Dynamic Valuation Engine v2
 
 ## Test Status
 
-- Unit Tests: 288 passing
+- Unit Tests: 296 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 
