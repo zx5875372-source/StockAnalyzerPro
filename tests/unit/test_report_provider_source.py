@@ -109,6 +109,31 @@ class ReportProviderSourceTests(unittest.TestCase):
         self.assertIn("| 合理買點 | 90.12 |", content)
         self.assertIn("| 第一目標價 | 120.99 |", content)
 
+    def test_report_includes_valuation_profile(self):
+        result = sample_result()
+        result["valuation"].update(
+            {
+                "valuation_profile": "通訊設備",
+                "valuation_source": "industry_profile_v2",
+                "industry_mapping": {"industry": "Communication Equipment", "profile": "通訊設備"},
+                "pe_range": (15, 25),
+                "pb_range": (1.5, 3.5),
+                "reasonable_pe": 20,
+                "reasonable_pb": 2.5,
+            }
+        )
+
+        content = render_report(result)
+
+        self.assertIn("### 估值模型", content)
+        self.assertIn("| 產業估值 | 通訊設備 |", content)
+        self.assertIn("| PE 區間 | 15~25 |", content)
+        self.assertIn("| PB 區間 | 1.5~3.5 |", content)
+        self.assertIn("| 本次採用 PE | 20 |", content)
+        self.assertIn("| 本次採用 PB | 2.5 |", content)
+        self.assertIn("| 合理 PE | 20.00 | 動態產業估值 |", content)
+        self.assertIn("| 合理 PB | 2.50 | 動態產業估值 |", content)
+
     def test_unmapped_raw_fields_are_advanced_diagnostics_only(self):
         result = sample_result()
         result["diagnostics"] = [

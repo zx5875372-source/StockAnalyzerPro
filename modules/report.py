@@ -45,6 +45,9 @@ ADVANCED_DIAGNOSTIC_MARKERS = [
     "provider_selected_provider",
     "provider_fallback_used",
     "provider_fallback_reason",
+    "valuation_profile",
+    "valuation_source",
+    "industry_mapping",
 ]
 
 
@@ -62,6 +65,21 @@ def metric(value):
     if isinstance(value, (int, float)):
         return f"{value:,.2f}"
     return str(value)
+
+
+def compact_metric(value):
+    if value is None:
+        return "資料不足"
+    if isinstance(value, (int, float)):
+        text = f"{value:.2f}"
+        return text.rstrip("0").rstrip(".")
+    return str(value)
+
+
+def range_text(values) -> str:
+    if not values or len(values) != 2:
+        return "資料不足"
+    return f"{compact_metric(values[0])}~{compact_metric(values[1])}"
 
 
 def percent(value):
@@ -277,6 +295,16 @@ def valuation_warnings(result: dict) -> str:
     return "\n".join(warnings) if warnings else "無明顯估值警示。"
 
 
+def valuation_model_text(valuation: dict) -> dict:
+    return {
+        "profile": valuation.get("valuation_profile") or "傳產",
+        "pe_range": range_text(valuation.get("pe_range")),
+        "pb_range": range_text(valuation.get("pb_range")),
+        "reasonable_pe": compact_metric(valuation.get("reasonable_pe")),
+        "reasonable_pb": compact_metric(valuation.get("reasonable_pb")),
+    }
+
+
 def generate_markdown_report(result: dict) -> str:
     reports_dir = Path("reports")
     reports_dir.mkdir(exist_ok=True)
@@ -305,6 +333,7 @@ def generate_markdown_report(result: dict) -> str:
     plain_judgement = plain_language_judgement(result)
     plain_judgement_reasons = numbered_lines(plain_judgement["reasons"])
     valuation_warning_text = valuation_warnings(result)
+    valuation_model = valuation_model_text(valuation)
     piotroski_rows = "\n".join(
         [
             "| "
@@ -403,14 +432,24 @@ Fallback：{fallback_text}
 
 ## 七、估值
 
+### 估值模型
+
+| 項目 | 結果 |
+|---|---|
+| 產業估值 | {valuation_model["profile"]} |
+| PE 區間 | {valuation_model["pe_range"]} |
+| PB 區間 | {valuation_model["pb_range"]} |
+| 本次採用 PE | {valuation_model["reasonable_pe"]} |
+| 本次採用 PB | {valuation_model["reasonable_pb"]} |
+
 | 指標 | 數值 | 判斷 |
 |---|---:|---|
 | 本益比 PE | {fmt(result["pe"])} | {result["pe_judgement"]} |
 | 股價淨值比 PB | {fmt(result["pb"])} | {result["pb_judgement"]} |
 | EPS | {metric(valuation.get("eps"))} | 估值輸入 |
 | 每股淨值 | {metric(valuation.get("book_value_per_share"))} | 估值輸入 |
-| 合理 PE | {metric(valuation.get("reasonable_pe"))} | v1.0 固定假設 |
-| 合理 PB | {metric(valuation.get("reasonable_pb"))} | v1.0 固定假設 |
+| 合理 PE | {metric(valuation.get("reasonable_pe"))} | 動態產業估值 |
+| 合理 PB | {metric(valuation.get("reasonable_pb"))} | 動態產業估值 |
 | PE 合理價 | {metric(valuation.get("pe_fair_price"))} | EPS × 合理 PE |
 | PB 合理價 | {metric(valuation.get("pb_fair_price"))} | 每股淨值 × 合理 PB |
 | 綜合合理價 | {metric(valuation.get("fair_price"))} | PE/PB 合理價平均 |

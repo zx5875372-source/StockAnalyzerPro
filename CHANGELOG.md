@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Dynamic Valuation Engine v2
+
+- Added `valuation/valuation_profiles.py` with reusable industry valuation profiles for 半導體, 電子零組件, 通訊設備, 電腦及週邊, 金融, and 傳產.
+- Added industry-to-profile mapping for English and Chinese industry labels, including `Communication Equipment -> 通訊設備`.
+- Replaced fixed valuation assumptions with profile target PE/PB values while keeping SAP Score scoring logic unchanged.
+- Added valuation diagnostics for `valuation_profile`, `valuation_source`, and `industry_mapping`.
+- Added a report valuation model section showing selected industry profile, PE/PB ranges, and adopted PE/PB values.
+- Added unit tests for profile lookup, industry mapping, unknown industry fallback, dynamic PE/PB calculations, and report valuation profile display.
+- No SAP Score scoring logic, Piotroski, Strategy, Backtest, Historical Pipeline, Qualification Logic, Provider, or FinMind changes were added.
+
 ## Unreleased - Piotroski Report UX Fix
 
 - Updated the Piotroski F-Score detail table header from `去年值/比較值` to `比較值`.

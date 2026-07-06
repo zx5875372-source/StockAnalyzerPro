@@ -61,7 +61,7 @@ Current version: v2.4 UI 中文化
 - Calculates complete Piotroski F-Score 9 items.
 - Calculates SAP Score with a 100-point weighted scoring engine.
 - Includes profitability, financial health, cashflow, valuation, and growth analysis.
-- Estimates simplified valuation, buy zones, and first target price.
+- Estimates dynamic industry-based valuation, buy zones, and first target price.
 - Shows diagnostics when required financial fields are missing.
 - Provides a validation scan over a sample stock universe and exports CSV results.
 - Provides an interactive v2.4 Chinese CLI console for stock analysis, historical data tools, research tools, and project status.
@@ -91,6 +91,16 @@ Current version: v2.4 UI 中文化
 - Provides Historical Qualification reporting for separating point-in-time-safe snapshots from research-only fallback data.
 - Provides a Backtest Qualification Gate for marking repository backtests as formal point-in-time or research-only.
 - Provides an end-to-end historical pipeline smoke test from financial CSV import to SAP snapshot generation.
+
+## Dynamic Valuation Engine
+
+StockAnalyzerPro uses industry-based valuation profiles instead of one fixed PE/PB assumption for every stock.
+
+- `valuation/valuation_profiles.py` defines reusable profiles such as 半導體, 電子零組件, 通訊設備, 電腦及週邊, 金融, and 傳產.
+- English industry labels such as `Communication Equipment` are mapped to Chinese valuation profiles such as `通訊設備`.
+- Unknown industries fall back to the conservative `傳產` profile.
+- Stock analysis reports show the selected valuation profile, PE/PB range, and target PE/PB used for the current valuation.
+- This changes valuation estimates only; it does not change SAP Score scoring logic.
 
 ## Installation
 

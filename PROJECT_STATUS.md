@@ -4,7 +4,7 @@ Current Version
 v2.4 UI 中文化
 
 Current Phase
-Piotroski Report UX Fix
+Dynamic Valuation Engine v2
 
 ## Completed
 
@@ -40,6 +40,7 @@ Piotroski Report UX Fix
 - FinMindProvider Completeness v3
 - Report Readability Improvement v1
 - Piotroski Report UX Fix
+- Dynamic Valuation Engine v2
 - GitHub Actions
 - GitHub Releases
 
@@ -71,7 +72,7 @@ Piotroski Report UX Fix
 
 ## Test Status
 
-- Unit Tests: 283 passing
+- Unit Tests: 288 passing
 - GitHub Actions: Passing
 - Latest Release: v2.3 Historical Pipeline MVP
 

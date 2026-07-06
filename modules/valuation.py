@@ -1,14 +1,22 @@
 from models.financial_data import FinancialData
-
-
-REASONABLE_PE = 20
-REASONABLE_PB = 3
+from valuation.valuation_profiles import get_valuation_profile
 
 
 def calculate_valuation(data: FinancialData) -> dict:
     eps = data.current.eps
     book_value_per_share = data.current.book_value_per_share
     diagnostics = []
+    profile, mapping = get_valuation_profile(data.industry, data.sector)
+    reasonable_pe = profile.target_pe
+    reasonable_pb = profile.target_pb
+
+    diagnostics.extend(
+        [
+            f"valuation_profile: {profile.name}",
+            f"valuation_source: {profile.source}",
+            f"industry_mapping: industry={mapping['industry']}, sector={mapping['sector']}, profile={profile.name}",
+        ]
+    )
 
     if eps is None:
         diagnostics.append("估值缺少 current.eps")
@@ -20,9 +28,9 @@ def calculate_valuation(data: FinancialData) -> dict:
     elif book_value_per_share <= 0:
         diagnostics.append("估值 current.book_value_per_share 非正值，暫不計算 PB 合理價")
 
-    pe_fair_price = round(eps * REASONABLE_PE, 2) if eps is not None and eps > 0 else None
+    pe_fair_price = round(eps * reasonable_pe, 2) if eps is not None and eps > 0 else None
     pb_fair_price = (
-        round(book_value_per_share * REASONABLE_PB, 2)
+        round(book_value_per_share * reasonable_pb, 2)
         if book_value_per_share is not None and book_value_per_share > 0
         else None
     )
@@ -45,8 +53,13 @@ def calculate_valuation(data: FinancialData) -> dict:
         diagnostics.append("估值缺少目前股價，無法計算預估上漲空間")
 
     return {
-        "reasonable_pe": REASONABLE_PE,
-        "reasonable_pb": REASONABLE_PB,
+        "reasonable_pe": reasonable_pe,
+        "reasonable_pb": reasonable_pb,
+        "valuation_profile": profile.name,
+        "valuation_source": profile.source,
+        "industry_mapping": mapping,
+        "pe_range": (profile.pe_min, profile.pe_max),
+        "pb_range": (profile.pb_min, profile.pb_max),
         "eps": eps,
         "book_value_per_share": book_value_per_share,
         "pe_fair_price": pe_fair_price,
