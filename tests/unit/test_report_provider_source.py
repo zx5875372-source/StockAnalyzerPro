@@ -162,9 +162,12 @@ class ReportProviderSourceTests(unittest.TestCase):
         self.assertIn("| Histogram | 0.40 |", content)
         self.assertIn("| MACD 狀態 | 偏多 |", content)
         self.assertIn("| 成交量倍率 | 1.50 |", content)
-        self.assertIn("| Trend Score | 80.00 |", content)
-        self.assertIn("| 技術評級 | A |", content)
-        self.assertIn("technical_source: Yahoo Finance", content)
+        self.assertIn("| 技術評分 | 80.00 |", content)
+        self.assertIn("| 技術等級 | A |", content)
+        self.assertIn("技術資料來源：Yahoo Finance", content)
+        self.assertIn("技術分析期間：2y", content)
+        self.assertIn("使用價格資料筆數：260", content)
+        self.assertIn("技術資料缺漏：-", content)
 
     def test_report_renders_total_score(self):
         result = sample_result()
@@ -173,10 +176,63 @@ class ReportProviderSourceTests(unittest.TestCase):
         content = render_report(result)
 
         self.assertIn("## 綜合分析", content)
-        self.assertIn("| SAP Score | 90.00 |", content)
-        self.assertIn("| Trend Score | 80.00 |", content)
-        self.assertIn("| Total Score | 86.00 |", content)
+        self.assertIn("| SAP 基本面評分 | 90.00 |", content)
+        self.assertIn("| 技術評分 | 80.00 |", content)
+        self.assertIn("| 綜合評分 | 86.00 |", content)
+        self.assertIn("綜合評分 = SAP 基本面評分 * 0.6 + 技術評分 * 0.4", content)
         self.assertIn("不影響 SAP Score 或原本投資等級", content)
+
+    def test_report_localizes_advanced_diagnostics(self):
+        result = sample_result()
+        result["diagnostics"] = [
+            "provider_selected_provider: finmind",
+            "provider_fallback_used: false",
+            "provider_fallback_reason: -",
+            "valuation_profile: 通訊設備",
+            "valuation_source: industry_profile_v2",
+            "industry_mapping: industry=Communication Equipment, sector=Technology, profile=通訊設備",
+        ]
+
+        content = render_report(result)
+
+        self.assertIn("使用資料來源：finmind", content)
+        self.assertIn("是否使用備援：false", content)
+        self.assertIn("備援原因：-", content)
+        self.assertIn("估值模型：通訊設備", content)
+        self.assertIn("估值來源：industry_profile_v2", content)
+        self.assertIn("產業估值對應：industry=Communication Equipment, sector=Technology, profile=通訊設備", content)
+
+    def test_report_does_not_render_english_diagnostic_or_score_labels(self):
+        result = sample_result()
+        result["technical"] = sample_technical()
+        result["diagnostics"] = [
+            "provider_selected_provider: finmind",
+            "provider_fallback_used: false",
+            "provider_fallback_reason: -",
+            "valuation_profile: 通訊設備",
+            "valuation_source: industry_profile_v2",
+            "industry_mapping: industry=Communication Equipment, sector=Technology, profile=通訊設備",
+        ]
+
+        content = render_report(result)
+
+        forbidden_labels = [
+            "Trend Score",
+            "Technical Grade",
+            "Total Score",
+            "technical_source",
+            "technical_period",
+            "technical_price_count",
+            "technical_missing_fields",
+            "provider_selected_provider",
+            "provider_fallback_used",
+            "provider_fallback_reason",
+            "valuation_profile",
+            "valuation_source",
+            "industry_mapping",
+        ]
+        for label in forbidden_labels:
+            self.assertNotIn(label, content)
 
     def test_unmapped_raw_fields_are_advanced_diagnostics_only(self):
         result = sample_result()

@@ -54,6 +54,19 @@ ADVANCED_DIAGNOSTIC_MARKERS = [
     "technical_missing_fields",
 ]
 
+DIAGNOSTIC_LABELS = {
+    "technical_source": "技術資料來源",
+    "technical_period": "技術分析期間",
+    "technical_price_count": "使用價格資料筆數",
+    "technical_missing_fields": "技術資料缺漏",
+    "provider_selected_provider": "使用資料來源",
+    "provider_fallback_used": "是否使用備援",
+    "provider_fallback_reason": "備援原因",
+    "valuation_profile": "估值模型",
+    "valuation_source": "估值來源",
+    "industry_mapping": "產業估值對應",
+}
+
 
 def fmt(value, suffix=""):
     if value is None:
@@ -258,6 +271,20 @@ def split_diagnostics(diagnostics: list[str]) -> tuple[list[str], list[str]]:
     return general or ["無明顯缺漏"], advanced or ["無"]
 
 
+def localize_diagnostic(item: str) -> str:
+    if ":" not in item:
+        return item
+    key, value = item.split(":", 1)
+    label = DIAGNOSTIC_LABELS.get(key.strip())
+    if label is None:
+        return item
+    return f"{label}：{value.strip()}"
+
+
+def diagnostic_lines(items: list[str]) -> str:
+    return "\n".join([f"- {localize_diagnostic(item)}" for item in items])
+
+
 def is_advanced_diagnostic(item: str) -> bool:
     return any(marker in item for marker in ADVANCED_DIAGNOSTIC_MARKERS)
 
@@ -372,8 +399,8 @@ def generate_markdown_report(result: dict) -> str:
     reasons_text = "\n".join([f"- {r}" for r in result["reasons"]])
     diagnostics = result.get("diagnostics") or ["無明顯缺漏"]
     general_diagnostics, advanced_diagnostics = split_diagnostics(diagnostics)
-    general_diagnostics_text = "\n".join([f"- {item}" for item in general_diagnostics])
-    advanced_diagnostics_text = "\n".join([f"- {item}" for item in advanced_diagnostics])
+    general_diagnostics_text = diagnostic_lines(general_diagnostics)
+    advanced_diagnostics_text = diagnostic_lines(advanced_diagnostics)
 
     piotroski = result.get("piotroski", {"score": 0, "available": 0, "items": []})
     piotroski_total = piotroski.get("total", 9)
@@ -392,7 +419,7 @@ def generate_markdown_report(result: dict) -> str:
     valuation_model = valuation_model_text(valuation)
     technical = technical_result(result)
     combined_total_score = total_score(result.get("sap_score"), technical.get("trend_score"))
-    technical_diagnostics_text = "\n".join([f"- {item}" for item in technical.get("diagnostics", [])])
+    technical_diagnostics_text = diagnostic_lines(technical.get("diagnostics", []))
     piotroski_rows = "\n".join(
         [
             "| "
@@ -536,8 +563,8 @@ Fallback：{fallback_text}
 | 黃金交叉 | {yes_no_plain(technical.get("golden_cross", False))} |
 | 死亡交叉 | {yes_no_plain(technical.get("death_cross", False))} |
 | 成交量倍率 | {format_ratio(technical.get("volume_ratio"))} |
-| Trend Score | {metric(technical.get("trend_score"))} |
-| 技術評級 | {technical.get("technical_grade")} |
+| 技術評分 | {metric(technical.get("trend_score"))} |
+| 技術等級 | {technical.get("technical_grade")} |
 
 ### 技術診斷
 
@@ -549,11 +576,11 @@ Fallback：{fallback_text}
 
 | 指標 | 分數 |
 |---|---:|
-| SAP Score | {metric(result.get("sap_score"))} |
-| Trend Score | {metric(technical.get("trend_score"))} |
-| Total Score | {metric(combined_total_score)} |
+| SAP 基本面評分 | {metric(result.get("sap_score"))} |
+| 技術評分 | {metric(technical.get("trend_score"))} |
+| 綜合評分 | {metric(combined_total_score)} |
 
-Total Score = SAP Score * 0.6 + Trend Score * 0.4。此分數只供參考，不影響 SAP Score 或原本投資等級。
+綜合評分 = SAP 基本面評分 * 0.6 + 技術評分 * 0.4。此分數只供參考，不影響 SAP Score 或原本投資等級。
 
 ---
 

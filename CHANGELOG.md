@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Chinese Report Localization v2
+
+- Localized technical report labels from `Trend Score` and `Technical Grade` to `技術評分` and `技術等級`.
+- Localized comprehensive-analysis labels to `SAP 基本面評分`, `技術評分`, and `綜合評分`.
+- Localized technical diagnostics keys for source, period, price count, and missing fields.
+- Localized advanced diagnostics keys for provider selection, fallback state/reason, valuation profile/source, and industry valuation mapping.
+- Added report rendering tests to ensure the English diagnostic and score labels no longer appear in generated Markdown reports.
+- No SAP Score, Trend Score, Total Score, Piotroski, Provider, FinMind, Strategy, or Backtest calculations were changed.
+
 ## Unreleased - Technical Analysis Engine v1
 
 - Added independent `technical/` module with moving averages, RSI, MACD, volume ratio, `TechnicalAnalysis`, and `TechnicalResult`.
