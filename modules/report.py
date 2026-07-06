@@ -48,6 +48,10 @@ ADVANCED_DIAGNOSTIC_MARKERS = [
     "valuation_profile",
     "valuation_source",
     "industry_mapping",
+    "technical_source",
+    "technical_period",
+    "technical_price_count",
+    "technical_missing_fields",
 ]
 
 
@@ -323,6 +327,40 @@ def valuation_model_text(valuation: dict) -> dict:
     }
 
 
+def technical_result(result: dict) -> dict:
+    technical = dict(result.get("technical") or {})
+    defaults = {
+        "trend_score": None,
+        "technical_grade": "資料不足",
+        "ma20": None,
+        "ma60": None,
+        "ma120": None,
+        "ma240": None,
+        "rsi14": None,
+        "rsi_status": "資料不足",
+        "macd": None,
+        "macd_signal": None,
+        "macd_histogram": None,
+        "macd_status": "資料不足",
+        "volume_ratio": None,
+        "golden_cross": False,
+        "death_cross": False,
+        "diagnostics": ["technical_missing_fields: technical_result"],
+    }
+    defaults.update(technical)
+    return defaults
+
+
+def total_score(sap_score, trend_score) -> float | None:
+    if sap_score is None or trend_score is None:
+        return None
+    return round(float(sap_score) * 0.6 + float(trend_score) * 0.4, 2)
+
+
+def yes_no_plain(value: bool) -> str:
+    return "是" if value else "否"
+
+
 def generate_markdown_report(result: dict) -> str:
     reports_dir = Path("reports")
     reports_dir.mkdir(exist_ok=True)
@@ -352,6 +390,9 @@ def generate_markdown_report(result: dict) -> str:
     plain_judgement_reasons = numbered_lines(plain_judgement["reasons"])
     valuation_warning_text = valuation_warnings(result)
     valuation_model = valuation_model_text(valuation)
+    technical = technical_result(result)
+    combined_total_score = total_score(result.get("sap_score"), technical.get("trend_score"))
+    technical_diagnostics_text = "\n".join([f"- {item}" for item in technical.get("diagnostics", [])])
     piotroski_rows = "\n".join(
         [
             "| "
@@ -475,6 +516,44 @@ Fallback：{fallback_text}
 ### 估值警示
 
 {valuation_warning_text}
+
+---
+
+## 技術分析
+
+| 指標 | 數值 |
+|---|---:|
+| MA20 | {metric(technical.get("ma20"))} |
+| MA60 | {metric(technical.get("ma60"))} |
+| MA120 | {metric(technical.get("ma120"))} |
+| MA240 | {metric(technical.get("ma240"))} |
+| RSI14 | {metric(technical.get("rsi14"))} |
+| RSI 狀態 | {technical.get("rsi_status")} |
+| MACD | {metric(technical.get("macd"))} |
+| Signal | {metric(technical.get("macd_signal"))} |
+| Histogram | {metric(technical.get("macd_histogram"))} |
+| MACD 狀態 | {technical.get("macd_status")} |
+| 黃金交叉 | {yes_no_plain(technical.get("golden_cross", False))} |
+| 死亡交叉 | {yes_no_plain(technical.get("death_cross", False))} |
+| 成交量倍率 | {format_ratio(technical.get("volume_ratio"))} |
+| Trend Score | {metric(technical.get("trend_score"))} |
+| 技術評級 | {technical.get("technical_grade")} |
+
+### 技術診斷
+
+{technical_diagnostics_text}
+
+---
+
+## 綜合分析
+
+| 指標 | 分數 |
+|---|---:|
+| SAP Score | {metric(result.get("sap_score"))} |
+| Trend Score | {metric(technical.get("trend_score"))} |
+| Total Score | {metric(combined_total_score)} |
+
+Total Score = SAP Score * 0.6 + Trend Score * 0.4。此分數只供參考，不影響 SAP Score 或原本投資等級。
 
 ---
 

@@ -62,6 +62,7 @@ Current version: v2.4 UI 中文化
 - Calculates SAP Score with a 100-point weighted scoring engine.
 - Includes profitability, financial health, cashflow, valuation, and growth analysis.
 - Estimates dynamic industry-based valuation, buy zones, and first target price.
+- Adds an independent Technical Analysis Engine for MA, RSI, MACD, volume ratio, Trend Score, and display-only Total Score.
 - Shows diagnostics when required financial fields are missing.
 - Provides a validation scan over a sample stock universe and exports CSV results.
 - Provides an interactive v2.4 Chinese CLI console for stock analysis, historical data tools, research tools, and project status.
@@ -101,6 +102,15 @@ StockAnalyzerPro uses industry-based valuation profiles instead of one fixed PE/
 - Unknown industries fall back to the conservative `傳產` profile.
 - Stock analysis reports show the selected valuation profile, PE/PB range, and target PE/PB used for the current valuation.
 - This changes valuation estimates only; it does not change SAP Score scoring logic.
+
+## Technical Analysis Engine
+
+The `technical/` module adds an independent technical-analysis layer for single-stock reports.
+
+- Indicators include MA20, MA60, MA120, MA240, RSI14, MACD, signal, histogram, and 20-day volume ratio.
+- Trend Score uses MA trend, RSI, MACD, and volume weights to produce a 0-100 technical score and S/A/B/C/D technical grade.
+- Single-stock Markdown reports display Technical Analysis and a display-only Total Score: `SAP Score * 0.6 + Trend Score * 0.4`.
+- Technical Analysis uses Yahoo Finance historical prices and does not modify FinMindProvider, CompositeProvider, downloader defaults, SAP Score, or backtest strategy logic.
 
 ## Installation
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Technical Analysis Engine v1
+
+- Added independent `technical/` module with moving averages, RSI, MACD, volume ratio, `TechnicalAnalysis`, and `TechnicalResult`.
+- Added Trend Score and technical grade calculation using MA trend, RSI, MACD, and volume weights.
+- Integrated single-stock Markdown reports with a new technical analysis section and a display-only Total Score: `SAP Score * 0.6 + Trend Score * 0.4`.
+- Technical analysis uses Yahoo Finance historical price data and does not change downloader runtime defaults or provider routing.
+- Added diagnostics for `technical_source`, `technical_period`, `technical_price_count`, and `technical_missing_fields`.
+- Added unit tests for MA, RSI, MACD, volume ratio, Trend Score, technical grade, report rendering, Total Score, and insufficient-data handling.
+- No SAP Score scoring logic, Piotroski scoring logic, Analyzer fundamental calculations, FinMindProvider, CompositeProvider, Provider routing, Backtest, Strategy, Historical Pipeline, or Qualification Logic changes were added.
+
 ## Unreleased - Financial Metrics Display Improvement
 
 - Added shared report display formatters for percent, ratio, and currency values.

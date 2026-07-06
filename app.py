@@ -7,6 +7,7 @@ import sys
 from modules.downloader import get_stock_data
 from modules.analyzer import analyze_stock
 from modules.report import generate_markdown_report
+from technical import TechnicalAnalysis
 from scan import (
     OUTPUT_PATH,
     SUMMARY_PATH,
@@ -208,6 +209,8 @@ def analyze_symbol(symbol: str, name: str = "") -> tuple[dict, Path, str, str] |
         data = get_stock_data(symbol)
         print("正在分析...")
         result = analyze_stock(data)
+        print("正在分析技術指標...")
+        result["technical"] = TechnicalAnalysis().analyze(result["symbol"]).to_dict()
         print("正在產生報告...")
         report_path = Path(generate_markdown_report(result))
         return result, report_path, symbol, name

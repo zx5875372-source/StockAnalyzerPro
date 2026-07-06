@@ -146,6 +146,38 @@ class ReportProviderSourceTests(unittest.TestCase):
         self.assertIn("| 合理 PE | 20.00 | 動態產業估值 |", content)
         self.assertIn("| 合理 PB | 2.50 | 動態產業估值 |", content)
 
+    def test_report_renders_technical_analysis(self):
+        result = sample_result()
+        result["technical"] = sample_technical()
+
+        content = render_report(result)
+
+        self.assertIn("## 技術分析", content)
+        self.assertIn("| MA20 | 100.00 |", content)
+        self.assertIn("| MA60 | 95.00 |", content)
+        self.assertIn("| RSI14 | 55.00 |", content)
+        self.assertIn("| RSI 狀態 | 正常 |", content)
+        self.assertIn("| MACD | 1.20 |", content)
+        self.assertIn("| Signal | 0.80 |", content)
+        self.assertIn("| Histogram | 0.40 |", content)
+        self.assertIn("| MACD 狀態 | 偏多 |", content)
+        self.assertIn("| 成交量倍率 | 1.50 |", content)
+        self.assertIn("| Trend Score | 80.00 |", content)
+        self.assertIn("| 技術評級 | A |", content)
+        self.assertIn("technical_source: Yahoo Finance", content)
+
+    def test_report_renders_total_score(self):
+        result = sample_result()
+        result["technical"] = sample_technical()
+
+        content = render_report(result)
+
+        self.assertIn("## 綜合分析", content)
+        self.assertIn("| SAP Score | 90.00 |", content)
+        self.assertIn("| Trend Score | 80.00 |", content)
+        self.assertIn("| Total Score | 86.00 |", content)
+        self.assertIn("不影響 SAP Score 或原本投資等級", content)
+
     def test_unmapped_raw_fields_are_advanced_diagnostics_only(self):
         result = sample_result()
         result["diagnostics"] = [
@@ -380,6 +412,32 @@ def piotroski_items():
             "note": "current revenue / total_assets > previous revenue / total_assets 加 1 分",
         },
     ]
+
+
+def sample_technical():
+    return {
+        "trend_score": 80,
+        "technical_grade": "A",
+        "ma20": 100,
+        "ma60": 95,
+        "ma120": 90,
+        "ma240": 85,
+        "rsi14": 55,
+        "rsi_status": "正常",
+        "macd": 1.2,
+        "macd_signal": 0.8,
+        "macd_histogram": 0.4,
+        "macd_status": "偏多",
+        "volume_ratio": 1.5,
+        "golden_cross": True,
+        "death_cross": False,
+        "diagnostics": [
+            "technical_source: Yahoo Finance",
+            "technical_period: 2y",
+            "technical_price_count: 260",
+            "technical_missing_fields: -",
+        ],
+    }
 
 
 if __name__ == "__main__":
